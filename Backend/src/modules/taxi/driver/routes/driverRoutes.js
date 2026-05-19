@@ -7,6 +7,7 @@ import {
   createOwnerBusService,
   cancelOwnerBusBookingSeats,
   createDriverPaymentQr,
+  handleDriverRazorpayWalletTopupCallback,
   createServiceCenterStaffMember,
   enrollServiceCenterStaffBiometric,
   updateServiceCenterStaffMember,
@@ -227,6 +228,10 @@ driverRouter.post(
   "/wallet/top-up",
   authenticate(["driver"]),
   asyncHandler(topUpMyWallet),
+);
+driverRouter.post(
+  "/wallet/top-up/razorpay/callback",
+  asyncHandler(handleDriverRazorpayWalletTopupCallback),
 );
   driverRouter.post(
     "/wallet/top-up/razorpay/order",

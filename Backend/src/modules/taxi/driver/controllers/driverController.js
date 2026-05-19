@@ -5833,6 +5833,36 @@ export const createDriverWalletTopupOrder = async (req, res) => {
   });
 };
 
+export const handleDriverRazorpayWalletTopupCallback = async (req, res) => {
+  const frontendBaseUrl = getFrontendBaseUrl(req);
+  const redirectUrl = new URL(`${frontendBaseUrl}/razorpay/status`);
+  redirectUrl.searchParams.set("flow", "driver-wallet");
+
+  const fields = [
+    "razorpay_payment_id",
+    "razorpay_order_id",
+    "razorpay_signature",
+  ];
+
+  for (const field of fields) {
+    const value = String(req.body?.[field] || "").trim();
+    if (value) {
+      redirectUrl.searchParams.set(field, value);
+    }
+  }
+
+  const errorCode = String(req.body?.error?.code || req.body?.error?.reason || "").trim();
+  const errorDescription = String(req.body?.error?.description || "").trim();
+  if (errorCode) {
+    redirectUrl.searchParams.set("error_code", errorCode);
+  }
+  if (errorDescription) {
+    redirectUrl.searchParams.set("error_description", errorDescription);
+  }
+
+  res.redirect(302, redirectUrl.toString());
+};
+
 export const createDriverPhonePeWalletTopupOrder = async (req, res) => {
   const settings = await getWalletSettings();
   const minTopUp = Number(settings.minimum_amount_added_to_wallet || 0);
