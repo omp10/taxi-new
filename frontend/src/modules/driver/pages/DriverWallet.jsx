@@ -429,9 +429,9 @@ const DriverWallet = () => {
 
             // 2. Open Razorpay checkout
             const driverPhone = driverInfo?.phone || driverInfo?.mobile || '';
-            const prefillContact = driverPhone
-                ? `+91${String(driverPhone).replace(/^\+?91/, '')}`
-                : '';
+            const cleanedPhoneDigits = String(driverPhone).replace(/\D/g, '');
+            const finalPhoneDigits = (cleanedPhoneDigits.length === 12 && cleanedPhoneDigits.startsWith('91')) ? cleanedPhoneDigits.slice(2) : cleanedPhoneDigits;
+            const prefillContact = finalPhoneDigits.length === 10 ? `+91${finalPhoneDigits}` : '';
 
             // In Flutter WebView, UPI app intents (Google Pay, PhonePe, Paytm)
             // cannot be launched from Razorpay's inline modal because WebViews
@@ -606,9 +606,9 @@ const DriverWallet = () => {
             }
 
             const driverPhone = driverInfo?.phone || driverInfo?.mobile || '';
-            const prefillContact = driverPhone
-                ? `+91${String(driverPhone).replace(/^\+?91/, '')}`
-                : '';
+            const cleanedPhoneDigits = String(driverPhone).replace(/\D/g, '');
+            const finalPhoneDigits = (cleanedPhoneDigits.length === 12 && cleanedPhoneDigits.startsWith('91')) ? cleanedPhoneDigits.slice(2) : cleanedPhoneDigits;
+            const prefillContact = finalPhoneDigits.length === 10 ? `+91${finalPhoneDigits}` : '';
 
             const rzp = new window.Razorpay({
                 key: orderData.keyId,

@@ -6017,9 +6017,11 @@ export const createDriverPhonePeWalletTopupOrder = async (req, res) => {
         },
         message: "Wallet top-up",
       },
-      prefillUserLoginDetails: normalizePhone(driver?.phone || "")
-        ? { phoneNumber: normalizePhone(driver?.phone || "") }
-        : undefined,
+      prefillUserLoginDetails: (() => {
+        const cleaned = String(driver?.phone || "").replace(/\D/g, "");
+        const finalPhone = (cleaned.length === 12 && cleaned.startsWith("91")) ? cleaned.slice(2) : cleaned;
+        return finalPhone.length === 10 ? { phoneNumber: finalPhone } : undefined;
+      })(),
     },
     clientId,
     clientSecret,
