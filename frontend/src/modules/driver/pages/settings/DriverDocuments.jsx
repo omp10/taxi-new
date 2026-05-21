@@ -219,10 +219,6 @@ const DriverDocuments = () => {
       return;
     }
 
-    if (targetDoc.reviewStatus === 'verified' || targetDoc.reviewStatus === 'approved') {
-      return;
-    }
-
     autoOpenedDocumentRef.current = focusDocumentKey;
     setTimeout(() => {
       targetInput.click();
@@ -374,10 +370,10 @@ const DriverDocuments = () => {
                     <div className="flex items-center gap-1.5 ml-1">
                       <label
                         onClick={(event) => event.stopPropagation()}
-                        className={`h-7 w-7 rounded-lg flex items-center justify-center transition-all ${
-                          doc.verified
-                            ? 'bg-slate-50 text-slate-200 cursor-not-allowed'
-                            : 'bg-blue-50 text-blue-500 cursor-pointer hover:bg-blue-100 active:scale-90'
+                        className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-lg px-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                          imageUploading && uploadingDocumentKey === doc.id
+                            ? 'bg-slate-100 text-slate-400 cursor-wait'
+                            : 'bg-blue-50 text-blue-600 cursor-pointer hover:bg-blue-100 active:scale-90'
                         }`}
                       >
                         {imageUploading && uploadingDocumentKey === doc.id ? (
@@ -385,6 +381,7 @@ const DriverDocuments = () => {
                         ) : (
                           <Camera size={13} strokeWidth={2.5} />
                         )}
+                        <span>{doc.hasDocument ? 'Re-upload' : 'Upload'}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -393,9 +390,8 @@ const DriverDocuments = () => {
                             if (node) documentInputRefs.current[doc.id] = node;
                             else delete documentInputRefs.current[doc.id];
                           }}
-                          disabled={imageUploading || doc.verified}
+                          disabled={imageUploading}
                           onChange={(event) => {
-                            if (doc.verified) return;
                             uploadingDocumentKeyRef.current = doc.id;
                             setUploadingDocumentKey(doc.id);
                             onDocumentImageChange(event);
