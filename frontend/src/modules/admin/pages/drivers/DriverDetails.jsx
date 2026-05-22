@@ -493,7 +493,12 @@ const DriverDetails = () => {
               )}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">{profile.name}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-gray-900">{profile.name}</h2>
+                <span className="font-mono font-semibold text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded shadow-sm border border-indigo-100">
+                  {profile.driver_code || profile.referralCode || (profile.phone ? `DRV${String(profile.phone).slice(-4)}${String(profile._id || profile.id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : 'N/A')}
+                </span>
+              </div>
               <p className="text-sm text-gray-500">{profile.city || 'India'}</p>
             </div>
           </div>

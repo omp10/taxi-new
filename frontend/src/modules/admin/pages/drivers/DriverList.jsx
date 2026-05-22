@@ -51,6 +51,7 @@ const DriverList = ({ mode = 'approved' }) => {
         const approved = driversList.map((d) => ({
           id: d._id,
           name: d.name || 'Unknown',
+          driverCode: d.driver_code || d.referralCode || (d.phone ? `DRV${String(d.phone).slice(-4)}${String(d._id || d.id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : 'N/A'),
           serviceLocation: d.service_location_name || d.city || d.service_location?.name || 'India',
           phone: d.phone || d.mobile || 'N/A',
           transportType: d.transport_type || d.register_for || d.vehicle_type || 'All - Bike',
@@ -281,6 +282,7 @@ const DriverList = ({ mode = 'approved' }) => {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Driver Code</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Service Location</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Mobile Number</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Transport Type</th>
@@ -295,7 +297,7 @@ const DriverList = ({ mode = 'approved' }) => {
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan="10" className="py-16 text-center">
+                  <td colSpan="11" className="py-16 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <Loader2 className="w-7 h-7 text-indigo-600 animate-spin" />
                       <p className="text-sm text-gray-400">Loading drivers...</p>
@@ -304,12 +306,17 @@ const DriverList = ({ mode = 'approved' }) => {
                 </tr>
               ) : drivers.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-16 text-center text-sm text-gray-400">No drivers found.</td>
+                  <td colSpan="11" className="px-6 py-16 text-center text-sm text-gray-400">No drivers found.</td>
                 </tr>
               ) : (
                 drivers.map((driver) => (
                   <tr key={driver.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{driver.name}</td>
+                    <td className="px-4 py-4 text-sm font-medium">
+                      <span className="font-mono font-semibold text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded shadow-sm border border-indigo-100">
+                        {driver.driverCode}
+                      </span>
+                    </td>
                     <td className="px-4 py-4 text-sm text-gray-500">{driver.serviceLocation}</td>
                     <td className="px-4 py-4 text-sm text-gray-500">{driver.phone}</td>
                     <td className="px-4 py-4 text-sm text-gray-500">{driver.transportType}</td>

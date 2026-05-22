@@ -168,7 +168,12 @@ const DriverDeleteRequests = () => {
                           {(item.name || 'D')[0]}
                         </div>
                         <div>
-                          <p className="text-[14px] font-black text-gray-950 tracking-tight leading-none uppercase">{item.name || 'Unknown'}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-[14px] font-black text-gray-950 tracking-tight uppercase leading-none">{item.name || 'Unknown'}</p>
+                            <span className="font-mono font-semibold text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 uppercase leading-none">
+                              {item.driver_code || item.referralCode || ((item.mobile || item.phone) ? `DRV${String(item.mobile || item.phone).slice(-4)}${String(item._id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : 'N/A')}
+                            </span>
+                          </div>
                           <p className="text-[11px] font-bold text-gray-400 mt-1">{item.email || 'No email'}</p>
                         </div>
                       </div>

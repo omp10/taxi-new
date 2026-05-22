@@ -146,6 +146,7 @@ const PendingDrivers = () => {
         .map((d) => ({
           id: d._id,
           name: d.name || 'Unknown',
+          driverCode: d.driver_code || d.referralCode || (d.phone ? `DRV${String(d.phone).slice(-4)}${String(d._id || d.id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : 'N/A'),
           serviceLocation: d.service_location_name || d.city || 'India',
           phone: d.phone || d.mobile || 'N/A',
           transport: d.transport_type || d.register_for || d.transport_type || 'N/A',
@@ -287,6 +288,7 @@ const PendingDrivers = () => {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500">
                 <th className="px-6 py-4">Name</th>
+                <th className="px-4 py-4">Driver Code</th>
                 <th className="px-4 py-4">Service Location</th>
                 <th className="px-4 py-4">Mobile Number</th>
                 <th className="px-4 py-4">Transport Type</th>
@@ -301,16 +303,21 @@ const PendingDrivers = () => {
             <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
               {isLoading ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-12 text-center text-gray-400">Loading pending drivers...</td>
+                  <td colSpan="11" className="px-6 py-12 text-center text-gray-400">Loading pending drivers...</td>
                 </tr>
               ) : pendingDrivers.length === 0 ? (
                 <tr>
-                  <td colSpan="10" className="px-6 py-12 text-center text-gray-400">No pending drivers found.</td>
+                  <td colSpan="11" className="px-6 py-12 text-center text-gray-400">No pending drivers found.</td>
                 </tr>
               ) : (
                 pendingDrivers.map((driver) => (
                   <tr key={driver.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="px-6 py-4 text-gray-900">{driver.name}</td>
+                    <td className="px-4 py-4 text-sm font-medium">
+                      <span className="font-mono font-semibold text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded shadow-sm border border-indigo-100">
+                        {driver.driverCode}
+                      </span>
+                    </td>
                     <td className="px-4 py-4">{driver.serviceLocation}</td>
                     <td className="px-4 py-4 font-medium text-gray-800">{driver.phone}</td>
                     <td className="px-4 py-4">{driver.transport}</td>

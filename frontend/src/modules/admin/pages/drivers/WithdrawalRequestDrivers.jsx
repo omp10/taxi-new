@@ -122,6 +122,7 @@ const WithdrawalRequestDrivers = () => {
               <tr className="text-xs font-semibold text-gray-500">
                 <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Name</th>
+                <th className="px-6 py-4">Driver Code</th>
                 <th className="px-6 py-4">Mobile Number</th>
                 <th className="px-6 py-4">Payout</th>
                 <th className="px-6 py-4">Requested Amount</th>
@@ -132,13 +133,13 @@ const WithdrawalRequestDrivers = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-16 text-center text-sm text-gray-400">
+                  <td colSpan={8} className="px-6 py-16 text-center text-sm text-gray-400">
                     Loading...
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-16 text-center">
+                  <td colSpan={8} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-gray-400">
                       <FileSearch size={44} strokeWidth={1.5} />
                       <p className="text-sm font-medium">No Data Found</p>
@@ -153,6 +154,11 @@ const WithdrawalRequestDrivers = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-800">
                       {item.driver?.name || 'Unknown'}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-medium">
+                      <span className="font-mono font-semibold text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded shadow-sm border border-indigo-100">
+                        {item.driver?.driver_code || item.driver?.referralCode || (item.driver?.mobile ? `DRV${String(item.driver.mobile).slice(-4)}${String(item.driver_id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : 'N/A')}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {item.driver?.mobile || '-'}

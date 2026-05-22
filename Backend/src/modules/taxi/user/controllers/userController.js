@@ -1518,6 +1518,10 @@ export const registerUser = async (req, res) => {
   validatePhone(phone);
   validateEmail(email);
 
+  if (!profileImage) {
+    throw new ApiError(400, 'Profile image is required');
+  }
+
   const existingUser = await User.findOne({ phone });
 
   const referrer = referralCode ? await findUserByReferralCode(referralCode) : null;
@@ -1630,6 +1634,10 @@ export const signupUser = async (req, res) => {
   validateName(name);
   validatePhone(phone);
   validateEmail(email);
+
+  if (!profileImage) {
+    throw new ApiError(400, 'Profile image is required');
+  }
 
   const signupSession = await requireVerifiedUserSignupSession(phone);
 
