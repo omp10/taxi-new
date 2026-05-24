@@ -90,6 +90,9 @@ const fileToDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
+const NATIVE_CAMERA_BRIDGE_TIMEOUT_MS = 20_000;
+const buildDocumentCameraInputId = (key = '') => `driver-document-camera-${String(key)}`;
+
 const loadImageFromDataUrl = (dataUrl) =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -156,6 +159,68 @@ const prepareImageFileForUpload = async (file) => {
     console.warn('Image optimization skipped; uploading original image instead.', error);
     return originalDataUrl;
   }
+};
+
+const withBridgeTimeout = (promise, timeoutMs = NATIVE_CAMERA_BRIDGE_TIMEOUT_MS) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      const timer = setTimeout(() => {
+        clearTimeout(timer);
+        reject(new Error('The camera is taking too long to respond. Please try again.'));
+      }, timeoutMs);
+    }),
+  ]);
+
+const isNativeCameraBridgeAvailable = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return Boolean(
+    window?.Rydon24Native?.captureInspectionPhoto
+      || window?.__nativeServiceCenterCamera
+      || window?.flutter_inappwebview?.callHandler,
+  );
+};
+
+const normalizeNativeCameraBridgeResult = (result) => {
+  if (!result) {
+    return null;
+  }
+
+  if (typeof result === 'string') {
+    const trimmed = result.trim();
+    if (trimmed.startsWith('data:image/')) {
+      return { dataUrl: trimmed, mimeType: 'image/jpeg', fileName: '' };
+    }
+    return null;
+  }
+
+  if (result.success === false) {
+    return null;
+  }
+
+  const mimeType = String(result.mimeType || result.type || 'image/jpeg').trim() || 'image/jpeg';
+  const rawBase64 = String(result.base64 || result.base64Data || result.imageBase64 || result.previewBase64 || '').trim();
+  const dataUrl = String(
+    result.dataUrl
+      || result.image
+      || result.base64Image
+      || result.previewImage
+      || (rawBase64 ? `data:${mimeType};base64,${rawBase64}` : '')
+      || '',
+  ).trim();
+
+  if (!dataUrl.startsWith('data:image/')) {
+    return null;
+  }
+
+  return {
+    dataUrl,
+    mimeType,
+    fileName: String(result.fileName || '').trim(),
+  };
 };
 
 const normalizeSignupRole = (role) =>
@@ -382,31 +447,22 @@ const StepDocuments = () => {
     });
   };
 
-  const handleFileChange = async (templateId, key, event) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-
-    if (!file) {
-      return;
-    }
-
+  const uploadDocumentFromSource = async ({ templateId, key, dataUrl, fileName = '', mimeType = 'image/jpeg' }) => {
     setUploading(key);
     setError('');
 
     try {
-      const dataUrl = isImageLikeFile(file)
-        ? await prepareImageFileForUpload(file)
-        : await fileToDataUrl(file);
-
-      const { fileName, mimeType } = inferImageMeta(file, dataUrl);
+      const effectiveMimeType = String(mimeType || '').trim() || 'image/jpeg';
+      const effectiveFileName = String(fileName || '').trim()
+        || `capture-${Date.now()}.${effectiveMimeType.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg'}`;
 
       setDocs((prev) => ({
         ...prev,
         [key]: {
           ...(prev[key] || {}),
           previewUrl: dataUrl,
-          fileName,
-          mimeType,
+          fileName: effectiveFileName,
+          mimeType: effectiveMimeType,
           uploaded: false,
           uploading: true,
         },
@@ -418,8 +474,8 @@ const StepDocuments = () => {
         documents: {
           [key]: {
             dataUrl,
-            fileName,
-            mimeType,
+            fileName: effectiveFileName,
+            mimeType: effectiveMimeType,
             identifyNumber: documentMeta[templateId]?.identifyNumber || '',
             expiryDate: documentMeta[templateId]?.expiryDate || '',
           },
@@ -431,8 +487,8 @@ const StepDocuments = () => {
       const nextDoc = normalizeDocument(uploadedDoc) || {
         previewUrl: dataUrl,
         secureUrl: dataUrl,
-        fileName,
-        mimeType,
+        fileName: effectiveFileName,
+        mimeType: effectiveMimeType,
         uploaded: true,
       };
       const nextDocWithMeta = applyTemplateMetaToDocuments(templateId, { [key]: nextDoc })[key];
@@ -459,6 +515,113 @@ const StepDocuments = () => {
       }));
     } finally {
       setUploading(null);
+    }
+  };
+
+  const handleFileChange = async (templateId, key, event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const dataUrl = isImageLikeFile(file)
+        ? await prepareImageFileForUpload(file)
+        : await fileToDataUrl(file);
+      const inferred = inferImageMeta(file, dataUrl);
+
+      await uploadDocumentFromSource({
+        templateId,
+        key,
+        dataUrl,
+        fileName: inferred.fileName,
+        mimeType: inferred.mimeType,
+      });
+    } catch (error) {
+      setError(error?.message || 'Unable to upload document');
+    }
+  };
+
+  const triggerCameraFileInput = (key) => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.getElementById(buildDocumentCameraInputId(key))?.click();
+  };
+
+  const handleCameraCapture = async (templateId, key, label) => {
+    if (!isNativeCameraBridgeAvailable()) {
+      triggerCameraFileInput(key);
+      return;
+    }
+
+    const payload = {
+      type: 'driver_document_capture',
+      action: 'capture',
+      key,
+      label,
+      registrationId: session.registrationId,
+      phone: session.phone,
+      source: 'driver_documents',
+    };
+
+    try {
+      let normalizedResult = null;
+
+      if (typeof window?.Rydon24Native?.captureInspectionPhoto === 'function') {
+        normalizedResult = normalizeNativeCameraBridgeResult(
+          await withBridgeTimeout(window.Rydon24Native.captureInspectionPhoto(payload)),
+        );
+      }
+
+      if (!normalizedResult && typeof window?.__nativeServiceCenterCamera === 'function') {
+        normalizedResult = normalizeNativeCameraBridgeResult(
+          await withBridgeTimeout(window.__nativeServiceCenterCamera(payload)),
+        );
+      }
+
+      if (!normalizedResult && window?.flutter_inappwebview?.callHandler) {
+        const handlers = [
+          'captureInspectionPhoto',
+          'cameraCapture',
+          'serviceCenterInspectionPhoto',
+          'serviceCenterCamera',
+          'openCamera',
+        ];
+
+        for (const handlerName of handlers) {
+          try {
+            const result = handlerName === 'openCamera'
+              ? await withBridgeTimeout(window.flutter_inappwebview.callHandler(handlerName))
+              : await withBridgeTimeout(window.flutter_inappwebview.callHandler(handlerName, payload));
+            normalizedResult = normalizeNativeCameraBridgeResult(result);
+            if (normalizedResult?.dataUrl) {
+              break;
+            }
+          } catch {
+            // Try the next bridge handler name.
+          }
+        }
+      }
+
+      if (!normalizedResult?.dataUrl) {
+        triggerCameraFileInput(key);
+        return;
+      }
+
+      await uploadDocumentFromSource({
+        templateId,
+        key,
+        dataUrl: normalizedResult.dataUrl,
+        fileName: normalizedResult.fileName,
+        mimeType: normalizedResult.mimeType,
+      });
+    } catch (error) {
+      setError(error?.message || 'Unable to open the camera');
+      triggerCameraFileInput(key);
     }
   };
 
@@ -689,23 +852,29 @@ const StepDocuments = () => {
                                     onChange={(event) => handleFileChange(template.id, field.key, event)}
                                     />
                                 </label>
-                                <label className={`flex-1 relative flex h-12 items-center justify-center gap-2 text-center rounded-2xl border text-[11px] font-black uppercase tracking-widest transition-all ${
-                                    isUploading
-                                    ? 'cursor-not-allowed border-slate-50 bg-slate-50 text-slate-300'
-                                    : 'cursor-pointer border-slate-900 bg-slate-900 text-white hover:bg-black shadow-lg shadow-slate-900/10 active:scale-[0.98]'
-                                }`}>
+                                <button
+                                    type="button"
+                                    disabled={isUploading}
+                                    onClick={() => handleCameraCapture(template.id, field.key, field.label)}
+                                    className={`flex-1 relative flex h-12 items-center justify-center gap-2 text-center rounded-2xl border text-[11px] font-black uppercase tracking-widest transition-all ${
+                                      isUploading
+                                        ? 'cursor-not-allowed border-slate-50 bg-slate-50 text-slate-300'
+                                        : 'cursor-pointer border-slate-900 bg-slate-900 text-white hover:bg-black shadow-lg shadow-slate-900/10 active:scale-[0.98]'
+                                    }`}
+                                >
                                     <Camera size={16} />
                                     Camera
                                     <input
+                                    id={buildDocumentCameraInputId(field.key)}
                                     type="file"
                                     accept="image/*"
                                     capture="environment"
                                     disabled={isUploading}
-                                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                                    className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
                                     aria-label={`Capture ${field.label} from camera`}
                                     onChange={(event) => handleFileChange(template.id, field.key, event)}
                                     />
-                                </label>
+                                </button>
                             </div>
                         </div>
                       </div>
