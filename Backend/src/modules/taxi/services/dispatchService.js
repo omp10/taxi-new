@@ -923,6 +923,7 @@ const dispatchAttempt = async (rideId, attemptIndex = 0) => {
       maxDistance: radius,
       vehicleTypeId: ride.vehicleTypeId,
       vehicleTypeIds: dispatchVehicleTypeIds,
+      serviceLocationId: ride.service_location_id || null,
     });
     const effectiveRadius = Number.isFinite(searchRadiusMeters) && searchRadiusMeters > 0
       ? searchRadiusMeters
@@ -1074,6 +1075,7 @@ export const notifyLateAvailableDriver = async (driverId) => {
       maxDistance: radius,
       vehicleTypeId: ride.vehicleTypeId,
       vehicleTypeIds: dispatchVehicleTypeIds,
+      serviceLocationId: ride.service_location_id || null,
     });
 
     const matchedDriver = drivers.find((item) => String(item._id) === driverKey);

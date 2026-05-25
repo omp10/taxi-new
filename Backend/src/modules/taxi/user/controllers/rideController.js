@@ -31,6 +31,7 @@ import {
   startDispatchFlow,
 } from '../../services/dispatchService.js';
 import { getTipSettings } from '../../services/appSettingsService.js';
+import { matchDrivers } from '../../services/matchingService.js';
 import { Ride } from '../models/Ride.js';
 import { UserWallet } from '../models/UserWallet.js';
 
@@ -976,30 +977,28 @@ export const listAvailableDrivers = async (req, res) => {
     throw new ApiError(400, 'lat and lng are required');
   }
 
-  const near = {
-    $geometry: {
-      type: 'Point',
-      coordinates: [longitude, latitude],
-    },
-  };
+  const normalizedServiceLocationId =
+    service_location_id && mongoose.Types.ObjectId.isValid(service_location_id)
+      ? new mongoose.Types.ObjectId(service_location_id)
+      : null;
 
-  if (Number.isFinite(distance) && distance > 0) {
-    near.$maxDistance = Math.min(distance, 25000);
-  }
-
-  const drivers = await Driver.find({
-    isOnline: true,
-    isOnRide: false,
+  const { zone, drivers } = await matchDrivers([longitude, latitude], {
+    maxDistance: Number.isFinite(distance) && distance > 0 ? Math.min(distance, 25000) : 25000,
+    limit: Math.min(Number(limit) || 30, 50),
     vehicleTypeId,
-    location: {
-      $near: near,
-    },
-  })
-    .limit(Math.min(Number(limit) || 30, 50))
-    .select('name phone vehicleTypeId vehicleType vehicleIconType vehicleNumber vehicleColor vehicleMake vehicleModel rating location')
-    .lean();
+    serviceLocationId: normalizedServiceLocationId,
+    allowCrossZoneFallback: false,
+    strictZoneOnly: true,
+  });
 
-  const enrichedDrivers = drivers.map((driver) => {
+  const zoneServiceLocationId = zone?.service_location_id ? String(zone.service_location_id) : '';
+  const requestedServiceLocationId = normalizedServiceLocationId ? String(normalizedServiceLocationId) : '';
+  const visibleDrivers =
+    requestedServiceLocationId && zoneServiceLocationId && requestedServiceLocationId !== zoneServiceLocationId
+      ? []
+      : drivers;
+
+  const enrichedDrivers = visibleDrivers.map((driver) => {
     const distanceMeters = calculateDistanceMeters([longitude, latitude], driver.location?.coordinates || []);
     const etaMinutes = estimateEtaMinutes(distanceMeters);
 
@@ -1022,9 +1021,7 @@ export const listAvailableDrivers = async (req, res) => {
 
   const closestDriver = enrichedDrivers[0] || null;
   const { allowedPaymentMethods } = await getAllowedRidePaymentMethodsForPricing({
-    serviceLocationId: service_location_id && mongoose.Types.ObjectId.isValid(service_location_id)
-      ? new mongoose.Types.ObjectId(service_location_id)
-      : null,
+    serviceLocationId: normalizedServiceLocationId,
     transportType: transport_type || 'taxi',
     vehicleTypeId,
   });

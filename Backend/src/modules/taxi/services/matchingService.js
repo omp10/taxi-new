@@ -32,7 +32,7 @@ const normalizeVehicleTypeIds = (vehicleTypeIds = [], vehicleTypeId = null) => {
   return [...new Set(values.map((value) => String(value || '').trim()).filter(Boolean))];
 };
 
-const buildDriverMatchFilters = ({ zoneId, vehicleTypeId, vehicleTypeIds, vehicleTypeKeys }) => {
+const buildDriverMatchFilters = ({ zoneId, serviceLocationId, vehicleTypeId, vehicleTypeIds, vehicleTypeKeys }) => {
   const normalizedVehicleTypeIds = normalizeVehicleTypeIds(vehicleTypeIds, vehicleTypeId);
   const normalizedVehicleTypeKeys = Array.isArray(vehicleTypeKeys)
     ? [...new Set(vehicleTypeKeys.map(normalizeVehicleKey).filter(Boolean))]
@@ -56,24 +56,41 @@ const buildDriverMatchFilters = ({ zoneId, vehicleTypeId, vehicleTypeIds, vehicl
     isOnRide: false,
     'wallet.isBlocked': { $ne: true },
     ...(zoneId ? { zoneId } : {}),
+    ...(serviceLocationId ? { service_location_id: serviceLocationId } : {}),
     ...vehicleTypeFilter,
   };
 };
 
-export const findZoneByPickup = async (pickupCoords) => {
-  const coordinates = normalizePoint(pickupCoords, 'pickupCoords');
-
-  // Zones are authoritative for dispatch, so every pickup must belong to one polygon.
-  return Zone.findOne({
-    geometry: {
-      $geoIntersects: {
-        $geometry: {
-          type: 'Point',
-          coordinates,
-        },
+const buildZoneIntersectionQuery = (coordinates) => ({
+  active: { $ne: false },
+  status: { $ne: 'inactive' },
+  geometry: {
+    $geoIntersects: {
+      $geometry: {
+        type: 'Point',
+        coordinates,
       },
     },
-  });
+  },
+});
+
+export const findZoneByPickup = async (pickupCoords, options = {}) => {
+  const coordinates = normalizePoint(pickupCoords, 'pickupCoords');
+  const normalizedServiceLocationId = String(options?.serviceLocationId || '').trim();
+
+  if (normalizedServiceLocationId) {
+    const preferredZone = await Zone.findOne({
+      ...buildZoneIntersectionQuery(coordinates),
+      service_location_id: normalizedServiceLocationId,
+    }).sort({ updatedAt: -1, createdAt: -1 });
+
+    if (preferredZone) {
+      return preferredZone;
+    }
+  }
+
+  // Zones are authoritative for dispatch. If polygons overlap, prefer the newest active zone.
+  return Zone.findOne(buildZoneIntersectionQuery(coordinates)).sort({ updatedAt: -1, createdAt: -1 });
 };
 
 const toLocalMeters = (origin, target) => {
@@ -189,25 +206,28 @@ const sortDriversByDispatchAnchorDistance = (drivers = [], pickupCoords) =>
 
 const findDriversForZone = async ({
   zoneId,
+  serviceLocationId,
   coordinates,
   effectiveMaxDistance,
   limit,
   normalizedVehicleTypeIds,
   vehicleTypeKeys,
+  strictZoneOnly = false,
 }) => {
   const commonFilters = buildDriverMatchFilters({
     zoneId,
+    serviceLocationId,
     vehicleTypeIds: normalizedVehicleTypeIds,
     vehicleTypeKeys,
   });
   const selectedFields =
-    'name phone socketId vehicleTypeId vehicleType vehicleIconType vehicleNumber vehicleColor vehicleMake vehicleModel rating location zoneId isOnline isOnRide routeBooking';
+    'name phone socketId vehicleTypeId vehicleType vehicleIconType vehicleNumber vehicleColor vehicleMake vehicleModel rating location zoneId service_location_id isOnline isOnRide routeBooking';
 
   const [liveLocationDrivers, routeBookingDrivers] = await Promise.all([
     Driver.find({
       ...commonFilters,
       'routeBooking.enabled': { $ne: true },
-      ...buildGeoNearFilter('location', coordinates, effectiveMaxDistance),
+      ...(strictZoneOnly ? {} : buildGeoNearFilter('location', coordinates, effectiveMaxDistance)),
     })
       .limit(limit)
       .select(selectedFields),
@@ -216,7 +236,7 @@ const findDriversForZone = async ({
       'routeBooking.enabled': true,
       'routeBooking.anchorLocation': { $ne: null },
       'routeBooking.anchorLocation.coordinates.1': { $exists: true },
-      ...buildGeoNearFilter('routeBooking.anchorLocation', coordinates, effectiveMaxDistance),
+      ...(strictZoneOnly ? {} : buildGeoNearFilter('routeBooking.anchorLocation', coordinates, effectiveMaxDistance)),
     })
       .limit(limit)
       .select(selectedFields),
@@ -237,6 +257,9 @@ export const matchDrivers = async (pickupCoords, options = {}) => {
     limit = DISPATCH_TOP_DRIVERS,
     vehicleTypeId,
     vehicleTypeIds,
+    serviceLocationId = null,
+    allowCrossZoneFallback = true,
+    strictZoneOnly = false,
   } = options;
   const normalizedVehicleTypeIds = normalizeVehicleTypeIds(vehicleTypeIds, vehicleTypeId);
   const allowedVehicles = normalizedVehicleTypeIds.length
@@ -244,7 +267,7 @@ export const matchDrivers = async (pickupCoords, options = {}) => {
     : [];
   const vehicleTypeKeys = normalizeVehicleKeys(allowedVehicles);
 
-  const zone = await findZoneByPickup(coordinates);
+  const zone = await findZoneByPickup(coordinates, { serviceLocationId });
   const zoneBoundaryCapMeters = zone ? getZoneBoundaryCapMeters(zone, coordinates) : null;
   const effectiveMaxDistance = Number.isFinite(zoneBoundaryCapMeters) && zoneBoundaryCapMeters >= 0
     ? Math.min(Math.max(1, Math.round(maxDistance)), Math.max(1, zoneBoundaryCapMeters))
@@ -252,11 +275,13 @@ export const matchDrivers = async (pickupCoords, options = {}) => {
 
   let drivers = await findDriversForZone({
     zoneId: zone?._id || null,
+    serviceLocationId,
     coordinates,
     effectiveMaxDistance,
     limit,
     normalizedVehicleTypeIds,
     vehicleTypeKeys,
+    strictZoneOnly,
   });
 
   const blockedDriverIds = await getDriverIdsBlockedByUpcomingScheduledRides(
@@ -264,14 +289,16 @@ export const matchDrivers = async (pickupCoords, options = {}) => {
   );
   drivers = drivers.filter((driver) => !blockedDriverIds.has(String(driver?._id || '')));
 
-  if (drivers.length === 0 && zone?._id) {
+  if (allowCrossZoneFallback && drivers.length === 0 && zone?._id) {
     drivers = await findDriversForZone({
       zoneId: null,
+      serviceLocationId,
       coordinates,
       effectiveMaxDistance,
       limit,
       normalizedVehicleTypeIds,
       vehicleTypeKeys,
+      strictZoneOnly,
     });
 
     const fallbackBlockedDriverIds = await getDriverIdsBlockedByUpcomingScheduledRides(

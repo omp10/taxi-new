@@ -51,6 +51,8 @@ import {
   getAvailableSubscriptionPlans,
   getMySubscriptions,
   buySubscription,
+  getSetPrices,
+  getZones,
 } from '../controllers/userController.js';
 import {
   searchPoolingRoutes,
@@ -71,6 +73,8 @@ userRouter.get('/settings/:category', asyncHandler(getGeneralSettingsCategory));
 userRouter.get('/intercity-packages', asyncHandler(getIntercityPackageCatalog));
 userRouter.get('/goods-types', asyncHandler(getGoodsTypes));
 userRouter.get('/vehicle-types', asyncHandler(getPublicVehicleTypeCatalog));
+userRouter.get('/set-prices', asyncHandler(getSetPrices));
+userRouter.get('/zones', asyncHandler(getZones));
 userRouter.get('/rental-vehicles', asyncHandler(getPublicRentalVehicleCatalog));
 userRouter.get('/service-locations', asyncHandler(listPublicServiceLocations));
 userRouter.get('/service-stores', asyncHandler(listPublicServiceStores));

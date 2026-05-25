@@ -555,6 +555,71 @@ const getSetPriceRows = (response) => {
 
 const normalizeId = (value) => String(value?._id || value?.id || value || '').trim();
 
+const getZoneServiceLocationId = (zone) => normalizeId(
+  zone?.service_location_id?._id
+  || zone?.service_location_id?.id
+  || zone?.service_location_id
+  || zone?.service_location?._id
+  || zone?.service_location?.id
+  || zone?.service_location
+  || '',
+);
+
+const isZoneActive = (zone) => zone?.active !== false && Number(zone?.status ?? 1) !== 0 && String(zone?.status || '').toLowerCase() !== 'inactive';
+
+const toZonePoint = (point) => {
+  if (Array.isArray(point) && point.length >= 2) {
+    const [lng, lat] = point;
+    if (Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))) {
+      return { lat: Number(lat), lng: Number(lng) };
+    }
+  }
+
+  if (point && typeof point === 'object') {
+    const lat = Number(point.lat ?? point.latitude);
+    const lng = Number(point.lng ?? point.longitude ?? point.lon);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      return { lat, lng };
+    }
+  }
+
+  return null;
+};
+
+const normalizeZonePath = (zone) => {
+  const source = Array.isArray(zone?.coordinates?.[0]) && Array.isArray(zone?.coordinates?.[0]?.[0])
+    ? zone.coordinates[0]
+    : zone?.coordinates;
+
+  if (!Array.isArray(source)) {
+    return [];
+  }
+
+  return source.map(toZonePoint).filter(Boolean);
+};
+
+const isPointInPolygon = (point, polygon) => {
+  if (!point || polygon.length < 3) {
+    return false;
+  }
+
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].lng;
+    const yi = polygon[i].lat;
+    const xj = polygon[j].lng;
+    const yj = polygon[j].lat;
+    const intersects = ((yi > point.lat) !== (yj > point.lat))
+      && (point.lng < ((xj - xi) * (point.lat - yi)) / ((yj - yi) || Number.EPSILON) + xi);
+
+    if (intersects) {
+      inside = !inside;
+    }
+  }
+
+  return inside;
+};
+
 const toFiniteNumber = (value, fallback = 0) => {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
@@ -634,7 +699,16 @@ const findBestPricingRule = ({ rules, vehicleTypeId, serviceLocationId, transpor
   }
 
   const genericBoth = candidates.find((rule) => !getRuleServiceLocationId(rule));
-  return genericBoth || candidates[0];
+  if (genericBoth) {
+    return genericBoth;
+  }
+
+  // Never borrow another zone's location-scoped price for this ride.
+  if (normalizedServiceLocationId) {
+    return null;
+  }
+
+  return candidates[0] || null;
 };
 
 const calculateEstimatedFare = ({ vehicle, pricingRule, distanceMeters, durationMinutes }) => {
@@ -938,13 +1012,68 @@ const SelectVehicle = () => {
     () => (Array.isArray(routeState.stops) ? routeState.stops : []),
     [routeState.stops],
   );
-  const serviceLocationId = routeState.service_location_id || routeState.serviceLocationId || '';
+  const routeServiceLocationId = routeState.service_location_id || routeState.serviceLocationId || '';
+  const [resolvedServiceLocationId, setResolvedServiceLocationId] = useState(routeServiceLocationId);
+  const serviceLocationId = resolvedServiceLocationId || routeServiceLocationId || '';
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
   const pickupPosition = useMemo(() => toLatLng(pickupCoords), [pickupCoords]);
   const dropPosition = useMemo(() => toLatLng(dropCoords, null), [dropCoords]);
   const { isLoaded: isMapLoaded, loadError: mapLoadError } = useAppGoogleMapsLoader();
   const minScheduledAt = useMemo(() => getMinScheduledDateTime(), []);
   const maxScheduledAt = useMemo(() => getMaxScheduledDateTime(), []);
+
+  useEffect(() => {
+    setResolvedServiceLocationId(routeServiceLocationId);
+  }, [routeServiceLocationId]);
+
+  useEffect(() => {
+    let active = true;
+
+    const resolveServiceLocationFromPickup = async () => {
+      if (routeServiceLocationId) {
+        return;
+      }
+
+      if (!Array.isArray(pickupCoords) || pickupCoords.length !== 2) {
+        return;
+      }
+
+      try {
+        const response = await api.get('/users/zones');
+        if (!active) {
+          return;
+        }
+
+        const payload = unwrap(response);
+        const zones = payload?.results || payload?.zones || payload?.paginator?.data || (Array.isArray(payload) ? payload : []);
+        const pickupPoint = { lat: Number(pickupCoords[1]), lng: Number(pickupCoords[0]) };
+        const matchedZone = [...(Array.isArray(zones) ? zones : [])]
+          .filter((zone) => isZoneActive(zone))
+          .map((zone) => ({ zone, path: normalizeZonePath(zone) }))
+          .filter(({ path }) => isPointInPolygon(pickupPoint, path))
+          .sort((left, right) => {
+            const leftUpdatedAt = new Date(left.zone?.updatedAt || left.zone?.createdAt || 0).getTime();
+            const rightUpdatedAt = new Date(right.zone?.updatedAt || right.zone?.createdAt || 0).getTime();
+            return rightUpdatedAt - leftUpdatedAt;
+          })[0]?.zone;
+
+        const nextServiceLocationId = getZoneServiceLocationId(matchedZone);
+        if (nextServiceLocationId) {
+          setResolvedServiceLocationId(nextServiceLocationId);
+        }
+      } catch {
+        if (active) {
+          setResolvedServiceLocationId('');
+        }
+      }
+    };
+
+    resolveServiceLocationFromPickup();
+
+    return () => {
+      active = false;
+    };
+  }, [pickupCoords, routeServiceLocationId]);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
@@ -1017,7 +1146,7 @@ const SelectVehicle = () => {
       setIsLoadingPricingRules(true);
 
       try {
-        const response = await api.get('/admin/types/set-prices', {
+        const response = await api.get('/users/set-prices', {
           params: { scope: 'ride' },
         });
 
@@ -1484,7 +1613,7 @@ const SelectVehicle = () => {
                 vehicleIconType: vehicle.iconType,
                 lng: pickupCoords[0],
                 lat: pickupCoords[1],
-                service_location_id: routeState.service_location_id || routeState.serviceLocationId || '',
+                service_location_id: serviceLocationId,
                 transport_type: vehicle.transportType || routeState.transport_type || routeState.transportType || 'taxi',
               },
             });
@@ -1566,7 +1695,7 @@ const SelectVehicle = () => {
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [pickupCoords, routeState.serviceLocationId, routeState.service_location_id, routeState.transportType, routeState.transport_type, selected, vehicles]);
+  }, [pickupCoords, routeState.transportType, routeState.transport_type, selected, serviceLocationId, vehicles]);
 
   const openPicker = (inputRef) => {
     if (typeof inputRef.current?.showPicker === 'function') {
@@ -1606,7 +1735,7 @@ const SelectVehicle = () => {
         pickupCoords,
         dropCoords,
         stops,
-        service_location_id: routeState.service_location_id || routeState.serviceLocationId || '',
+        service_location_id: serviceLocationId,
         transport_type: resolvedTransportType,
         vehicle: selectedVehicle,
         vehicleTypeId: selectedVehicle.vehicleTypeId,

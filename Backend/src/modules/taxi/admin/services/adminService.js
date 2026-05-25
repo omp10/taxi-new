@@ -2282,6 +2282,8 @@ const serializeDriver = (driver) => ({
   referralCode: driver.referralCode || '',
   owner_id: driver.owner_id || null,
   service_location_id: driver.service_location_id || null,
+  zoneId: driver.zoneId?._id || driver.zoneId || null,
+  zone_name: driver.zoneId?.name || driver.zone_name || '',
   country: driver.country || null,
   profile_picture: driver.profile_picture || '',
   city: driver.city || '',
@@ -4874,6 +4876,24 @@ export const updateDriver = async (id, payload, currentAdmin = null) => {
         : null;
   }
 
+  const zoneValue = payload.zone_id ?? payload.zoneId ?? payload.zone;
+  if (zoneValue !== undefined) {
+    if (currentAdmin && zoneValue) {
+      await assertZoneAccess(currentAdmin, zoneValue);
+    }
+
+    if (zoneValue && mongoose.isValidObjectId(zoneValue)) {
+      const zone = await Zone.findById(zoneValue).select('_id service_location_id').lean();
+      if (!zone) {
+        throw new ApiError(404, 'Zone not found');
+      }
+      update.zoneId = toObjectId(zone._id);
+      update.service_location_id = zone.service_location_id ? toObjectId(zone.service_location_id) : null;
+    } else {
+      update.zoneId = null;
+    }
+  }
+
   if (payload.country !== undefined) {
     update.country = payload.country || null;
   }
@@ -4927,7 +4947,9 @@ export const deleteDriver = async (id) => {
 };
 
 export const getDriverById = async (id, currentAdmin = null) => {
-  const driver = await Driver.findById(id).lean();
+  const driver = await Driver.findById(id)
+    .populate('zoneId', 'name service_location_id')
+    .lean();
   if (!driver) {
     throw new ApiError(404, 'Driver not found');
   }
@@ -6184,7 +6206,17 @@ export const createSetPrice = async (payload, currentAdmin = null) => {
 
   const zone_id = toObjectId(payload.zone_id?._id || payload.zone_id?.id || payload.zone_id);
   const vehicle_type = toObjectId(payload.vehicle_type?._id || payload.vehicle_type?.id || payload.vehicle_type || payload.type_id);
-  const service_location_id = toObjectId(payload.service_location_id?._id || payload.service_location_id?.id || payload.service_location_id || payload.zone?._id || payload.zone?.service_location_id);
+  const payloadServiceLocationId =
+    payload.service_location_id?._id
+    || payload.service_location_id?.id
+    || payload.service_location_id
+    || payload.zone?.service_location?._id
+    || payload.zone?.service_location?.id
+    || payload.zone?.service_location_id;
+  const zone = zone_id ? await Zone.findById(zone_id).select('_id service_location_id').lean() : null;
+  const service_location_id = zone?.service_location_id
+    ? toObjectId(zone.service_location_id)
+    : toObjectId(payloadServiceLocationId);
 
   const setPrice = await SetPrice.create({
     zone_id,
@@ -6278,12 +6310,23 @@ export const updateSetPrice = async (id, payload, currentAdmin = null) => {
     'order_number', 'bill_status', 'status'
   ];
 
-  fields.forEach(field => {
+  for (const field of fields) {
     let value = payload[field];
 
     if (field === 'zone_id') value = payload.zone_id?._id || payload.zone_id?.id || payload.zone_id;
     if (field === 'vehicle_type') value = payload.vehicle_type?._id || payload.vehicle_type?.id || payload.vehicle_type || payload.type_id;
-    if (field === 'service_location_id') value = payload.service_location_id?._id || payload.service_location_id?.id || payload.service_location_id || payload.zone?._id || payload.zone?.service_location_id;
+    if (field === 'service_location_id') {
+      const payloadServiceLocationId =
+        payload.service_location_id?._id
+        || payload.service_location_id?.id
+        || payload.service_location_id
+        || payload.zone?.service_location?._id
+        || payload.zone?.service_location?.id
+        || payload.zone?.service_location_id;
+      const zoneValue = payload.zone_id?._id || payload.zone_id?.id || payload.zone_id || setPrice.zone_id;
+      const zone = zoneValue ? await Zone.findById(zoneValue).select('_id service_location_id').lean() : null;
+      value = zone?.service_location_id || payloadServiceLocationId;
+    }
     if (field === 'package_type_id') value = payload.package_type_id?._id || payload.package_type_id?.id || payload.package_type_id;
     if (field === 'transport_type' && value !== undefined) value = normalizeVehicleTransportType(value);
 
@@ -6317,7 +6360,7 @@ export const updateSetPrice = async (id, payload, currentAdmin = null) => {
         setPrice[field] = value;
       }
     }
-  });
+  }
 
   if (payload.package_vehicle_prices !== undefined) {
     setPrice.package_vehicle_prices = Array.isArray(payload.package_vehicle_prices)

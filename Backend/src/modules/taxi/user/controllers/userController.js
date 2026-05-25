@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import mongoose from 'mongoose';
 import { Env, StandardCheckoutClient, StandardCheckoutPayRequest, PrefillUserLoginDetails } from '@phonepe-pg/pg-sdk-node';
 import { ApiError } from '../../../../utils/ApiError.js';
+import { asyncHandler } from '../../../../utils/asyncHandler.js';
 import { User } from '../models/User.js';
 import { UserWallet } from '../models/UserWallet.js';
 import { AdminBusinessSetting } from '../../admin/models/AdminBusinessSetting.js';
@@ -32,7 +33,7 @@ import { emitToDriver } from '../../services/dispatchService.js';
 import { sendPushNotificationToEntities } from '../../services/pushNotificationService.js';
 import { buildRentalTrackingSnapshot, updateUserRentalTracking } from '../../services/rentalTrackingService.js';
 import { listDriverServiceLocations } from '../../driver/services/serviceLocationService.js';
-import { listServiceStores } from '../../admin/services/adminService.js';
+import { listServiceStores, listSetPrices, listZones } from '../../admin/services/adminService.js';
 import {
   getUserSubscriptionSummary,
   listCustomerSubscriptionPlans,
@@ -4182,3 +4183,14 @@ export const listMyBusBookings = async (req, res) => {
     },
   });
 };
+
+export const getSetPrices = asyncHandler(async (req, res) => {
+  const data = await listSetPrices(req.query || {}, null);
+  res.status(200).json({ success: true, ...data });
+});
+
+export const getZones = asyncHandler(async (req, res) => {
+  const results = await listZones(null);
+  res.status(200).json({ success: true, results });
+});
+

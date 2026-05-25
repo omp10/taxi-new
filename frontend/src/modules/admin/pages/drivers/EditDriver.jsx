@@ -81,6 +81,7 @@ const EditDriver = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [locations, setLocations] = useState([]);
+  const [zones, setZones] = useState([]);
   const [countries, setCountries] = useState([]);
   const { transportTypes } = useTaxiTransportTypes();
   const [vehicleTypes, setVehicleTypes] = useState([]);
@@ -90,6 +91,7 @@ const EditDriver = () => {
 
   const [formData, setFormData] = useState({
     area: '',
+    zoneId: '',
     country: '',
     name: '',
     mobile: '',
@@ -126,6 +128,15 @@ const EditDriver = () => {
           setLocations(Array.isArray(results) ? results : []);
         }
 
+        const zoneRes = await fetch(globalThis.__LEGACY_BACKEND_ORIGIN__ + '/api/v1/admin/zones', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const zoneData = await zoneRes.json();
+        if (zoneData.success || zoneData.data) {
+          const results = zoneData.data?.results || zoneData.data || zoneData.results || [];
+          setZones(Array.isArray(results) ? results : []);
+        }
+
         const countRes = await fetch(globalThis.__LEGACY_BACKEND_ORIGIN__ + '/api/v1/countries', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -160,6 +171,7 @@ const EditDriver = () => {
 
           setFormData({
             area: d.service_location_id?._id || d.service_location_id || d.service_location?._id || d.service_location || onboardingVehicle.locationId || '',
+            zoneId: d.zoneId?._id || d.zoneId || d.zone?._id || d.zone || '',
             country: d.country?._id || d.country || d.service_location?.country?._id || d.service_location?.country || '',
             name: d.name || d.user_id?.name || onboardingPersonal.fullName || '',
             mobile: d.phone || d.mobile || d.user_id?.mobile || '',
@@ -257,7 +269,20 @@ const EditDriver = () => {
         setFormData(prev => ({ 
           ...prev, 
           [name]: value,
+          zoneId: '',
           country: selectedLoc.country?._id || selectedLoc.country || prev.country
+        }));
+        return;
+      }
+    }
+
+    if (name === 'zoneId') {
+      const selectedZone = zones.find((zone) => String(zone._id || zone.id) === String(value));
+      if (selectedZone) {
+        setFormData((prev) => ({
+          ...prev,
+          zoneId: value,
+          area: selectedZone.service_location_id?._id || selectedZone.service_location_id || prev.area,
         }));
         return;
       }
@@ -319,6 +344,7 @@ const EditDriver = () => {
         car_type: formData.vehicleType,
         vehicle_type_id: formData.vehicleType,
         vehicle_type: selectedVehicleTypeLabel,
+        zone_id: formData.zoneId || null,
         service_location_id: formData.area,
         country: formData.country,
         onboarding: {
@@ -368,6 +394,11 @@ const EditDriver = () => {
   // --- Shared input class ---
   const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors";
   const labelClass = "block text-xs font-semibold text-gray-500 mb-1.5";
+  const visibleZones = zones.filter((zone) => {
+    if (!formData.area) return true;
+    const zoneServiceLocationId = zone?.service_location_id?._id || zone?.service_location_id || '';
+    return String(zoneServiceLocationId) === String(formData.area);
+  });
 
   if (isFetching) {
     return (
@@ -423,18 +454,19 @@ const EditDriver = () => {
               <div>
                 <label className={labelClass}>
                   <MapPin size={12} className="inline mr-1 text-gray-400" />
-                  Select Area *
+                  Assigned Zone
                 </label>
-                <select 
-                  name="area"
-                  required
-                  value={formData.area}
+                <select
+                  name="zoneId"
+                  value={formData.zoneId}
                   onChange={handleChange}
                   className={inputClass}
                 >
-                  <option value="">Select Area</option>
-                  {locations.map(loc => (
-                    <option key={loc._id} value={loc._id}>{loc.service_location_name}</option>
+                  <option value="">Select Zone</option>
+                  {visibleZones.map((zone) => (
+                    <option key={zone._id || zone.id} value={zone._id || zone.id}>
+                      {zone.name || zone.zone_name || 'Unnamed Zone'}
+                    </option>
                   ))}
                 </select>
               </div>
