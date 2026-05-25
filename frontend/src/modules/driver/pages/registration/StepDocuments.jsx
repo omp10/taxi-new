@@ -281,6 +281,7 @@ const StepDocuments = () => {
     ...(location.state || {}),
   };
   const isHandlingHistoryNavigationRef = useRef(false);
+  const isMetaInitializedRef = useRef(false);
   const normalizedRole = normalizeSignupRole(session.role);
   const phone = String(session.phone || '').replace(/\D/g, '').slice(-10);
   const registrationId = String(session.registrationId || '').trim();
@@ -345,10 +346,10 @@ const StepDocuments = () => {
   );
 
   useEffect(() => {
-    setDocumentMeta((current) => ({
-      ...buildTemplateMetaState(documentTemplates, docs),
-      ...current,
-    }));
+    if (documentTemplates.length > 0 && !isMetaInitializedRef.current) {
+      setDocumentMeta(buildTemplateMetaState(documentTemplates, docs));
+      isMetaInitializedRef.current = true;
+    }
   }, [documentTemplates, docs]);
 
   useEffect(() => {
@@ -905,7 +906,7 @@ const StepDocuments = () => {
                                 <input
                                     type="text"
                                     value={documentMeta[template.id]?.identifyNumber || ''}
-                                    onChange={(event) => handleMetaChange(template.id, 'identifyNumber', event.target.value.trim().toUpperCase())}
+                                    onChange={(event) => handleMetaChange(template.id, 'identifyNumber', event.target.value.toUpperCase())}
                                     placeholder={`Enter ${formatMetaLabel(template.identify_number_key) || 'Number'}`}
                                     className="w-full border-none bg-transparent p-0 text-lg font-black text-slate-900 outline-none focus:ring-0 placeholder:text-slate-200"
                                 />
@@ -915,7 +916,20 @@ const StepDocuments = () => {
                     ) : null}
 
                     {template.has_expiry_date ? (
-                      <div className="group rounded-[1.8rem] border-2 transition-all p-4 border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white focus-within:shadow-xl focus-within:shadow-slate-900/5">
+                      <div 
+                        onClick={(e) => {
+                          const input = e.currentTarget.querySelector('input[type="date"]');
+                          if (input) {
+                            try {
+                              input.showPicker();
+                            } catch {
+                              input.focus();
+                              input.click();
+                            }
+                          }
+                        }}
+                        className="group cursor-pointer rounded-[1.8rem] border-2 transition-all p-4 border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white focus-within:shadow-xl focus-within:shadow-slate-900/5"
+                      >
                         <div className="flex items-center gap-4">
                             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm group-focus-within:bg-slate-900 group-focus-within:text-white transition-all">
                                 <AlertCircle size={20} strokeWidth={2.5} />
