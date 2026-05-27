@@ -1,61 +1,67 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-const ActionCard = ({ title, description, image, surfaceClass, titleClass, buttonClass, buttonText, path }) => {
+const ActionCard = ({ title, description, image, surfaceClass, glowClass, buttonBgClass, path }) => {
   const navigate = useNavigate();
 
   return (
-    <div
-      className={`group relative flex min-h-[176px] flex-1 flex-col overflow-hidden rounded-2xl border border-white/80 p-4 shadow-[0_14px_34px_rgba(2,6,23,0.10)] transition-transform duration-200 hover:-translate-y-0.5 focus-within:-translate-y-0.5 ${surfaceClass}`}
+    <motion.div
+      whileHover={{ y: -4, scale: 1.01 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => navigate(path)}
+      className={`group relative flex min-h-[180px] flex-1 flex-col overflow-hidden rounded-[28px] border border-slate-200/40 bg-white/70 p-5 shadow-[0_16px_36px_rgba(15,23,42,0.05)] hover:shadow-[0_20px_40px_rgba(15,23,42,0.08)] transition-shadow duration-300 cursor-pointer ${surfaceClass}`}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(120px_90px_at_12%_20%,rgba(255,255,255,0.85),transparent_65%)]" aria-hidden="true" />
+      {/* Dynamic Hover Glow */}
+      <div 
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" 
+        style={{
+          background: `radial-gradient(circle at 75% 75%, rgba(${glowClass}, 0.12) 0%, transparent 65%)`
+        }}
+      />
+      
+      {/* Corner visual gradient accent */}
+      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-white/40 to-transparent blur-md pointer-events-none" />
 
-        <div className="relative z-10 flex flex-1 flex-col">
-        <div className="max-w-[160px]">
-          <h3 className={`text-[18px] font-black leading-none tracking-tight ${titleClass}`}>{title}</h3>
-          <p className="mt-2 text-[12px] font-semibold leading-snug text-slate-600">{description}</p>
+      <div className="relative z-10 flex flex-1 flex-col justify-between">
+        <div className="max-w-[130px] space-y-1">
+          <h3 className="text-[20px] font-bold tracking-tight text-slate-900 leading-tight">
+            {title}
+          </h3>
+          <p className="text-[11px] font-medium text-slate-500 leading-normal">
+            {description}
+          </p>
         </div>
 
-        <div className="mt-auto pt-3">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(path);
-            }}
-            className="relative inline-flex items-center rounded-full px-3.5 py-2 text-[11px] font-black whitespace-nowrap text-white shadow-[0_12px_26px_rgba(2,6,23,0.16)] backdrop-blur-md bg-white/10 border border-white/35 overflow-hidden transition-all active:scale-95"
-          >
-            <span aria-hidden="true" className={`absolute inset-0 ${buttonClass} opacity-40`} />
-            <span
-              aria-hidden="true"
-              className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.45),rgba(255,255,255,0))] opacity-70"
-            />
-            <span className="relative z-10 inline-flex items-center gap-2">
-              {buttonText}
-              <ArrowRight size={13} strokeWidth={3} className="translate-y-[0.5px]" />
-            </span>
-          </button>
+        <div className="mt-4 flex items-center">
+          <div className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[10px] font-bold text-white shadow-md transition-all duration-300 group-hover:shadow-lg ${buttonBgClass}`}>
+            <span>Go</span>
+            <ArrowRight size={11} strokeWidth={3} className="transform group-hover:translate-x-0.5 transition-transform duration-200" />
+          </div>
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-12 right-2 w-[82px] opacity-95 transition-transform duration-300 group-hover:scale-[1.03]">
-        <img
-          src={image}
-          alt=""
-          aria-hidden="true"
-          className="w-full h-auto object-contain drop-shadow-[0_22px_38px_rgba(2,6,23,0.18)]"
-        />
+      {/* Floating Spotlight Image */}
+      <div className="absolute -bottom-2 -right-2 w-28 h-28 pointer-events-none select-none">
+        <div className="relative w-full h-full">
+          <div className="absolute inset-2 rounded-full blur-xl opacity-20 group-hover:opacity-35 transition-opacity duration-300 bg-white" />
+          <img
+            src={image}
+            alt=""
+            className="w-full h-full object-contain drop-shadow-[0_16px_24px_rgba(15,23,42,0.12)] transform group-hover:scale-110 group-hover:-translate-y-1 group-hover:-translate-x-1 transition-transform duration-300"
+          />
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 const ActionsSection = () => {
   return (
     <div className="px-5">
-      <div className="mb-3 ml-1">
-        <h2 className="text-[19px] font-black text-gray-900 tracking-tight">What do you need today?</h2>
+      <div className="mb-3.5 ml-1">
+        <h2 className="text-[20px] font-extrabold text-slate-900 tracking-tight">What do you need today?</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -63,10 +69,9 @@ const ActionsSection = () => {
           title="Ride"
           description="Bike, auto, and cab rides."
           image="/1_Bike.png"
-          surfaceClass="bg-gradient-to-br from-orange-50/80 via-white/80 to-orange-100/60"
-          titleClass="text-slate-900"
-          buttonClass="bg-orange-500"
-          buttonText="Book Now"
+          surfaceClass="bg-gradient-to-br from-orange-50/60 via-white/80 to-orange-100/40"
+          glowClass="249,115,22"
+          buttonBgClass="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
           path="/ride/select-location"
         />
 
@@ -74,10 +79,9 @@ const ActionsSection = () => {
           title="Delivery"
           description="Send parcels across the city."
           image="/5_Parcel.png"
-          surfaceClass="bg-gradient-to-br from-indigo-50/80 via-white/80 to-indigo-100/60"
-          titleClass="text-slate-900"
-          buttonClass="bg-indigo-500"
-          buttonText="Send Now"
+          surfaceClass="bg-gradient-to-br from-indigo-50/60 via-white/80 to-indigo-100/40"
+          glowClass="99,102,241"
+          buttonBgClass="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600"
           path="/parcel/type"
         />
       </div>

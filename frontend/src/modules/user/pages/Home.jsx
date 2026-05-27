@@ -630,56 +630,167 @@ const Home = () => {
         )}
         
         {/* Active Rental Dashboard - Only visible during active rentals */}
-        {serviceType === 'rental' && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mx-5 overflow-hidden rounded-[32px] border border-white/60 bg-white/50 p-5 shadow-[0_20px_40px_rgba(0,0,0,0.06)] backdrop-blur-2xl relative"
-          >
-            <div className="relative z-10 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="h-20 w-24 flex items-center justify-center shrink-0">
-                  <img src={currentRideIcon} alt="" className="h-full w-full object-contain scale-110" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    {rideStage === 'end_requested' ? 'Review Pending' : 'Live Rental'}
-                  </p>
-                  <h2 className="mt-1 text-[24px] font-semibold tracking-tight text-slate-900 leading-none">
-                    {rentalTimerLabel}
-                  </h2>
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <div className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-                    <p className="text-[12px] font-semibold text-slate-900">
-                      {currentRide.vehicle?.name || 'Assigned Vehicle'}
-                    </p>
+        {serviceType === 'rental' && (() => {
+          const rentalH = Math.floor(rentalElapsedSeconds / 3600);
+          const rentalM = Math.floor((rentalElapsedSeconds % 3600) / 60);
+          const rentalS = rentalElapsedSeconds % 60;
+          
+          const includedHours = Math.max(
+            Number(currentRide?.includedHours || 0),
+            Number(currentRide?.selectedPackage?.durationHours || 0),
+            Number(currentRide?.requestedHours || 0) > 0 && Number(currentRide?.extraHourRate || 0) <= 0 ? Number(currentRide.requestedHours) : 0,
+            1,
+          );
+          
+          const packageName = currentRide?.selectedPackage?.name || `${includedHours} hrs Package`;
+          const isExtraTime = (rentalElapsedSeconds / 3600) > includedHours;
+          const progressPercentage = Math.min(100, ((rentalElapsedSeconds / 3600) / includedHours) * 100);
+
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 120 }}
+              className="mx-5 overflow-hidden rounded-[32px] border border-white/80 bg-white/70 p-5 shadow-[0_24px_48px_rgba(15,23,42,0.08)] backdrop-blur-2xl relative"
+            >
+              {/* Radial background glows */}
+              <div className="absolute -right-12 -bottom-12 h-36 w-36 rounded-full bg-orange-200/30 blur-3xl pointer-events-none" />
+              <div className="absolute -left-12 -top-12 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl pointer-events-none" />
+
+              <div className="relative z-10 space-y-4">
+                {/* Header Row */}
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-orange-600">
+                      {rideStage === 'end_requested' ? 'End Pending' : 'Live Rental'}
+                    </span>
+                  </div>
+                  <div className="rounded-full bg-slate-100/80 px-2.5 py-0.5 border border-slate-200/40 text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
+                    {packageName}
                   </div>
                 </div>
-              </div>
-              
-              <div className="text-right space-y-2.5">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-600">Current Fare</p>
-                  <p className="text-[18px] font-semibold text-slate-900 tracking-tight">Rs {rentalCurrentCharge.toFixed(0)}</p>
+
+                {/* Main Content Layout */}
+                <div className="grid grid-cols-12 gap-3 items-center">
+                  {/* Left Side: Vehicle Pedestal */}
+                  <div className="col-span-5 flex flex-col items-center">
+                    <motion.div 
+                      animate={{ y: [0, -4, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                      className="relative h-20 w-full rounded-2xl bg-gradient-to-b from-slate-50 to-slate-100/80 border border-slate-200/40 flex items-center justify-center p-2 shadow-inner overflow-hidden group"
+                    >
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.05)_0%,transparent_70%)]" />
+                      <img 
+                        src={currentRideIcon} 
+                        alt="" 
+                        className="h-full w-full object-contain scale-110 relative z-10 transition-transform duration-300 group-hover:scale-125" 
+                      />
+                    </motion.div>
+                    <p className="mt-2 text-center text-[11px] font-bold text-slate-800 truncate w-full">
+                      {currentRide.vehicle?.name || 'Honda Amaze'}
+                    </p>
+                  </div>
+
+                  {/* Right Side: Chronometer and Visual progress */}
+                  <div className="col-span-7 pl-2 flex flex-col justify-center space-y-2">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400">Duration Elapsed</p>
+                      
+                      {/* Premium stopwatch display */}
+                      <div className="flex items-center gap-1">
+                        <div className="flex flex-col items-center">
+                          <span className="font-mono text-2xl font-bold tracking-tight text-slate-900 leading-none">
+                            {String(rentalH).padStart(2, '0')}
+                          </span>
+                          <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Hrs</span>
+                        </div>
+                        <span className="text-xl font-medium text-slate-300 -translate-y-1 animate-pulse">:</span>
+                        <div className="flex flex-col items-center">
+                          <span className="font-mono text-2xl font-bold tracking-tight text-slate-900 leading-none">
+                            {String(rentalM).padStart(2, '0')}
+                          </span>
+                          <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Min</span>
+                        </div>
+                        <span className="text-xl font-medium text-slate-300 -translate-y-1 animate-pulse">:</span>
+                        <div className="flex flex-col items-center">
+                          <span className="font-mono text-2xl font-bold tracking-tight text-rose-500 leading-none">
+                            {String(rentalS).padStart(2, '0')}
+                          </span>
+                          <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Sec</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress slider showing package usage */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[9px] font-medium text-slate-400">
+                        <span>Limit: {includedHours} hrs</span>
+                        <span className={isExtraTime ? "text-rose-500 font-semibold" : "text-emerald-600 font-semibold"}>
+                          {isExtraTime ? 'Extra Hours Incurred' : `${progressPercentage.toFixed(0)}% consumed`}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/30">
+                        <motion.div 
+                          className={`h-full rounded-full ${isExtraTime ? 'bg-gradient-to-r from-orange-500 to-rose-500' : 'bg-gradient-to-r from-emerald-400 to-teal-500'}`}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${progressPercentage}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEndRide();
-                  }}
-                  disabled={endingRide || rideStage === 'end_requested'}
-                  className="rounded-xl bg-slate-900 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-white shadow-[0_8px_16px_rgba(15,23,42,0.2)] transition-all active:scale-95 disabled:opacity-50 disabled:grayscale"
-                >
-                  {endingRide ? 'Ending...' : rideStage === 'end_requested' ? 'Pending' : 'End Ride'}
-                </button>
+
+                {/* Footer Section: Fare and Action */}
+                <div className="mt-2 pt-3 border-t border-slate-100 flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400">Live Cost</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-xs font-semibold text-emerald-600">₹</span>
+                      <span className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+                        {rentalCurrentCharge.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                      </span>
+                    </div>
+                    {isExtraTime && (
+                      <p className="text-[8px] font-medium text-rose-500">Includes extra hour rates</p>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEndRide();
+                    }}
+                    disabled={endingRide || rideStage === 'end_requested'}
+                    className="relative group overflow-hidden rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 px-5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-[0_8px_20px_rgba(244,63,94,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:grayscale flex items-center gap-2"
+                  >
+                    {endingRide ? (
+                      <>
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <span>Ending...</span>
+                      </>
+                    ) : rideStage === 'end_requested' ? (
+                      <span>Pending</span>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white group-hover:animate-pulse">
+                          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                          <line x1="12" y1="2" x2="12" y2="12"></line>
+                        </svg>
+                        <span>End Ride</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-            
-            <div className="absolute -right-6 -bottom-6 h-24 w-24 rounded-full bg-orange-100/40 blur-3xl pointer-events-none" />
-            <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-emerald-100/40 blur-3xl pointer-events-none" />
-          </motion.div>
-        )}
+            </motion.div>
+          );
+        })()}
 
         <ServiceGrid />
         {showDeferredSections ? (
