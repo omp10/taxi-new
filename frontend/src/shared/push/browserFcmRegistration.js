@@ -56,7 +56,7 @@ const getPushPlatform = () => {
     const ua = String(navigator.userAgent || '');
     // When inside a mobile WebView or mobile browser, the token should be
     // registered as 'mobile' so the backend stores it in fcmTokenMobile.
-    if (/Android|iPhone|iPad|iPod/i.test(ua) && window.__isRydon24WebView) {
+    if (/Android|iPhone|iPad|iPod/i.test(ua) && isNativeContainer()) {
       return 'mobile';
     }
   }
@@ -155,13 +155,17 @@ const createServiceWorkerUrl = () => {
 
 const saveTokenForRole = async (role, token) => {
   const platform = getPushPlatform();
+  const saveFn = role === 'driver' ? saveDriverFcmToken : (t, p) => userAuthService.saveFcmToken(t, p);
 
-  if (role === 'driver') {
-    await saveDriverFcmToken(token, platform);
-    return;
+  // Save to the primary platform field.
+  await saveFn(token, platform);
+
+  // When inside a WebView, the primary platform is 'mobile' (fcmTokenMobile).
+  // Also save to 'web' (fcmTokenWeb) so both fields have a valid token and
+  // push notifications can be delivered through either channel.
+  if (platform === 'mobile') {
+    await saveFn(token, 'web').catch(() => {});
   }
-
-  await userAuthService.saveFcmToken(token, platform);
 };
 
 const shouldSkipRegistration = (role, token, platform) => {
@@ -174,9 +178,12 @@ const registerBrowserFcmToken = async ({ interactive = false } = {}) => {
     return { ok: false, reason: 'browser-unsupported' };
   }
 
-  if (isNativeContainer()) {
-    return { ok: false, reason: 'native-container-use-native-fcm' };
-  }
+  // NOTE: We intentionally do NOT bail when isNativeContainer() is true.
+  // The Flutter WebView APK does not reliably send the native FCM token via
+  // the JS bridge or a direct API call, so we let the browser FCM SDK run
+  // inside the WebView as well. getPushPlatform() returns 'mobile' when in
+  // a WebView, so the token is saved to fcmTokenMobile. If Flutter later
+  // sends a native token through the bridge, it will overwrite this value.
 
   if (!hasFirebaseConfig() || !VAPID_KEY) {
     return { ok: false, reason: 'firebase-web-config-missing' };
