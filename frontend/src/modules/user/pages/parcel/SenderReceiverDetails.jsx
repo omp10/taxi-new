@@ -409,7 +409,7 @@ const MapPickerSheet = ({ open, title, confirmLabel, value, initialCoords, onClo
       return undefined;
     }
 
-    if (!isLoaded || !window.google?.maps?.places?.AutocompleteService || trimmedQuery.length < 3) {
+    if (trimmedQuery.length < 1) {
       setSearchSuggestions([]);
       setIsFetchingSuggestions(false);
       return undefined;
@@ -425,43 +425,73 @@ const MapPickerSheet = ({ open, title, confirmLabel, value, initialCoords, onClo
 
     let active = true;
     suggestionTimerRef.current = setTimeout(() => {
-      if (!autocompleteServiceRef.current) {
-        autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
-      }
+      // 1. Get local preset matches matching the query
+      const localMatches = Object.keys(LOCATION_COORDS)
+        .filter((name) => name.toLowerCase().includes(trimmedQuery.toLowerCase()))
+        .slice(0, 5)
+        .map((name) => ({
+          id: name,
+          label: name,
+          secondaryText: 'Indore, Madhya Pradesh',
+          description: name + ', Indore, Madhya Pradesh',
+          coords: LOCATION_COORDS[name],
+          placeId: '',
+        }));
 
-      if (!autocompleteSessionTokenRef.current && window.google?.maps?.places?.AutocompleteSessionToken) {
-        autocompleteSessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
-      }
-
-      setIsFetchingSuggestions(true);
-      const request = {
-        input: trimmedQuery,
-        componentRestrictions: { country: 'in' },
-        sessionToken: autocompleteSessionTokenRef.current || undefined,
-        location: new window.google.maps.LatLng(center.lat, center.lng),
-        radius: 10000,
-      };
-
-      autocompleteServiceRef.current.getPlacePredictions(request, (predictions, status) => {
-        if (!active) {
-          return;
+      // 2. Fetch Google predictions if user has typed 3+ characters
+      if (isLoaded && window.google?.maps?.places?.AutocompleteService && trimmedQuery.length >= 3) {
+        if (!autocompleteServiceRef.current) {
+          autocompleteServiceRef.current = new window.google.maps.places.AutocompleteService();
         }
 
-        const normalizedSuggestions =
-          status === 'OK' && Array.isArray(predictions)
-            ? predictions.slice(0, 5).map((prediction) => ({
-                id: prediction.place_id || prediction.description,
-                label: prediction.structured_formatting?.main_text || prediction.description,
-                secondaryText: prediction.structured_formatting?.secondary_text || '',
-                description: prediction.description || '',
-                placeId: prediction.place_id || '',
-              }))
-            : [];
+        if (!autocompleteSessionTokenRef.current && window.google?.maps?.places?.AutocompleteSessionToken) {
+          autocompleteSessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+        }
 
-        suggestionCacheRef.current.set(cacheKey, normalizedSuggestions);
-        setSearchSuggestions(normalizedSuggestions);
+        setIsFetchingSuggestions(true);
+        const request = {
+          input: trimmedQuery,
+          componentRestrictions: { country: 'in' },
+          sessionToken: autocompleteSessionTokenRef.current || undefined,
+          location: new window.google.maps.LatLng(center.lat, center.lng),
+          radius: 10000,
+        };
+
+        autocompleteServiceRef.current.getPlacePredictions(request, (predictions, status) => {
+          if (!active) {
+            return;
+          }
+
+          const googleSuggestions =
+            status === 'OK' && Array.isArray(predictions)
+              ? predictions.slice(0, 5).map((prediction) => ({
+                  id: prediction.place_id || prediction.description,
+                  label: prediction.structured_formatting?.main_text || prediction.description,
+                  secondaryText: prediction.structured_formatting?.secondary_text || '',
+                  description: prediction.description || '',
+                  placeId: prediction.place_id || '',
+                }))
+              : [];
+
+          // Merge presets and Google suggestions, then deduplicate
+          const merged = [...localMatches, ...googleSuggestions];
+          const seen = new Set();
+          const normalizedSuggestions = merged.filter((item) => {
+            const key = item.label.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+
+          suggestionCacheRef.current.set(cacheKey, normalizedSuggestions);
+          setSearchSuggestions(normalizedSuggestions);
+          setIsFetchingSuggestions(false);
+        });
+      } else {
+        // Under 3 characters or Places API not ready: only show local presets matches
+        setSearchSuggestions(localMatches);
         setIsFetchingSuggestions(false);
-      });
+      }
     }, 350);
 
     return () => {
@@ -547,19 +577,29 @@ const MapPickerSheet = ({ open, title, confirmLabel, value, initialCoords, onClo
     });
 
   const applySearchSuggestion = async (suggestion) => {
-    if (!suggestion?.placeId) {
+    let targetCoords = null;
+    let resolvedAddress = suggestion.description || suggestion.label;
+
+    if (Array.isArray(suggestion.coords) && suggestion.coords.length === 2) {
+      // Direct local coordinate match
+      const [lng, lat] = suggestion.coords;
+      targetCoords = { lat, lng };
+    } else if (suggestion.placeId) {
+      // Autocomplete Google places resolve coordinates
+      const resolved = await resolveCoordsFromPlaceId(suggestion.placeId);
+      if (resolved) {
+        targetCoords = { lat: resolved.lat, lng: resolved.lng };
+        resolvedAddress = resolved.address || resolvedAddress;
+      }
+    }
+
+    if (!targetCoords) {
       return;
     }
 
-    const nextCenter = await resolveCoordsFromPlaceId(suggestion.placeId);
-    if (!nextCenter) {
-      return;
-    }
-
-    const resolvedAddress = nextCenter.address || suggestion.description || suggestion.label;
     ignoreGeocodingRef.current = true;
     ignoreAutocompleteRef.current = true;
-    setCenter({ lat: nextCenter.lat, lng: nextCenter.lng });
+    setCenter(targetCoords);
     setSearchQuery(resolvedAddress);
     setSearchSuggestions([]);
     lastResolvedAddressRef.current = resolvedAddress;
@@ -569,7 +609,7 @@ const MapPickerSheet = ({ open, title, confirmLabel, value, initialCoords, onClo
     }
 
     if (mapRef.current) {
-      mapRef.current.panTo({ lat: nextCenter.lat, lng: nextCenter.lng });
+      mapRef.current.panTo(targetCoords);
       mapRef.current.setZoom(17);
     }
   };
