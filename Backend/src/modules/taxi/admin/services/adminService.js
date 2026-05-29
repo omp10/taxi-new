@@ -5571,186 +5571,228 @@ const toAdminIntercityTripRow = (ride) => {
   };
 };
 
+const clampAdminRideListPageSize = (value, fallback = 10) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return Math.min(parsed, 100);
+};
+
+const buildRideStatusFilter = (tab = 'all', variant = 'ride_requests') => {
+  const normalizedTab = String(tab || 'all').trim().toLowerCase();
+
+  if (variant === 'ongoing_rides') {
+    if (normalizedTab === 'accepted') {
+      return {
+        $or: [
+          { status: RIDE_STATUS.ACCEPTED },
+          { liveStatus: { $in: [RIDE_LIVE_STATUS.ACCEPTED, RIDE_LIVE_STATUS.ARRIVING] } },
+        ],
+      };
+    }
+
+    if (normalizedTab === 'ongoing') {
+      return {
+        $or: [
+          { status: RIDE_STATUS.ONGOING },
+          { liveStatus: RIDE_LIVE_STATUS.STARTED },
+        ],
+      };
+    }
+
+    if (normalizedTab === 'upcoming') {
+      return {
+        status: RIDE_STATUS.SEARCHING,
+      };
+    }
+
+    return {};
+  }
+
+  if (normalizedTab === 'completed') {
+    return { status: RIDE_STATUS.COMPLETED };
+  }
+
+  if (normalizedTab === 'cancelled') {
+    return { status: RIDE_STATUS.CANCELLED };
+  }
+
+  if (normalizedTab === 'upcoming') {
+    return { status: RIDE_STATUS.SEARCHING };
+  }
+
+  if (normalizedTab === 'on trip' || normalizedTab === 'on_trip' || normalizedTab === 'ongoing') {
+    return {
+      $or: [
+        { status: { $in: [RIDE_STATUS.ACCEPTED, RIDE_STATUS.ONGOING] } },
+        { liveStatus: { $in: [RIDE_LIVE_STATUS.ACCEPTED, RIDE_LIVE_STATUS.ARRIVING, RIDE_LIVE_STATUS.STARTED] } },
+      ],
+    };
+  }
+
+  return {};
+};
+
+const buildAdminRideSearchClauses = async (
+  search = '',
+  { includeParcel = false, includeIntercity = false } = {},
+) => {
+  const normalizedSearch = String(search || '').trim();
+  if (!normalizedSearch) {
+    return [];
+  }
+
+  const regex = new RegExp(escapeRegex(normalizedSearch), 'i');
+  const [matchedUsers, matchedDrivers] = await Promise.all([
+    User.find({
+      $or: [{ name: regex }, { phone: regex }],
+    })
+      .select('_id')
+      .limit(100)
+      .lean(),
+    Driver.find({
+      $or: [{ name: regex }, { phone: regex }, { vehicleType: regex }, { vehicleNumber: regex }],
+    })
+      .select('_id')
+      .limit(100)
+      .lean(),
+  ]);
+
+  const clauses = [
+    { pickupAddress: regex },
+    { dropAddress: regex },
+    { vehicleIconType: regex },
+  ];
+
+  if (/^[a-f0-9]{24}$/i.test(normalizedSearch)) {
+    clauses.push({ _id: new mongoose.Types.ObjectId(normalizedSearch) });
+  }
+
+  if (matchedUsers.length > 0) {
+    clauses.push({ userId: { $in: matchedUsers.map((item) => item._id) } });
+  }
+
+  if (matchedDrivers.length > 0) {
+    clauses.push({ driverId: { $in: matchedDrivers.map((item) => item._id) } });
+  }
+
+  if (includeParcel) {
+    clauses.push(
+      { 'parcel.category': regex },
+      { 'parcel.senderName': regex },
+      { 'parcel.receiverName': regex },
+    );
+  }
+
+  if (includeIntercity) {
+    clauses.push(
+      { 'intercity.fromCity': regex },
+      { 'intercity.toCity': regex },
+      { 'intercity.tripType': regex },
+      { 'intercity.travelDate': regex },
+    );
+  }
+
+  return clauses;
+};
+
+const listAdminRides = async ({
+  query = {},
+  baseFilter = {},
+  variant = 'ride_requests',
+  serializer,
+  includeParcel = false,
+  includeIntercity = false,
+}) => {
+  const page = Math.max(Number(query.page || 1), 1);
+  const limit = clampAdminRideListPageSize(query.limit, 10);
+  const tab = String(query.tab || 'all').toLowerCase();
+  const search = String(query.search || '').trim();
+
+  const mongoFilter = {
+    ...baseFilter,
+    ...buildRideStatusFilter(tab, variant),
+  };
+
+  const searchClauses = await buildAdminRideSearchClauses(search, {
+    includeParcel,
+    includeIntercity,
+  });
+
+  if (searchClauses.length > 0) {
+    mongoFilter.$or = searchClauses;
+  }
+
+  const [total, rides] = await Promise.all([
+    Ride.countDocuments(mongoFilter),
+    (() => {
+      let rideQuery = Ride.find(mongoFilter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate('userId', 'name phone')
+        .populate('driverId', 'name phone vehicleType vehicleNumber');
+
+      if (includeParcel) {
+        rideQuery = rideQuery.populate('deliveryId');
+      }
+
+      return rideQuery.lean();
+    })(),
+  ]);
+
+  return buildDatabasePaginator(rides.map(serializer), page, limit, total);
+};
+
 
 
 
 
 export const listOngoingRides = async (query = {}) => {
-  const page = Number(query.page || 1);
-  const limit = Number(query.limit || 10);
-  const tab = String(query.tab || 'all').toLowerCase();
-  const search = String(query.search || '').trim().toLowerCase();
-
-  const rides = await Ride.find({
-    status: { $in: [RIDE_STATUS.SEARCHING, RIDE_STATUS.ACCEPTED, RIDE_STATUS.ONGOING] },
-  })
-    .sort({ createdAt: -1 })
-    .populate('userId', 'name phone')
-    .populate('driverId', 'name phone vehicleType vehicleNumber')
-    .lean();
-
-  let rows = rides.map(toAdminRideRow);
-
-  if (tab === 'accepted') {
-    rows = rows.filter((row) => row.tripStatus === 'ACCEPTED');
-  } else if (tab === 'upcoming') {
-    rows = rows.filter((row) => row.tripStatus === 'UPCOMING');
-  } else if (tab === 'ongoing') {
-    rows = rows.filter((row) => row.tripStatus === 'ONGOING');
-  }
-
-  if (search) {
-    rows = rows.filter((row) =>
-      [
-        row.requestId,
-        row.userName,
-        row.driverName,
-        row.transportType,
-        row.pickupLabel,
-        row.dropLabel,
-      ].some((value) => String(value || '').toLowerCase().includes(search)),
-    );
-  }
-
-  return buildPaginator(rows, page, limit);
+  return listAdminRides({
+    query,
+    baseFilter: {
+      status: { $in: [RIDE_STATUS.SEARCHING, RIDE_STATUS.ACCEPTED, RIDE_STATUS.ONGOING] },
+    },
+    variant: 'ongoing_rides',
+    serializer: toAdminRideRow,
+  });
 };
 
 export const listRideRequests = async (query = {}) => {
-  const page = Number(query.page || 1);
-  const limit = Number(query.limit || 10);
-  const tab = String(query.tab || 'all').toLowerCase();
-  const search = String(query.search || '').trim().toLowerCase();
-
-  const rides = await Ride.find({
-    serviceType: { $nin: ['parcel', 'intercity'] },
-  })
-    .sort({ createdAt: -1 })
-    .populate('userId', 'name phone')
-    .populate('driverId', 'name phone vehicleType vehicleNumber')
-    .lean();
-
-  let rows = rides.map(toAdminRideRow);
-
-  if (tab === 'completed') {
-    rows = rows.filter((row) => row.tripStatus === 'COMPLETED');
-  } else if (tab === 'cancelled') {
-    rows = rows.filter((row) => row.tripStatus === 'CANCELLED');
-  } else if (tab === 'upcoming') {
-    rows = rows.filter((row) => row.tripStatus === 'UPCOMING');
-  } else if (tab === 'on trip' || tab === 'on_trip' || tab === 'ongoing') {
-    rows = rows.filter((row) => row.tripStatus === 'ACCEPTED' || row.tripStatus === 'ONGOING');
-  }
-
-  if (search) {
-    rows = rows.filter((row) =>
-      [
-        row.requestId,
-        row.userName,
-        row.driverName,
-        row.transportType,
-        row.pickupLabel,
-        row.dropLabel,
-      ].some((value) => String(value || '').toLowerCase().includes(search)),
-    );
-  }
-
-  return buildPaginator(rows, page, limit);
+  return listAdminRides({
+    query,
+    baseFilter: {
+      serviceType: { $nin: ['parcel', 'intercity'] },
+    },
+    variant: 'ride_requests',
+    serializer: toAdminRideRow,
+  });
 };
 
 export const listDeliveries = async (query = {}) => {
-  const page = Number(query.page || 1);
-  const limit = Number(query.limit || 10);
-  const tab = String(query.tab || 'all').toLowerCase();
-  const search = String(query.search || '').trim().toLowerCase();
-
-  const rides = await Ride.find({ serviceType: 'parcel' })
-    .sort({ createdAt: -1 })
-    .populate('deliveryId')
-    .populate('userId', 'name phone')
-    .populate('driverId', 'name phone vehicleType vehicleNumber')
-    .lean();
-
-  let rows = rides.map(toAdminDeliveryRow);
-
-  if (tab === 'completed') {
-    rows = rows.filter((row) => row.tripStatus === 'COMPLETED');
-  } else if (tab === 'cancelled') {
-    rows = rows.filter((row) => row.tripStatus === 'CANCELLED');
-  } else if (tab === 'upcoming') {
-    rows = rows.filter((row) => row.tripStatus === 'UPCOMING');
-  } else if (tab === 'on trip' || tab === 'on_trip' || tab === 'ongoing') {
-    rows = rows.filter((row) => row.tripStatus === 'ON_TRIP');
-  }
-  if (tab === 'completed') {
-    rows = rows.filter((row) => row.tripStatus === 'COMPLETED');
-  } else if (tab === 'cancelled') {
-    rows = rows.filter((row) => row.tripStatus === 'CANCELLED');
-  } else if (tab === 'upcoming') {
-    rows = rows.filter((row) => row.tripStatus === 'UPCOMING');
-  } else if (tab === 'on trip' || tab === 'on_trip' || tab === 'ongoing') {
-    rows = rows.filter((row) => row.tripStatus === 'ON_TRIP');
-  }
-
-  if (search) {
-    rows = rows.filter((row) =>
-      [
-        row.requestId,
-        row.userName,
-        row.driverName,
-        row.transportType,
-        row.pickupLabel,
-        row.dropLabel,
-        row.parcel?.category,
-        row.parcel?.senderName,
-        row.parcel?.receiverName,
-      ].some((value) => String(value || '').toLowerCase().includes(search)),
-    );
-  }
-
-  return buildPaginator(rows, page, limit);
+  return listAdminRides({
+    query,
+    baseFilter: {
+      serviceType: 'parcel',
+    },
+    variant: 'deliveries',
+    serializer: toAdminDeliveryRow,
+    includeParcel: true,
+  });
 };
 
 export const listIntercityTrips = async (query = {}) => {
-  const page = Number(query.page || 1);
-  const limit = Number(query.limit || 10);
-  const tab = String(query.tab || 'all').toLowerCase();
-  const search = String(query.search || '').trim().toLowerCase();
-
-  const rides = await Ride.find({ serviceType: 'intercity' })
-    .sort({ createdAt: -1 })
-    .populate('userId', 'name phone')
-    .populate('driverId', 'name phone vehicleType vehicleNumber')
-    .lean();
-
-  let rows = rides.map(toAdminIntercityTripRow);
-
-  if (tab === 'completed') {
-    rows = rows.filter((row) => row.tripStatus === 'COMPLETED');
-  } else if (tab === 'cancelled') {
-    rows = rows.filter((row) => row.tripStatus === 'CANCELLED');
-  } else if (tab === 'upcoming') {
-    rows = rows.filter((row) => row.tripStatus === 'UPCOMING');
-  } else if (tab === 'on trip' || tab === 'on_trip' || tab === 'ongoing') {
-    rows = rows.filter((row) => row.tripStatus === 'ON_TRIP');
-  }
-
-  if (search) {
-    rows = rows.filter((row) =>
-      [
-        row.requestId,
-        row.userName,
-        row.driverName,
-        row.transportType,
-        row.pickupLabel,
-        row.dropLabel,
-        row.routeLabel,
-        row.tripType,
-        row.travelDate,
-      ].some((value) => String(value || '').toLowerCase().includes(search)),
-    );
-  }
-
-  return buildPaginator(rows, page, limit);
+  return listAdminRides({
+    query,
+    baseFilter: {
+      serviceType: 'intercity',
+    },
+    variant: 'intercity',
+    serializer: toAdminIntercityTripRow,
+    includeIntercity: true,
+  });
 };
 
 export const deleteOngoingRide = async (rideId) => {
@@ -5839,6 +5881,23 @@ export const listVehicleCatalog = async () => {
     }
   };
 };
+
+const buildDatabasePaginator = (results, page = 1, limit = 50, total = 0) => {
+  const safePage = Number(page) || 1;
+  const safeLimit = Number(limit) || 50;
+  const safeTotal = Number(total) || 0;
+
+  return {
+    results,
+    paginator: {
+      current_page: safePage,
+      per_page: safeLimit,
+      total: safeTotal,
+      last_page: Math.max(1, Math.ceil(safeTotal / safeLimit)),
+    },
+  };
+};
+
 
 export const getVehicleTypeById = async (id) => {
   const item = await Vehicle.findById(id).lean();

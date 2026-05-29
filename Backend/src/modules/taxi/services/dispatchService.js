@@ -81,6 +81,32 @@ const resolveCancellationPricing = async (ride, session) => {
   });
 };
 
+const matchDispatchDrivers = async ({
+  ride,
+  radius,
+  dispatchVehicleTypeIds,
+}) => {
+  const sharedOptions = {
+    maxDistance: radius,
+    vehicleTypeId: ride.vehicleTypeId,
+    vehicleTypeIds: dispatchVehicleTypeIds,
+  };
+
+  let result = await matchDrivers(ride.pickupLocation.coordinates, {
+    ...sharedOptions,
+    serviceLocationId: ride.service_location_id || null,
+  });
+
+  if (!result.drivers.length && ride.service_location_id) {
+    result = await matchDrivers(ride.pickupLocation.coordinates, {
+      ...sharedOptions,
+      serviceLocationId: null,
+    });
+  }
+
+  return result;
+};
+
 const applyUserWalletAdjustment = async ({
   userId,
   amount,
@@ -919,11 +945,10 @@ const dispatchAttempt = async (rideId, attemptIndex = 0) => {
       closeDriverRequestWindow(rideId, dispatchState.driverIds);
     }
 
-    const { zone, drivers, searchRadiusMeters } = await matchDrivers(ride.pickupLocation.coordinates, {
-      maxDistance: radius,
-      vehicleTypeId: ride.vehicleTypeId,
-      vehicleTypeIds: dispatchVehicleTypeIds,
-      serviceLocationId: ride.service_location_id || null,
+    const { zone, drivers, searchRadiusMeters } = await matchDispatchDrivers({
+      ride,
+      radius,
+      dispatchVehicleTypeIds,
     });
     const effectiveRadius = Number.isFinite(searchRadiusMeters) && searchRadiusMeters > 0
       ? searchRadiusMeters
@@ -1071,11 +1096,10 @@ export const notifyLateAvailableDriver = async (driverId) => {
       attemptIndex,
     );
     const dispatchVehicleTypeIds = getDispatchVehicleTypeIds(ride);
-    const { zone, drivers, searchRadiusMeters } = await matchDrivers(ride.pickupLocation.coordinates, {
-      maxDistance: radius,
-      vehicleTypeId: ride.vehicleTypeId,
-      vehicleTypeIds: dispatchVehicleTypeIds,
-      serviceLocationId: ride.service_location_id || null,
+    const { zone, drivers, searchRadiusMeters } = await matchDispatchDrivers({
+      ride,
+      radius,
+      dispatchVehicleTypeIds,
     });
 
     const matchedDriver = drivers.find((item) => String(item._id) === driverKey);

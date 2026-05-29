@@ -983,23 +983,27 @@ export const listAvailableDrivers = async (req, res) => {
       ? new mongoose.Types.ObjectId(service_location_id)
       : null;
 
-  const { zone, drivers } = await matchDrivers([longitude, latitude], {
+  const matchOptions = {
     maxDistance: Number.isFinite(distance) && distance > 0 ? Math.min(distance, 25000) : 25000,
     limit: Math.min(Number(limit) || 30, 50),
     vehicleTypeId,
+  };
+
+  let matchResult = await matchDrivers([longitude, latitude], {
+    ...matchOptions,
     serviceLocationId: normalizedServiceLocationId,
-    allowCrossZoneFallback: false,
-    strictZoneOnly: true,
   });
 
-  const zoneServiceLocationId = zone?.service_location_id ? String(zone.service_location_id) : '';
-  const requestedServiceLocationId = normalizedServiceLocationId ? String(normalizedServiceLocationId) : '';
-  const visibleDrivers =
-    requestedServiceLocationId && zoneServiceLocationId && requestedServiceLocationId !== zoneServiceLocationId
-      ? []
-      : drivers;
+  if (!matchResult.drivers.length && normalizedServiceLocationId) {
+    matchResult = await matchDrivers([longitude, latitude], {
+      ...matchOptions,
+      serviceLocationId: null,
+    });
+  }
 
-  const enrichedDrivers = visibleDrivers.map((driver) => {
+  const { drivers } = matchResult;
+
+  const enrichedDrivers = drivers.map((driver) => {
     const distanceMeters = calculateDistanceMeters([longitude, latitude], driver.location?.coordinates || []);
     const etaMinutes = estimateEtaMinutes(distanceMeters);
 

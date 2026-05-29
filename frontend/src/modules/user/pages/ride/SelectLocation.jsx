@@ -695,11 +695,6 @@ const SelectLocation = () => {
       return;
     }
 
-    if (!validateZoneSelection(resolvedPickupCoords) || !validateZoneSelection(resolvedDropCoords)) {
-      window.alert('Please choose pickup and drop locations inside the active service zone.');
-      return;
-    }
-
     saveLocation({
       address: finalPickup,
       lat: resolvedPickupCoords[1],
@@ -772,11 +767,6 @@ const SelectLocation = () => {
   const handleConfirmMapLocation = () => {
     const finalAddress = pickedAddress;
     const selectedCoords = [lastCenterRef.current.lng, lastCenterRef.current.lat];
-
-    if (!validateZoneSelection(selectedCoords)) {
-      window.alert('Please pin a location inside the active service zone.');
-      return;
-    }
 
     if (activeInput === 'pickup') {
       if (isParcelFlow) {
@@ -877,11 +867,6 @@ const SelectLocation = () => {
     const resolvedSelection = await resolvePlaceSelection(normalizedResult);
     const finalTitle = resolvedSelection.title || resolvedSelection.address;
     const resolvedCoords = selectedCoords || resolvedSelection.coords;
-
-    if (!validateZoneSelection(resolvedCoords)) {
-      window.alert('That location is outside your active service zone. Please choose a point inside the zone.');
-      return;
-    }
 
     resetAutocompleteSessionToken();
 
@@ -1297,7 +1282,7 @@ const SelectLocation = () => {
               {isSearchingLocations
                 ? 'Searching locations inside your service zone...'
                 : zonePaths.length
-                  ? 'Showing zone-prioritized results after 3+ characters. Selections outside the zone are blocked.'
+                  ? 'Showing zone-prioritized results after 3+ characters.'
                   : 'Showing optimized search results after 3+ characters.'}
             </p>
           </div>

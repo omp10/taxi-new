@@ -19,6 +19,17 @@ import moversImg from '@/assets/images/delivery/movers.png';
 const Motion = motion;
 const PARCEL_BOOKING_DRAFT_KEY = 'parcelBookingDraft';
 const FALLBACK_PICKUP_LABEL = 'Choose your location';
+const toPlainData = (value) => {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return null;
+  }
+};
 
 const DELIVERY_CATEGORY_OPTIONS = [
   {
@@ -167,16 +178,19 @@ const ParcelType = () => {
     if (loading || vehicleTypes.length === 0) return;
 
     const selectedVehicle = filteredVehicles[0] || vehicleTypes[0];
+    const selectedVehicles = (filteredVehicles.length ? filteredVehicles : selectedVehicle ? [selectedVehicle] : [])
+      .map((vehicle) => toPlainData(vehicle))
+      .filter(Boolean);
+    const plainSelectedVehicle = toPlainData(selectedVehicle);
     const selectedVehicleIds = filteredVehicles.length
       ? filteredVehicles.map((vehicle) => vehicle?._id || vehicle?.id).filter(Boolean)
-      : [selectedVehicle?._id || selectedVehicle?.id].filter(Boolean);
-    const selectedVehicles = filteredVehicles.length ? filteredVehicles : selectedVehicle ? [selectedVehicle] : [];
+      : [plainSelectedVehicle?._id || plainSelectedVehicle?.id].filter(Boolean);
 
     const nextState = {
       parcelType: 'General Parcel',
-      selectedVehicle: selectedVehicle,
+      selectedVehicle: plainSelectedVehicle,
       selectedVehicles,
-      selectedVehicleId: selectedVehicle?._id || selectedVehicle?.id,
+      selectedVehicleId: plainSelectedVehicle?._id || plainSelectedVehicle?.id,
       selectedVehicleIds,
       category: category.id,
       deliveryCategory: category.id,

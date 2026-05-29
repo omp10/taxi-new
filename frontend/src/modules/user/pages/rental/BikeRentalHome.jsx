@@ -1,11 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Fuel, Shield, ChevronRight, Star, Info, Car, Search, X } from 'lucide-react';
+import { ArrowLeft, Fuel, Shield, ChevronRight, Star, Info, Car, Search, X, Bike } from 'lucide-react';
 import { userService } from '../../services/userService';
 const DURATION_TABS = ['Hourly', 'Half-Day', 'Daily'];
 const RENTAL_SELECTED_VEHICLE_STORAGE_KEY = 'selectedRentalVehicleDetail';
 const RENTAL_PAGE_SIZE = 10;
+const CATEGORY_FILTERS = [
+  { id: 'all', label: 'All', Icon: Star },
+  { id: 'car', label: 'Cars', Icon: Car },
+  { id: 'bike', label: 'Bikes', Icon: Bike },
+];
 
 const infoBanner = {
   Hourly: 'Short rentals for quick city use.',
@@ -24,6 +29,14 @@ const gradientPairs = [
 ];
 
 const normalizeSearchValue = (value = '') => String(value || '').trim().toLowerCase();
+const normalizeRentalCategory = (value = '') => {
+  const normalized = normalizeSearchValue(value);
+
+  if (normalized === 'bike') return 'bike';
+  if (['car', 'suv', 'van'].includes(normalized)) return 'car';
+
+  return normalized;
+};
 
 const findPricingBucket = (pricing = [], minHours, maxHours = Infinity) =>
   pricing.find(
@@ -125,6 +138,7 @@ const normalizeRentalVehicle = (item = {}, index = 0) => {
     luggageCapacity,
     capacity,
     vehicleCategory: item.vehicleCategory || 'Vehicle',
+    normalizedCategory: normalizeRentalCategory(item.vehicleCategory),
     advancePayment: {
       enabled: Boolean(item.advancePayment?.enabled),
       paymentMode: 'fixed',
@@ -176,6 +190,7 @@ const BikeRentalHome = () => {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
@@ -270,14 +285,35 @@ const BikeRentalHome = () => {
       .slice(0, 6);
   }, [rentalSuggestions, searchQuery]);
 
+  const categoryCounts = useMemo(() => {
+    return vehicles.reduce(
+      (accumulator, vehicle) => {
+        const category = normalizeRentalCategory(vehicle.normalizedCategory || vehicle.vehicleCategory);
+        if (category === 'car') accumulator.car += 1;
+        if (category === 'bike') accumulator.bike += 1;
+        accumulator.all += 1;
+        return accumulator;
+      },
+      { all: 0, car: 0, bike: 0 },
+    );
+  }, [vehicles]);
+
   const filteredVehicles = useMemo(() => {
     const query = normalizeSearchValue(searchQuery);
 
-    if (!query) {
-      return vehicles;
-    }
-
     return vehicles.filter((vehicle) => {
+      const matchesCategory =
+        selectedCategoryFilter === 'all' ||
+        normalizeRentalCategory(vehicle.normalizedCategory || vehicle.vehicleCategory) === selectedCategoryFilter;
+
+      if (!matchesCategory) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
       const haystack = [
         vehicle.name,
         vehicle.vehicleCategory,
@@ -292,7 +328,7 @@ const BikeRentalHome = () => {
 
       return haystack.includes(query);
     });
-  }, [searchQuery, vehicles]);
+  }, [searchQuery, selectedCategoryFilter, vehicles]);
 
   const filteredCountLabel = `${filteredVehicles.length} result${filteredVehicles.length === 1 ? '' : 's'}`;
   const totalPages = Math.max(1, Math.ceil(filteredVehicles.length / RENTAL_PAGE_SIZE));
@@ -303,7 +339,7 @@ const BikeRentalHome = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, selectedCategoryFilter]);
 
   useEffect(() => {
     setCurrentPage((previousPage) => Math.min(previousPage, totalPages));
@@ -451,6 +487,57 @@ const BikeRentalHome = () => {
           </div>
           <h2 className="text-[20px] font-[900] tracking-tight text-slate-900">Explore Fleet</h2>
         </div>
+
+        <div className="space-y-3">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            {CATEGORY_FILTERS.map(({ id, label, Icon }) => {
+              const isActive = selectedCategoryFilter === id;
+              const count = categoryCounts[id] || 0;
+
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setSelectedCategoryFilter(id)}
+                  className={`shrink-0 rounded-[18px] border px-3.5 py-2.5 transition-all ${
+                    isActive
+                      ? 'border-slate-900 bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]'
+                      : 'border-white/90 bg-white/75 text-slate-600 shadow-[0_8px_20px_rgba(15,23,42,0.05)]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-[12px] ${isActive ? 'bg-white/12' : 'bg-slate-100 text-slate-500'}`}>
+                      <Icon size={15} strokeWidth={2.4} />
+                    </div>
+                    <div className="text-left">
+                      <p className={`text-[11px] font-black uppercase tracking-[0.16em] ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                        {label}
+                      </p>
+                      <p className={`text-[12px] font-bold ${isActive ? 'text-white/80' : 'text-slate-700'}`}>
+                        {count} available
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-[18px] border border-white/80 bg-white/70 px-3 py-3 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Fleet</p>
+              <p className="mt-1 text-[17px] font-black text-slate-900">{categoryCounts.all}</p>
+            </div>
+            <div className="rounded-[18px] border border-orange-100 bg-gradient-to-br from-orange-50 to-white px-3 py-3 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-400">Cars</p>
+              <p className="mt-1 text-[17px] font-black text-slate-900">{categoryCounts.car}</p>
+            </div>
+            <div className="rounded-[18px] border border-sky-100 bg-gradient-to-br from-sky-50 to-white px-3 py-3 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-500">Bikes</p>
+              <p className="mt-1 text-[17px] font-black text-slate-900">{categoryCounts.bike}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="px-5 pt-4 pb-12 space-y-4">
@@ -501,7 +588,7 @@ const BikeRentalHome = () => {
                 <Search size={22} />
               </div>
               <p className="mt-4 text-[15px] font-black text-slate-900">No rentals matched your search</p>
-              <p className="mt-1 text-[12px] font-bold text-slate-400">Try another vehicle name, category, or amenity.</p>
+              <p className="mt-1 text-[12px] font-bold text-slate-400">Try another vehicle name, category, amenity, or switch the car and bike filter.</p>
             </motion.div>
           ) : (
           paginatedVehicles.map((v, idx) => (
