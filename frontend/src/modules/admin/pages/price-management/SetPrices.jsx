@@ -34,7 +34,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { API_BASE_URL } from '../../../../shared/api/runtimeConfig';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useTaxiTransportTypes } from '../../../../shared/hooks/useTaxiTransportTypes';
 import { adminService } from '../../services/adminService';
 
 const inputClass = "w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-800 bg-white focus:border-indigo-500 transition-all outline-none";
@@ -65,6 +64,59 @@ const normalizeTransportType = (value = '') => {
   if (normalized === 'pooling') return 'pooling';
   if (normalized === 'both' || normalized === 'all') return 'both';
   return normalized === 'taxi' ? 'taxi' : '';
+};
+
+const getVehicleTransportType = (vehicle = {}) =>
+  normalizeTransportType(vehicle?.transport_type || vehicle?.is_taxi || '');
+
+const formatTransportTypeLabel = (value = '') => {
+  const normalized = normalizeTransportType(value);
+  if (normalized === 'delivery') return 'Delivery';
+  if (normalized === 'pooling') return 'Pooling';
+  if (normalized === 'both') return 'Both';
+  return normalized === 'taxi' ? 'Taxi' : 'Not assigned';
+};
+
+const NON_NEGATIVE_FORM_FIELDS = new Set([
+  'admin_commission_from_driver',
+  'admin_commission_for_owner',
+  'service_tax',
+  'order_number',
+  'base_price',
+  'base_distance',
+  'price_per_distance',
+  'time_price',
+  'waiting_charge',
+  'free_waiting_before',
+  'free_waiting_after',
+  'support_airport_fee',
+  'airport_surge',
+  'outstation_base_price',
+  'outstation_base_distance',
+  'outstation_price_per_distance',
+  'outstation_time_price',
+  'price_per_seat',
+  'shared_price_per_distance',
+  'shared_cancel_fee',
+  'user_cancellation_fee',
+  'driver_cancellation_fee',
+]);
+
+const clampNonNegativeInput = (field, value) => {
+  if (!NON_NEGATIVE_FORM_FIELDS.has(field)) {
+    return value;
+  }
+
+  if (value === '' || value === null || value === undefined) {
+    return '';
+  }
+
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return value;
+  }
+
+  return String(Math.max(0, numeric));
 };
 
 const togglePaymentType = (currentValue, targetValue) => {
@@ -142,39 +194,15 @@ const SetPrices = ({ mode }) => {
   
   const [zones, setZones] = useState([]);
   const [vehicleTypes, setVehicleTypes] = useState([]);
-  const { transportTypes } = useTaxiTransportTypes();
-  const transportTypeOptions = React.useMemo(() => {
-    const normalized = new Map();
-
-    (Array.isArray(transportTypes) ? transportTypes : []).forEach((item) => {
-      const value = normalizeTransportType(item?.name || item?.transport_type || item?.id || '');
-      if (!value) return;
-
-      normalized.set(value, {
-        id: item?.id || item?._id || value,
-        name: value,
-        display_name: value === 'both'
-          ? 'Both'
-          : (item?.display_name || item?.label || value.charAt(0).toUpperCase() + value.slice(1)),
-      });
-    });
-
-    if (!normalized.has('taxi')) {
-      normalized.set('taxi', { id: 'taxi', name: 'taxi', display_name: 'Taxi' });
-    }
-
-    if (!normalized.has('delivery')) {
-      normalized.set('delivery', { id: 'delivery', name: 'delivery', display_name: 'Delivery' });
-    }
-
-    if (!normalized.has('both')) {
-      normalized.set('both', { id: 'both', name: 'both', display_name: 'Both' });
-    }
-
-    return Array.from(normalized.values());
-  }, [transportTypes]);
-
   const [formData, setFormData] = useState(initialFormState);
+  const selectedVehicleType = React.useMemo(
+    () => vehicleTypes.find((vehicle) => String(vehicle._id || vehicle.id) === String(formData.vehicle_type || '')) || null,
+    [formData.vehicle_type, vehicleTypes],
+  );
+  const derivedTransportType = React.useMemo(
+    () => getVehicleTransportType(selectedVehicleType),
+    [selectedVehicleType],
+  );
 
   const baseUrl = `${API_BASE_URL}/admin`;
   const token = localStorage.getItem('adminToken');
@@ -188,6 +216,23 @@ const SetPrices = ({ mode }) => {
       setFormData({ ...initialFormState });
     }
   }, [mode]);
+
+  useEffect(() => {
+    if (!selectedVehicleType) {
+      return;
+    }
+
+    const nextTransportType = getVehicleTransportType(selectedVehicleType);
+    if (!nextTransportType) {
+      return;
+    }
+
+    setFormData((previous) => (
+      previous.transport_type === nextTransportType
+        ? previous
+        : { ...previous, transport_type: nextTransportType }
+    ));
+  }, [selectedVehicleType]);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -267,7 +312,7 @@ const SetPrices = ({ mode }) => {
           shared_price_per_distance: 0,
           shared_cancel_fee: 0,
           pricing_scope: 'ride',
-          transport_type: normalizeTransportType(formData.transport_type),
+          transport_type: derivedTransportType || normalizeTransportType(formData.transport_type),
           payment_type: normalizePaymentTypes(formData.payment_type).length ? normalizePaymentTypes(formData.payment_type) : ['cash']
         })
       });
@@ -438,18 +483,6 @@ const SetPrices = ({ mode }) => {
                         </div>
                      </div>
                      <div>
-                        <label className={labelClass}>Transport Type <span className="text-rose-500">*</span></label>
-                        <div className="relative">
-                            <select required className={inputClass + " appearance-none cursor-pointer"} value={formData.transport_type} onChange={e => setFormData(p=>({...p, transport_type: e.target.value}))}>
-                               <option value="">Select Transport Type</option>
-                               {transportTypeOptions.map(t => (
-                                 <option key={t.id || t._id} value={t.name}>{t.display_name}</option>
-                               ))}
-                            </select>
-                           <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                        </div>
-                     </div>
-                     <div>
                         <label className={labelClass}>Vehicle Type <span className="text-rose-500">*</span></label>
                         <div className="relative">
                            <select required className={inputClass + " appearance-none cursor-pointer"} value={formData.vehicle_type} onChange={e => setFormData(p=>({...p, vehicle_type: e.target.value}))}>
@@ -458,6 +491,13 @@ const SetPrices = ({ mode }) => {
                            </select>
                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         </div>
+                        <p className="mt-2 text-[11px] font-medium text-slate-400">
+                          Transport type is taken from the selected vehicle type:
+                          {' '}
+                          <span className="font-black uppercase tracking-[0.12em] text-slate-600">
+                            {formatTransportTypeLabel(derivedTransportType || formData.transport_type)}
+                          </span>
+                        </p>
                      </div>
                      <div>
                         <label className={labelClass}>Payment Type <span className="text-rose-500">*</span></label>
@@ -525,21 +565,6 @@ const SetPrices = ({ mode }) => {
                         </div>
                      </div>
                      <div>
-                        <label className={labelClass}>Admin Commission Type From Customer <span className="text-rose-500">*</span></label>
-                        <div className="relative">
-                           <select required className={inputClass + " appearance-none cursor-pointer"} value={formData.admin_commision_type} onChange={e => setFormData(p=>({...p, admin_commision_type: e.target.value}))}>
-                              <option value="">Select Type</option>
-                              <option value="1">Percentage</option>
-                              <option value="2">Fixed</option>
-                           </select>
-                           <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                        </div>
-                     </div>
-                     <div>
-                        <label className={labelClass}>Admin Commission From Customer <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Admin Commission From Customer" value={formData.admin_commision} onChange={e => setFormData(p=>({...p, admin_commision: e.target.value}))} />
-                     </div>
-                     <div>
                         <label className={labelClass}>Admin Commission Type From Driver <span className="text-rose-500">*</span></label>
                         <div className="relative">
                            <select required className={inputClass + " appearance-none cursor-pointer"} value={formData.admin_commission_type_from_driver} onChange={e => setFormData(p=>({...p, admin_commission_type_from_driver: e.target.value}))}>
@@ -552,7 +577,7 @@ const SetPrices = ({ mode }) => {
                      </div>
                      <div>
                         <label className={labelClass}>Admin Commission From Driver <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Admin Commission From Driver" value={formData.admin_commission_from_driver} onChange={e => setFormData(p=>({...p, admin_commission_from_driver: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Enter Admin Commission From Driver" value={formData.admin_commission_from_driver} onChange={e => setFormData(p=>({...p, admin_commission_from_driver: clampNonNegativeInput('admin_commission_from_driver', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Admin Commission Type From Owner <span className="text-rose-500">*</span></label>
@@ -567,45 +592,41 @@ const SetPrices = ({ mode }) => {
                      </div>
                      <div>
                         <label className={labelClass}>Admin Commission From Owner <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Admin Commission From Owner" value={formData.admin_commission_for_owner} onChange={e => setFormData(p=>({...p, admin_commission_for_owner: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Enter Admin Commission From Owner" value={formData.admin_commission_for_owner} onChange={e => setFormData(p=>({...p, admin_commission_for_owner: clampNonNegativeInput('admin_commission_for_owner', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Service Tax (%) <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Service Tax (%)" value={formData.service_tax} onChange={e => setFormData(p=>({...p, service_tax: e.target.value}))} />
-                     </div>
-                     <div>
-                        <label className={labelClass}>ETA Sequence <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Order Number" value={formData.order_number} onChange={e => setFormData(p=>({...p, order_number: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Enter Service Tax (%)" value={formData.service_tax} onChange={e => setFormData(p=>({...p, service_tax: clampNonNegativeInput('service_tax', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Base Price <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Base Price" value={formData.base_price} onChange={e => setFormData(p=>({...p, base_price: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Enter Base Price" value={formData.base_price} onChange={e => setFormData(p=>({...p, base_price: clampNonNegativeInput('base_price', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Base Distance <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Base Distance" value={formData.base_distance} onChange={e => setFormData(p=>({...p, base_distance: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Enter Base Distance" value={formData.base_distance} onChange={e => setFormData(p=>({...p, base_distance: clampNonNegativeInput('base_distance', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Price Per Distance <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Price Per Distance" value={formData.price_per_distance} onChange={e => setFormData(p=>({...p, price_per_distance: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Enter Price Per Distance" value={formData.price_per_distance} onChange={e => setFormData(p=>({...p, price_per_distance: clampNonNegativeInput('price_per_distance', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Time Price in Mintue <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Time Price" value={formData.time_price} onChange={e => setFormData(p=>({...p, time_price: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Enter Time Price" value={formData.time_price} onChange={e => setFormData(p=>({...p, time_price: clampNonNegativeInput('time_price', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Waiting Charge <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Enter Waiting Charge" value={formData.waiting_charge} onChange={e => setFormData(p=>({...p, waiting_charge: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Enter Waiting Charge" value={formData.waiting_charge} onChange={e => setFormData(p=>({...p, waiting_charge: clampNonNegativeInput('waiting_charge', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Free Waiting Time In Minutes Before Start A Ride <span className="text-rose-500">*</span></label>
-                        <input type="number" required className={inputClass} placeholder="Free Waiting Time In Minutes Before Start A Ride" value={formData.free_waiting_before} onChange={e => setFormData(p=>({...p, free_waiting_before: e.target.value}))} />
+                        <input type="number" min="0" required className={inputClass} placeholder="Free Waiting Time In Minutes Before Start A Ride" value={formData.free_waiting_before} onChange={e => setFormData(p=>({...p, free_waiting_before: clampNonNegativeInput('free_waiting_before', e.target.value)}))} />
                      </div>
 
                      <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-12">
                         <div>
                            <label className={labelClass}>Free Waiting Time In Minutes After Start A Ride <span className="text-rose-500">*</span></label>
-                           <input type="number" required className={inputClass} placeholder="Free Waiting Time In Minutes After Start A Ride" value={formData.free_waiting_after} onChange={e => setFormData(p=>({...p, free_waiting_after: e.target.value}))} />
+                           <input type="number" min="0" required className={inputClass} placeholder="Free Waiting Time In Minutes After Start A Ride" value={formData.free_waiting_after} onChange={e => setFormData(p=>({...p, free_waiting_after: clampNonNegativeInput('free_waiting_after', e.target.value)}))} />
                         </div>
                      </div>
 
@@ -622,11 +643,11 @@ const SetPrices = ({ mode }) => {
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                               <div>
                                  <label className={labelClass}>Airport Surge Fee <span className="text-rose-500">*</span></label>
-                                 <input type="number" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Airport Surge Fee" value={formData.airport_surge} onChange={e => setFormData(p=>({...p, airport_surge: e.target.value}))} />
+                                 <input type="number" min="0" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Airport Surge Fee" value={formData.airport_surge} onChange={e => setFormData(p=>({...p, airport_surge: clampNonNegativeInput('airport_surge', e.target.value)}))} />
                               </div>
                               <div>
                                  <label className={labelClass}>Support Airport Fee <span className="text-rose-500">*</span></label>
-                                 <input type="number" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Support Airport Fee" value={formData.support_airport_fee} onChange={e => setFormData(p=>({...p, support_airport_fee: e.target.value}))} />
+                                 <input type="number" min="0" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Support Airport Fee" value={formData.support_airport_fee} onChange={e => setFormData(p=>({...p, support_airport_fee: clampNonNegativeInput('support_airport_fee', e.target.value)}))} />
                               </div>
                            </div>
                         </div>
@@ -645,19 +666,19 @@ const SetPrices = ({ mode }) => {
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                               <div>
                                  <label className={labelClass}>Base Price <span className="text-rose-500">*</span></label>
-                                 <input type="number" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Price" value={formData.outstation_base_price} onChange={e => setFormData(p=>({...p, outstation_base_price: e.target.value}))} />
+                                 <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Price" value={formData.outstation_base_price} onChange={e => setFormData(p=>({...p, outstation_base_price: clampNonNegativeInput('outstation_base_price', e.target.value)}))} />
                               </div>
                               <div>
                                  <label className={labelClass}>Base Distance <span className="text-rose-500">*(Kilometers)</span></label>
-                                 <input type="number" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Distance" value={formData.outstation_base_distance} onChange={e => setFormData(p=>({...p, outstation_base_distance: e.target.value}))} />
+                                 <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Distance" value={formData.outstation_base_distance} onChange={e => setFormData(p=>({...p, outstation_base_distance: clampNonNegativeInput('outstation_base_distance', e.target.value)}))} />
                               </div>
                               <div>
                                  <label className={labelClass}>Price Per Distance <span className="text-rose-500">*(Kilometers)</span></label>
-                                 <input type="number" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Price Per Distance" value={formData.outstation_price_per_distance} onChange={e => setFormData(p=>({...p, outstation_price_per_distance: e.target.value}))} />
+                                 <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Price Per Distance" value={formData.outstation_price_per_distance} onChange={e => setFormData(p=>({...p, outstation_price_per_distance: clampNonNegativeInput('outstation_price_per_distance', e.target.value)}))} />
                               </div>
                               <div>
                                  <label className={labelClass}>Time Price in Mintue <span className="text-rose-500">*</span></label>
-                                 <input type="number" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Time Price" value={formData.outstation_time_price} onChange={e => setFormData(p=>({...p, outstation_time_price: e.target.value}))} />
+                                 <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Time Price" value={formData.outstation_time_price} onChange={e => setFormData(p=>({...p, outstation_time_price: clampNonNegativeInput('outstation_time_price', e.target.value)}))} />
                               </div>
                            </div>
                         </div>
@@ -675,7 +696,7 @@ const SetPrices = ({ mode }) => {
                                  <option value="percentage">%</option>
                                  <option value="fixed">FIXED</option>
                               </select>
-                              <input type="number" className="flex-1 px-4 py-3 text-sm outline-none" placeholder="Enter Cancellation Fee for User" value={formData.user_cancellation_fee} onChange={e => setFormData(p=>({...p, user_cancellation_fee: e.target.value}))} />
+                              <input type="number" min="0" className="flex-1 px-4 py-3 text-sm outline-none" placeholder="Enter Cancellation Fee for User" value={formData.user_cancellation_fee} onChange={e => setFormData(p=>({...p, user_cancellation_fee: clampNonNegativeInput('user_cancellation_fee', e.target.value)}))} />
                            </div>
                         </div>
                         <div>
@@ -685,7 +706,7 @@ const SetPrices = ({ mode }) => {
                                  <option value="percentage">%</option>
                                  <option value="fixed">FIXED</option>
                               </select>
-                              <input type="number" className="flex-1 px-4 py-3 text-sm outline-none" placeholder="Enter Cancellation Fee for Driver" value={formData.driver_cancellation_fee} onChange={e => setFormData(p=>({...p, driver_cancellation_fee: e.target.value}))} />
+                              <input type="number" min="0" className="flex-1 px-4 py-3 text-sm outline-none" placeholder="Enter Cancellation Fee for Driver" value={formData.driver_cancellation_fee} onChange={e => setFormData(p=>({...p, driver_cancellation_fee: clampNonNegativeInput('driver_cancellation_fee', e.target.value)}))} />
                            </div>
                         </div>
                         <div>

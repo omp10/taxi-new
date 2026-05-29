@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { GoogleMap, HeatmapLayer } from '@react-google-maps/api';
+import { Circle, GoogleMap } from '@react-google-maps/api';
 import { 
   ChevronRight, 
   Map as MapIcon, 
@@ -9,14 +9,11 @@ import {
   ArrowLeft,
   Activity,
   Zap,
-  Navigation,
-  Layers,
-  MousePointer2
+  Navigation
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../utils/googleMaps';
 import { adminService } from '../../services/adminService';
-import { motion } from 'framer-motion';
 
 const INDIA_CENTER = { lat: 22.7196, lng: 75.8577 };
 const MAP_CONTAINER_STYLE = { width: '100%', height: '400px' };
@@ -33,6 +30,35 @@ const mapOptions = {
     { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
     { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#e5e7eb' }] }
   ]
+};
+
+const OVERLAY_STYLES = {
+  default: {
+    fillColor: '#f97316',
+    strokeColor: '#ea580c',
+  },
+  spectral: {
+    fillColor: '#8b5cf6',
+    strokeColor: '#2563eb',
+  },
+  density: {
+    fillColor: '#14b8a6',
+    strokeColor: '#0f766e',
+  },
+};
+
+const getOverlayStyle = (mode) => {
+  const normalizedMode = String(mode || '').toLowerCase();
+
+  if (normalizedMode.includes('spectral')) {
+    return OVERLAY_STYLES.spectral;
+  }
+
+  if (normalizedMode.includes('density')) {
+    return OVERLAY_STYLES.density;
+  }
+
+  return OVERLAY_STYLES.default;
 };
 
 const HeatMap = () => {
@@ -65,22 +91,40 @@ const HeatMap = () => {
     fetchZones();
   }, []);
 
-  const heatmapData = useMemo(() => {
-    if (!zones.length || !window.google) return [];
-    return zones.flatMap((zone) => {
+  const overlayStyle = useMemo(() => getOverlayStyle(gradient), [gradient]);
+
+  const zoneOverlays = useMemo(() => {
+    if (!zones.length) return [];
+
+    return zones.map((zone, index) => {
       const coord = zone.coordinates?.[0]?.[0] || [75.8577, 22.7196];
       const lat = Number(coord[1]);
       const lng = Number(coord[0]);
-      
-      return Array.from({ length: 12 }).map(() => ({
-        location: new window.google.maps.LatLng(
-          lat + (Math.random() - 0.5) * 0.08,
-          lng + (Math.random() - 0.5) * 0.08
-        ),
-        weight: Math.random() * 10
-      }));
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+      }
+
+      const rawWeight = Number(
+        zone.demandScore ??
+        zone.weight ??
+        zone.intensity ??
+        zone.tripCount ??
+        zone.requests ??
+        zone.count ??
+        1,
+      );
+      const weight = Number.isFinite(rawWeight) && rawWeight > 0 ? rawWeight : 1;
+
+      return {
+        id: String(zone._id || zone.id || `${lat}-${lng}-${index}`),
+        center: { lat, lng },
+        weight,
+      };
     });
-  }, [zones, isLoaded]);
+  }, [zones]);
+
+  const circleRadiusMeters = Math.max(250, radius * 140);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 lg:p-8 font-sans">
@@ -114,7 +158,21 @@ const HeatMap = () => {
                  <GoogleMap
                     mapContainerStyle={MAP_CONTAINER_STYLE} center={INDIA_CENTER} zoom={11} options={mapOptions}
                  >
-                    <HeatmapLayer data={heatmapData} options={{ opacity, radius }} />
+                    {zoneOverlays.filter(Boolean).map((overlay) => (
+                      <Circle
+                        key={overlay.id}
+                        center={overlay.center}
+                        radius={circleRadiusMeters * Math.max(1, Math.min(overlay.weight, 5))}
+                        options={{
+                          fillColor: overlayStyle.fillColor,
+                          fillOpacity: Math.max(0.1, Math.min(opacity * 0.45, 0.7)),
+                          strokeColor: overlayStyle.strokeColor,
+                          strokeOpacity: Math.max(0.2, Math.min(opacity, 0.9)),
+                          strokeWeight: 1,
+                          clickable: false,
+                        }}
+                      />
+                    ))}
                  </GoogleMap>
               ) : (
                 <div className="h-[400px] flex flex-col items-center justify-center bg-gray-50 gap-4">
@@ -148,7 +206,7 @@ const HeatMap = () => {
               <div className="max-w-md">
                  <label className={labelClass}>
                     <Settings2 size={12} className="inline mr-1 text-indigo-500" />
-                    Heatmap Gradient Mode
+                    Overlay Color Mode
                  </label>
                  <select value={gradient} onChange={e => setGradient(e.target.value)} className={inputClass}>
                     <option>Default (Thermal)</option>

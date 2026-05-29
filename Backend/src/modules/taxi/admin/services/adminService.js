@@ -6306,6 +6306,56 @@ export const getSetPriceById = async (id, currentAdmin = null) => {
   return serializeSetPrice(item);
 };
 
+const resolveSetPriceVehicleAndTransportType = async ({
+  vehicleTypeId = null,
+  transportType = undefined,
+  fallbackVehicleTypeId = null,
+  fallbackTransportType = 'taxi',
+}) => {
+  const resolvedVehicleTypeId = toObjectId(vehicleTypeId || fallbackVehicleTypeId);
+
+  if (!resolvedVehicleTypeId) {
+    return {
+      vehicleTypeId: null,
+      transportType: transportType !== undefined
+        ? normalizeVehicleTransportType(transportType)
+        : normalizeVehicleTransportType(fallbackTransportType || 'taxi'),
+    };
+  }
+
+  const vehicle = await Vehicle.findById(resolvedVehicleTypeId)
+    .select('_id transport_type is_taxi')
+    .lean();
+
+  if (!vehicle) {
+    throw new ApiError(404, 'Vehicle type not found');
+  }
+
+  const vehicleTransportType = normalizeVehicleTransportType(
+    vehicle.transport_type || vehicle.is_taxi || 'taxi',
+  );
+  const requestedTransportType = transportType !== undefined
+    ? normalizeVehicleTransportType(transportType)
+    : normalizeVehicleTransportType(fallbackTransportType || vehicleTransportType);
+
+  const isCompatible =
+    vehicleTransportType === 'both'
+      ? ['both', 'taxi', 'delivery', 'pooling'].includes(requestedTransportType)
+      : requestedTransportType === vehicleTransportType;
+
+  if (!isCompatible) {
+    throw new ApiError(400, 'Selected vehicle type does not match the pricing transport type');
+  }
+
+  return {
+    vehicleTypeId: resolvedVehicleTypeId,
+    transportType:
+      vehicleTransportType === 'both'
+        ? requestedTransportType
+        : vehicleTransportType,
+  };
+};
+
 export const createSetPrice = async (payload, currentAdmin = null) => {
   if (currentAdmin) {
     assertAdminPermission(currentAdmin, 'set_prices.view', 'set prices');
@@ -6324,7 +6374,8 @@ export const createSetPrice = async (payload, currentAdmin = null) => {
       : ['cash', 'online', 'wallet'];
 
   const zone_id = toObjectId(payload.zone_id?._id || payload.zone_id?.id || payload.zone_id);
-  const vehicle_type = toObjectId(payload.vehicle_type?._id || payload.vehicle_type?.id || payload.vehicle_type || payload.type_id);
+  const requestedVehicleTypeId =
+    payload.vehicle_type?._id || payload.vehicle_type?.id || payload.vehicle_type || payload.type_id;
   const payloadServiceLocationId =
     payload.service_location_id?._id
     || payload.service_location_id?.id
@@ -6336,13 +6387,19 @@ export const createSetPrice = async (payload, currentAdmin = null) => {
   const service_location_id = zone?.service_location_id
     ? toObjectId(zone.service_location_id)
     : toObjectId(payloadServiceLocationId);
+  const { vehicleTypeId: vehicle_type, transportType: resolvedTransportType } =
+    await resolveSetPriceVehicleAndTransportType({
+      vehicleTypeId: requestedVehicleTypeId,
+      transportType: payload.transport_type,
+      fallbackTransportType: 'taxi',
+    });
 
   const setPrice = await SetPrice.create({
     zone_id,
     vehicle_type,
     service_location_id,
     pricing_scope: payload.pricing_scope || 'ride',
-    transport_type: normalizeVehicleTransportType(payload.transport_type || 'taxi'),
+    transport_type: resolvedTransportType,
     package_type_id: toObjectId(payload.package_type_id?._id || payload.package_type_id?.id || payload.package_type_id),
     package_destination: String(payload.package_destination || '').trim(),
     package_availability: payload.package_availability || 'available',
@@ -6429,11 +6486,54 @@ export const updateSetPrice = async (id, payload, currentAdmin = null) => {
     'order_number', 'bill_status', 'status'
   ];
 
+  const nonNegativeFields = new Set([
+    'admin_commision',
+    'admin_commission_for_owner',
+    'admin_commission_from_driver',
+    'service_tax',
+    'airport_surge',
+    'support_airport_fee',
+    'support_outstation',
+    'base_price',
+    'base_distance',
+    'price_per_distance',
+    'time_price',
+    'waiting_charge',
+    'outstation_base_price',
+    'outstation_base_distance',
+    'outstation_price_per_distance',
+    'outstation_time_price',
+    'free_waiting_before',
+    'free_waiting_after',
+    'price_per_seat',
+    'shared_price_per_distance',
+    'shared_cancel_fee',
+    'user_cancellation_fee',
+    'driver_cancellation_fee',
+    'order_number',
+  ]);
+
+  const requestedVehicleTypeId =
+    payload.vehicle_type?._id || payload.vehicle_type?.id || payload.vehicle_type || payload.type_id;
+  const shouldReconcileVehicleTransport =
+    payload.transport_type !== undefined || requestedVehicleTypeId !== undefined;
+
+  let reconciledVehicleAndTransport = null;
+  if (shouldReconcileVehicleTransport) {
+    reconciledVehicleAndTransport = await resolveSetPriceVehicleAndTransportType({
+      vehicleTypeId: requestedVehicleTypeId,
+      transportType: payload.transport_type,
+      fallbackVehicleTypeId: setPrice.vehicle_type,
+      fallbackTransportType: setPrice.transport_type || 'taxi',
+    });
+  }
+
   for (const field of fields) {
     let value = payload[field];
 
     if (field === 'zone_id') value = payload.zone_id?._id || payload.zone_id?.id || payload.zone_id;
-    if (field === 'vehicle_type') value = payload.vehicle_type?._id || payload.vehicle_type?.id || payload.vehicle_type || payload.type_id;
+    if (field === 'vehicle_type' && reconciledVehicleAndTransport) value = reconciledVehicleAndTransport.vehicleTypeId;
+    if (field === 'vehicle_type' && !reconciledVehicleAndTransport) value = payload.vehicle_type?._id || payload.vehicle_type?.id || payload.vehicle_type || payload.type_id;
     if (field === 'service_location_id') {
       const payloadServiceLocationId =
         payload.service_location_id?._id
@@ -6447,7 +6547,8 @@ export const updateSetPrice = async (id, payload, currentAdmin = null) => {
       value = zone?.service_location_id || payloadServiceLocationId;
     }
     if (field === 'package_type_id') value = payload.package_type_id?._id || payload.package_type_id?.id || payload.package_type_id;
-    if (field === 'transport_type' && value !== undefined) value = normalizeVehicleTransportType(value);
+    if (field === 'transport_type' && reconciledVehicleAndTransport) value = reconciledVehicleAndTransport.transportType;
+    if (field === 'transport_type' && !reconciledVehicleAndTransport && value !== undefined) value = normalizeVehicleTransportType(value);
 
     if (currentAdmin && value !== undefined) {
       if (field === 'zone_id' && value) {
@@ -6474,7 +6575,10 @@ export const updateSetPrice = async (id, payload, currentAdmin = null) => {
       } else if (field === 'payment_type') {
         setPrice[field] = Array.isArray(value) ? value : (typeof value === 'string' ? value.split(',').map(s => s.trim()) : value);
       } else if (typeof setPrice[field] === 'number' || ['admin_commision', 'service_tax', 'base_price', 'base_distance', 'price_per_distance', 'time_price', 'order_number'].includes(field)) {
-        setPrice[field] = Number(value);
+        const numericValue = Number(value);
+        setPrice[field] = nonNegativeFields.has(field)
+          ? Math.max(0, numericValue)
+          : numericValue;
       } else {
         setPrice[field] = value;
       }

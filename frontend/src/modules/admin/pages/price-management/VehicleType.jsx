@@ -3,6 +3,7 @@ import {
   Plus,
   Car,
   ChevronRight,
+  ChevronDown,
   Trash2,
   Edit2,
   ArrowLeft,
@@ -91,6 +92,21 @@ const normalizeTaxiMode = (value = '') => {
   if (normalized === 'pooling') return 'pooling';
   if (normalized === 'both' || normalized === 'all') return 'both';
   return 'taxi';
+};
+
+const getTransportTypeOptionDescription = (transportType = '', vehicleName = '') => {
+  const normalizedTransportType = normalizeTransportType(transportType);
+  const normalizedVehicleName = String(vehicleName || '').trim() || 'Vehicle name preview';
+
+  if (normalizedTransportType === 'both') {
+    return `${normalizedVehicleName} in both ride and delivery`;
+  }
+
+  if (normalizedTransportType === 'delivery') {
+    return normalizedVehicleName;
+  }
+
+  return normalizedVehicleName;
 };
 
 const resolveVehicleTransportType = (vehicle = {}) => {
@@ -201,7 +217,6 @@ const DELIVERY_CATEGORY_OPTIONS = [
 const TRANSPORT_TYPE_OPTIONS = [
   { id: 'taxi', name: 'taxi', display_name: 'Ride' },
   { id: 'delivery', name: 'delivery', display_name: 'Delivery' },
-  { id: 'pooling', name: 'pooling', display_name: 'Pooling' },
   { id: 'both', name: 'both', display_name: 'Both' },
 ];
 
@@ -304,6 +319,7 @@ const VehicleType = ({ mode: propMode }) => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTransportTypeMenuOpen, setIsTransportTypeMenuOpen] = useState(false);
   const [vehiclePreferences, setVehiclePreferences] = useState([]);
   const [pagination, setPagination] = useState({ total: 0, current_page: 1 });
   const [errorMessage, setErrorMessage] = useState('');
@@ -314,7 +330,7 @@ const VehicleType = ({ mode: propMode }) => {
 
     [...TRANSPORT_TYPE_OPTIONS, ...(Array.isArray(transportTypes) ? transportTypes : [])].forEach((item) => {
       const value = normalizeTransportType(item?.name || item?.transport_type || item?.id || '');
-      if (!value) return;
+      if (!value || value === 'pooling') return;
 
       normalized.set(value, {
         id: item?.id || item?._id || value,
@@ -328,6 +344,10 @@ const VehicleType = ({ mode: propMode }) => {
 
     return Array.from(normalized.values());
   }, [transportTypes]);
+  const selectedTransportTypeOption = useMemo(
+    () => transportTypeOptions.find((item) => item.name === formData.transport_type) || null,
+    [formData.transport_type, transportTypeOptions],
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -727,23 +747,75 @@ const VehicleType = ({ mode: propMode }) => {
         <div className="grid grid-cols-1 gap-8 p-6 lg:grid-cols-2 lg:p-8">
           <div>
             <label className={labelClass}>Transport Type *</label>
-            <select
-              value={formData.transport_type}
-              onChange={(e) => {
-                const nextTransportType = e.target.value;
-                updateForm('transport_type', nextTransportType);
-                if (!['delivery', 'both'].includes(normalizeTransportType(nextTransportType))) {
-                  updateForm('delivery_category', '');
-                  updateForm('delivery_distance_pricing', normalizeDeliveryDistancePricing());
-                }
-              }}
-              className={inputClass}
-            >
-               <option value="">Select Transport Type</option>
-               {transportTypeOptions.map((t) => (
-                 <option key={t.id || t._id || t.name} value={t.name}>{t.display_name}</option>
-               ))}
-            </select>
+            <input type="hidden" required value={formData.transport_type} onChange={() => {}} />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsTransportTypeMenuOpen((previous) => !previous)}
+                onBlur={(event) => {
+                  const nextFocusTarget = event.relatedTarget;
+                  if (!event.currentTarget.parentElement?.contains(nextFocusTarget)) {
+                    setIsTransportTypeMenuOpen(false);
+                  }
+                }}
+                className={`${inputClass} flex min-h-[76px] items-center justify-between text-left`}
+              >
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    {selectedTransportTypeOption?.display_name || 'Select Transport Type'}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {selectedTransportTypeOption
+                      ? getTransportTypeOptionDescription(selectedTransportTypeOption.name, formData.name)
+                      : 'Choose where this vehicle name should appear.'}
+                  </p>
+                </div>
+                <ChevronDown
+                  size={18}
+                  className={`shrink-0 text-slate-400 transition-transform ${isTransportTypeMenuOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {isTransportTypeMenuOpen ? (
+                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                  {transportTypeOptions.map((t) => {
+                    const selected = t.name === formData.transport_type;
+
+                    return (
+                      <button
+                        key={t.id || t._id || t.name}
+                        type="button"
+                        onClick={() => {
+                          const nextTransportType = t.name;
+                          updateForm('transport_type', nextTransportType);
+                          if (!['delivery', 'both'].includes(normalizeTransportType(nextTransportType))) {
+                            updateForm('delivery_category', '');
+                            updateForm('delivery_distance_pricing', normalizeDeliveryDistancePricing());
+                          }
+                          setIsTransportTypeMenuOpen(false);
+                        }}
+                        className={`flex w-full items-start justify-between gap-3 px-4 py-3 text-left transition ${
+                          selected ? 'bg-orange-50' : 'bg-white hover:bg-slate-50'
+                        }`}
+                      >
+                        <div>
+                          <p className={`text-sm font-bold ${selected ? 'text-orange-600' : 'text-slate-900'}`}>
+                            {t.display_name}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {getTransportTypeOptionDescription(t.name, formData.name)}
+                          </p>
+                        </div>
+                        {selected ? (
+                          <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-white">
+                            <CheckCircle2 size={12} />
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
             <p className="mt-2 text-xs text-slate-500">
               Choose `Both` for vehicle types like bikes that can handle ride and parcel flows.
             </p>
