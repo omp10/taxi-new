@@ -31,6 +31,21 @@ const toPlainData = (value) => {
   }
 };
 
+const getDeliveryPricingScore = (vehicle = {}) => {
+  const pricing = vehicle?.delivery_distance_pricing || {};
+  const enabled = Boolean(pricing?.enabled);
+  const basePrice = Number(pricing?.base_price || 0);
+  const distancePrice = Number(pricing?.distance_price || 0);
+  const baseDistance = Number(pricing?.base_distance ?? pricing?.free_distance ?? 0);
+
+  return Number(enabled) * 1000 + Number(basePrice > 0) * 100 + Number(distancePrice > 0) * 10 + Number(baseDistance > 0);
+};
+
+const getVehicleRecencyScore = (vehicle = {}) => {
+  const timestamp = new Date(vehicle?.updatedAt || vehicle?.createdAt || 0).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
 const DELIVERY_CATEGORY_OPTIONS = [
   {
     id: 'trucks',
@@ -174,16 +189,29 @@ const ParcelType = () => {
       const iconType = String(vehicle.icon_types || '').toLowerCase();
       return category.searchTokens.some((token) => name.includes(token) || iconType.includes(token));
     });
+    const prioritizedVehicles = [...filteredVehicles].sort((left, right) => {
+      const pricingDelta = getDeliveryPricingScore(right) - getDeliveryPricingScore(left);
+      if (pricingDelta !== 0) {
+        return pricingDelta;
+      }
+
+      const recencyDelta = getVehicleRecencyScore(right) - getVehicleRecencyScore(left);
+      if (recencyDelta !== 0) {
+        return recencyDelta;
+      }
+
+      return String(left?.name || '').localeCompare(String(right?.name || ''));
+    });
 
     if (loading || vehicleTypes.length === 0) return;
 
-    const selectedVehicle = filteredVehicles[0] || vehicleTypes[0];
-    const selectedVehicles = (filteredVehicles.length ? filteredVehicles : selectedVehicle ? [selectedVehicle] : [])
+    const selectedVehicle = prioritizedVehicles[0] || vehicleTypes[0];
+    const selectedVehicles = (prioritizedVehicles.length ? prioritizedVehicles : selectedVehicle ? [selectedVehicle] : [])
       .map((vehicle) => toPlainData(vehicle))
       .filter(Boolean);
     const plainSelectedVehicle = toPlainData(selectedVehicle);
-    const selectedVehicleIds = filteredVehicles.length
-      ? filteredVehicles.map((vehicle) => vehicle?._id || vehicle?.id).filter(Boolean)
+    const selectedVehicleIds = prioritizedVehicles.length
+      ? prioritizedVehicles.map((vehicle) => vehicle?._id || vehicle?.id).filter(Boolean)
       : [plainSelectedVehicle?._id || plainSelectedVehicle?.id].filter(Boolean);
 
     const nextState = {

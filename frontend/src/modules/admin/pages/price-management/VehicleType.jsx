@@ -103,8 +103,7 @@ const resolveVehicleTransportType = (vehicle = {}) => {
   const hasDeliveryPricing = Boolean(
     vehicle?.delivery_distance_pricing?.enabled ||
     Number(vehicle?.delivery_distance_pricing?.base_price || 0) > 0 ||
-    Number(vehicle?.delivery_distance_pricing?.distance_price || 0) > 0 ||
-    Number(vehicle?.delivery_distance_pricing?.time_price || 0) > 0,
+    Number(vehicle?.delivery_distance_pricing?.distance_price || 0) > 0,
   );
 
   if (hasDeliveryCategory || hasDeliveryPricing) {
@@ -171,8 +170,6 @@ const defaultFormData = {
     base_price: '',
     free_distance: '',
     distance_price: '',
-    free_time: '',
-    time_price: '',
   },
   status: 1,
   active: true,
@@ -213,10 +210,8 @@ const unwrap = (response) => response?.data?.data || response?.data || response;
 const normalizeDeliveryDistancePricing = (value = {}) => ({
   enabled: Boolean(value?.enabled),
   base_price: String(value?.base_price ?? ''),
-  free_distance: String(value?.free_distance ?? ''),
+  free_distance: String(value?.free_distance ?? value?.base_distance ?? ''),
   distance_price: String(value?.distance_price ?? ''),
-  free_time: String(value?.free_time ?? ''),
-  time_price: String(value?.time_price ?? ''),
 });
 
 const normalizeVehicle = (item = {}) => ({
@@ -514,8 +509,8 @@ const VehicleType = ({ mode: propMode }) => {
               base_price: Number(formData.delivery_distance_pricing?.base_price || 0),
               free_distance: Number(formData.delivery_distance_pricing?.free_distance || 0),
               distance_price: Number(formData.delivery_distance_pricing?.distance_price || 0),
-              free_time: Number(formData.delivery_distance_pricing?.free_time || 0),
-              time_price: Number(formData.delivery_distance_pricing?.time_price || 0),
+              free_time: 0,
+              time_price: 0,
             }
           : {
               enabled: false,
@@ -846,7 +841,7 @@ const VehicleType = ({ mode: propMode }) => {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Free Distance (KM)</label>
+                  <label className={labelClass}>Base Distance (KM)</label>
                   <input
                     type="number"
                     min="0"
@@ -859,6 +854,9 @@ const VehicleType = ({ mode: propMode }) => {
                     placeholder="2"
                     disabled={!formData.delivery_distance_pricing?.enabled}
                   />
+                  <p className="mt-2 text-[11px] font-medium text-slate-400">
+                    Distance covered by the base price before per-km charges begin.
+                  </p>
                 </div>
 
                 <div>
@@ -877,37 +875,6 @@ const VehicleType = ({ mode: propMode }) => {
                   />
                 </div>
 
-                <div>
-                  <label className={labelClass}>Free Time (Min)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.delivery_distance_pricing?.free_time ?? ''}
-                    onChange={(e) => updateForm('delivery_distance_pricing', {
-                      ...formData.delivery_distance_pricing,
-                      free_time: e.target.value,
-                    })}
-                    className={inputClass}
-                    placeholder="0"
-                    disabled={!formData.delivery_distance_pricing?.enabled}
-                  />
-                </div>
-
-                <div>
-                  <label className={labelClass}>Time Price</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.delivery_distance_pricing?.time_price ?? ''}
-                    onChange={(e) => updateForm('delivery_distance_pricing', {
-                      ...formData.delivery_distance_pricing,
-                      time_price: e.target.value,
-                    })}
-                    className={inputClass}
-                    placeholder="0"
-                    disabled={!formData.delivery_distance_pricing?.enabled}
-                  />
-                </div>
               </div>
 
               <p className="mt-3 text-xs text-slate-500">

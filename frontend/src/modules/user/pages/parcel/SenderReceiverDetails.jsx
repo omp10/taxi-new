@@ -220,22 +220,26 @@ const getNearbyPopularLocations = (anchorCoords, excludedLocations = [], limit =
 
 const normalizeDeliveryPricing = (vehicle = {}) => {
   const basePrice = Number(vehicle?.delivery_distance_pricing?.base_price ?? 0);
-  const freeDistance = Number(vehicle?.delivery_distance_pricing?.free_distance ?? 0);
+  const baseDistance = Number(
+    vehicle?.delivery_distance_pricing?.base_distance
+      ?? vehicle?.delivery_distance_pricing?.free_distance
+      ?? 0,
+  );
   const distancePrice = Number(vehicle?.delivery_distance_pricing?.distance_price ?? 0);
-  const timePrice = Number(vehicle?.delivery_distance_pricing?.time_price ?? 0);
 
   return {
     enabled: Boolean(
       vehicle?.delivery_distance_pricing?.enabled ||
       basePrice > 0 ||
-      distancePrice > 0 ||
-      timePrice > 0
+      distancePrice > 0
     ),
     basePrice,
-    freeDistance,
+    baseDistance,
     distancePrice,
   };
 };
+
+const roundCurrency = (value) => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
 
 const calculateVehicleFare = (vehicle, distanceKm) => {
   const pricing = normalizeDeliveryPricing(vehicle);
@@ -243,9 +247,19 @@ const calculateVehicleFare = (vehicle, distanceKm) => {
     return null;
   }
 
-  const extraDistanceKm = Math.max(Number(distanceKm || 0) - pricing.freeDistance, 0);
-  const total = pricing.basePrice + extraDistanceKm * pricing.distancePrice;
-  return Math.max(0, Math.round(total));
+  const normalizedDistanceKm = Math.max(Number(distanceKm || 0), 0);
+  const extraDistanceKm = Math.max(normalizedDistanceKm - pricing.baseDistance, 0);
+  const distanceCharge = extraDistanceKm * pricing.distancePrice;
+  const total = pricing.basePrice + distanceCharge;
+
+  return {
+    total: Math.max(0, roundCurrency(total)),
+    basePrice: pricing.basePrice,
+    baseDistance: pricing.baseDistance,
+    distancePrice: pricing.distancePrice,
+    extraDistanceKm: roundCurrency(extraDistanceKm),
+    distanceCharge: roundCurrency(distanceCharge),
+  };
 };
 
 const formatCoordLabel = (coords) => {
@@ -983,6 +997,7 @@ const SenderReceiverDetails = () => {
   const [zones, setZones] = useState([]);
   const [zonePaths, setZonePaths] = useState([]);
   const [serviceStores, setServiceStores] = useState([]);
+  const [routeEstimate, setRouteEstimate] = useState({ distanceKm: 0, durationMinutes: 0, source: 'air' });
   const autoPickupRequestedRef = useRef(false);
   const livePickupHydratedRef = useRef(false);
   const dropInputRef = useRef(null);
@@ -1083,17 +1098,6 @@ const SenderReceiverDetails = () => {
   }, [storedUser]);
 
   useEffect(() => {
-    const routeSelectedVehicles = Array.isArray(parcelState.selectedVehicles)
-      ? parcelState.selectedVehicles.filter(Boolean)
-      : parcelState.selectedVehicle
-        ? [parcelState.selectedVehicle].filter(Boolean)
-        : [];
-
-    if (routeSelectedVehicles.length > 0) {
-      setRecoveredSelectedVehicles(routeSelectedVehicles);
-      return undefined;
-    }
-
     const selectedVehicleIds = Array.isArray(parcelState.selectedVehicleIds)
       ? parcelState.selectedVehicleIds.map((id) => String(id || '').trim()).filter(Boolean)
       : [];
@@ -1191,32 +1195,88 @@ const SenderReceiverDetails = () => {
     }
     return [];
   }, [recoveredSelectedVehicles]);
+  const primarySelectedVehicle = useMemo(() => {
+    return selectedVehicles[0] || null;
+  }, [selectedVehicles]);
   const estimatedDistanceKm = useMemo(
     () => calculateDistanceKm(pickupCoords, dropCoords),
     [dropCoords, pickupCoords],
   );
+  const effectiveDistanceKm = Number(routeEstimate?.distanceKm || 0) > 0
+    ? Number(routeEstimate.distanceKm)
+    : estimatedDistanceKm;
+
+  useEffect(() => {
+    let active = true;
+
+    if (!Array.isArray(pickupCoords) || pickupCoords.length !== 2 || !Array.isArray(dropCoords) || dropCoords.length !== 2) {
+      setRouteEstimate({ distanceKm: 0, durationMinutes: 0, source: 'air' });
+      return undefined;
+    }
+
+    if (!isGoogleMapsLoaded || !window.google?.maps?.DirectionsService) {
+      setRouteEstimate({ distanceKm: estimatedDistanceKm, durationMinutes: 0, source: 'air' });
+      return undefined;
+    }
+
+    const directionsService = new window.google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: coordPairToLatLng(pickupCoords),
+        destination: coordPairToLatLng(dropCoords),
+        travelMode: window.google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (!active) {
+          return;
+        }
+
+        if (status !== 'OK' || !result?.routes?.length) {
+          setRouteEstimate({ distanceKm: estimatedDistanceKm, durationMinutes: 0, source: 'air' });
+          return;
+        }
+
+        const legs = Array.isArray(result.routes[0]?.legs) ? result.routes[0].legs : [];
+        const totals = legs.reduce(
+          (accumulator, leg) => ({
+            distanceMeters: accumulator.distanceMeters + Number(leg?.distance?.value || 0),
+            durationSeconds: accumulator.durationSeconds + Number(leg?.duration?.value || 0),
+          }),
+          { distanceMeters: 0, durationSeconds: 0 },
+        );
+
+        setRouteEstimate({
+          distanceKm: roundCurrency(totals.distanceMeters / 1000),
+          durationMinutes: Math.max(0, Math.ceil(totals.durationSeconds / 60)),
+          source: 'road',
+        });
+      },
+    );
+
+    return () => {
+      active = false;
+    };
+  }, [dropCoords, estimatedDistanceKm, isGoogleMapsLoaded, pickupCoords]);
+
   const estimatedFare = useMemo(() => {
     if (!drop.trim()) {
       return null;
     }
 
-    const dynamicFares = selectedVehicles
-      .map((vehicle) => calculateVehicleFare(vehicle, estimatedDistanceKm))
-      .filter((value) => Number.isFinite(value));
-
-    if (dynamicFares.length > 0) {
-      const minFare = Math.min(...dynamicFares);
-      const maxFare = Math.max(...dynamicFares);
-      return {
-        min: minFare,
-        max: maxFare,
-        approx: Math.round((minFare + maxFare) / 2),
-        dynamic: true,
-      };
+    const primaryFare = calculateVehicleFare(primarySelectedVehicle, effectiveDistanceKm);
+    if (!Number.isFinite(primaryFare?.total)) {
+      return null;
     }
 
-    return null;
-  }, [drop, estimatedDistanceKm, selectedVehicles]);
+    return {
+      min: primaryFare.total,
+      max: primaryFare.total,
+      approx: Math.round(primaryFare.total),
+      dynamic: true,
+      minBaseDistance: Number(primaryFare.baseDistance || 0),
+      maxBaseDistance: Number(primaryFare.baseDistance || 0),
+    };
+  }, [drop, effectiveDistanceKm, primarySelectedVehicle]);
 
   const validate = () => {
     const nextErrors = {};
@@ -1906,13 +1966,21 @@ const SenderReceiverDetails = () => {
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Approx. Delivery Fare</p>
               <p className="mt-1 text-3xl font-black tracking-tight text-white">
-                {estimatedFare ? `Rs ${estimatedFare.approx ?? estimatedFare.min}` : '—'}
+                {estimatedFare ? `Rs ${estimatedFare.approx ?? estimatedFare.min}` : '--'}
               </p>
               <p className="mt-1 text-[11px] font-bold text-slate-400">
                 {estimatedFare
-                  ? `Based on distance pricing for about ${estimatedDistanceKm.toFixed(1)} km`
+                  ? `Based on ${routeEstimate.source === 'road' ? 'road' : 'approx'} travel of ${effectiveDistanceKm.toFixed(1)} km`
                   : 'Enter drop location to view live fare'}
               </p>
+              {estimatedFare ? (
+                <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                  Base fare covers {estimatedFare.minBaseDistance === estimatedFare.maxBaseDistance
+                    ? `${estimatedFare.maxBaseDistance.toFixed(1)} km`
+                    : `${estimatedFare.minBaseDistance.toFixed(1)}-${estimatedFare.maxBaseDistance.toFixed(1)} km`}
+                  {' '}before extra charges.
+                </p>
+              ) : null}
             </div>
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
               <PackageCheck size={28} className="text-emerald-400" />
