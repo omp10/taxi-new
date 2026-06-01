@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, User, Phone, Mail, ChevronRight, Check, Loader2 } from 'lucide-react';
 import userBusService from '../../services/busService';
 import { userAuthService } from '../../services/authService';
+import { buildBusRouteState, toPlainData } from './busNavigationState';
 
 const getRoutePrefix = (pathname = '') => (pathname.startsWith('/taxi/user') ? '/taxi/user' : '');
 
@@ -204,15 +205,15 @@ const BusDetails = () => {
         handler: async (response) => {
           try {
             const verifyResponse = await userBusService.verifyBookingPayment(response);
-            const booking = unwrapPayload(verifyResponse);
+            const booking = toPlainData(unwrapPayload(verifyResponse));
             navigate(`${routePrefix}/bus/confirm`, {
               replace: true,
-              state: {
+              state: buildBusRouteState({
                 booking,
                 fromCity,
                 toCity,
                 date,
-              },
+              }),
             });
           } catch (verifyError) {
             setError(verifyError?.message || 'Payment verification failed');

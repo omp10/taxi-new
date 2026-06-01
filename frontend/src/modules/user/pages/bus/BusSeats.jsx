@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import userBusService from '../../services/busService';
+import { buildBusRouteState, toPlainData } from './busNavigationState';
 
 const getRoutePrefix = (pathname = '') => (pathname.startsWith('/taxi/user') ? '/taxi/user' : '');
 
@@ -137,7 +138,7 @@ const BusSeats = () => {
           date,
         });
         if (!active) return;
-        setSeatLayout(response?.data || null);
+        setSeatLayout(toPlainData(response?.data) || null);
       } catch (err) {
         if (!active) return;
         setError(err?.message || 'Failed to load seat layout');
@@ -269,12 +270,11 @@ const BusSeats = () => {
           whileTap={{ scale: 0.98 }}
           onClick={() =>
             navigate(`${routePrefix}/bus/checkout`, {
-              state: {
-                ...state,
+              state: buildBusRouteState(state, {
                 bus: seatLayout?.bus || bus,
                 selectedSeats,
                 totalFare,
-              },
+              }),
             })
           }
           className={`w-full py-4 rounded-2xl text-base font-bold flex items-center justify-center gap-2 transition-all ${

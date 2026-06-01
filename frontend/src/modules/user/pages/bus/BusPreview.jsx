@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Ticket,
 } from 'lucide-react';
+import { buildBusRouteState } from './busNavigationState';
 
 const getRoutePrefix = (pathname = '') => (pathname.startsWith('/taxi/user') ? '/taxi/user' : '');
 
@@ -279,7 +280,7 @@ const BusPreview = () => {
       <div className="fixed bottom-0 left-1/2 z-30 w-full max-w-lg -translate-x-1/2 border-t border-slate-100 bg-white/95 px-5 pb-8 pt-4 backdrop-blur-md">
         <button
           type="button"
-          onClick={() => navigate(`${routePrefix}/bus/seats`, { state })}
+          onClick={() => navigate(`${routePrefix}/bus/seats`, { state: buildBusRouteState(state) })}
           className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-slate-900 py-4 text-base font-black text-white shadow-lg"
         >
           Select Seats <ChevronRight size={18} />
