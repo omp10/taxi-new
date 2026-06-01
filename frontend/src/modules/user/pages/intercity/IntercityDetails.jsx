@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, MapPin, Navigation, ChevronRight, Map as MapIcon, LoaderCircle, AlertTriangle, X, Check, ShieldCheck, MapPinned } from 'lucide-react';
+import { ArrowLeft, MapPin, Navigation, ChevronRight, LoaderCircle, AlertTriangle, X, Check, ShieldCheck, MapPinned, Search } from 'lucide-react';
 import { GoogleMap, Autocomplete } from '@react-google-maps/api';
 import { HAS_VALID_GOOGLE_MAPS_KEY, INDIA_CENTER, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import api from '../../../../shared/api/axiosInstance';
@@ -24,6 +24,8 @@ const getCityCoords = (city) => {
   return [center.lng, center.lat];
 };
 const unwrapApiPayload = (response) => response?.data?.data || response?.data || response || {};
+const normalizeSuggestionKey = (result) =>
+  `${String(result?.title || '').trim().toLowerCase()}|${String(result?.address || '').trim().toLowerCase()}`;
 
 const generateIntercityBookingId = () =>
   'IC-' + Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6).padEnd(6, '0');
@@ -49,8 +51,17 @@ const IntercityDetails = () => {
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [mapSearchInput, setMapSearchInput] = useState('');
+  const [mapSearchResults, setMapSearchResults] = useState([]);
+  const [isSearchingMapLocations, setIsSearchingMapLocations] = useState(false);
   const mapInstanceRef = useRef(null);
   const lastCenterRef = useRef(INDIA_CENTER);
+  const geocoderRef = useRef(null);
+  const autocompleteServiceRef = useRef(null);
+  const placesServiceRef = useRef(null);
+  const autocompleteSessionTokenRef = useRef(null);
+  const mapSearchCacheRef = useRef(new Map());
+  const latestMapSearchRef = useRef(0);
   const { isLoaded, loadError } = useAppGoogleMapsLoader();
 
   const [autocompletePickup, setAutocompletePickup] = useState(null);
@@ -74,6 +85,17 @@ const IntercityDetails = () => {
       navigate(`${routePrefix}/intercity`, { replace: true });
     }
   }, [fromCity, navigate, routePrefix, vehicle]);
+
+  useEffect(() => {
+    if (!isLoaded || !window.google?.maps?.places?.AutocompleteService) {
+      return;
+    }
+
+    autocompleteServiceRef.current = autocompleteServiceRef.current || new window.google.maps.places.AutocompleteService();
+    placesServiceRef.current = placesServiceRef.current || new window.google.maps.places.PlacesService(document.createElement('div'));
+    autocompleteSessionTokenRef.current = autocompleteSessionTokenRef.current
+      || new window.google.maps.places.AutocompleteSessionToken();
+  }, [isLoaded]);
 
   useEffect(() => {
     let active = true;
@@ -251,6 +273,123 @@ const IntercityDetails = () => {
     }
   };
 
+  const getAutocompleteSessionToken = () => {
+    if (!window.google?.maps?.places?.AutocompleteSessionToken) {
+      return null;
+    }
+
+    if (!autocompleteSessionTokenRef.current) {
+      autocompleteSessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+    }
+
+    return autocompleteSessionTokenRef.current;
+  };
+
+  const resetAutocompleteSessionToken = () => {
+    if (!window.google?.maps?.places?.AutocompleteSessionToken) {
+      autocompleteSessionTokenRef.current = null;
+      return;
+    }
+
+    autocompleteSessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+  };
+
+  const getGeocoder = () => {
+    if (!window.google?.maps?.Geocoder) {
+      return null;
+    }
+
+    if (!geocoderRef.current) {
+      geocoderRef.current = new window.google.maps.Geocoder();
+    }
+
+    return geocoderRef.current;
+  };
+
+  const getPlacesService = () => {
+    if (!window.google?.maps?.places?.PlacesService) {
+      return null;
+    }
+
+    if (!placesServiceRef.current) {
+      placesServiceRef.current = new window.google.maps.places.PlacesService(document.createElement('div'));
+    }
+
+    return placesServiceRef.current;
+  };
+
+  const resolveSuggestionSelection = async (result) => {
+    const geocoder = getGeocoder();
+    const placesService = getPlacesService();
+
+    if (result?.placeId && placesService) {
+      return new Promise((resolve) => {
+        placesService.getDetails(
+          {
+            placeId: result.placeId,
+            sessionToken: getAutocompleteSessionToken(),
+            fields: ['formatted_address', 'geometry.location', 'name'],
+          },
+          (place, status) => {
+            const location = place?.geometry?.location;
+
+            if (status === 'OK' && location) {
+              resolve({
+                title: result.title || place.name || place.formatted_address,
+                address: place.formatted_address || result.address || result.title || '',
+                coords: [location.lng(), location.lat()],
+              });
+              return;
+            }
+
+            if (!geocoder || !result.placeId) {
+              resolve(null);
+              return;
+            }
+
+            geocoder.geocode({ placeId: result.placeId }, (results, geocodeStatus) => {
+              const geocodedPlace = results?.[0];
+              const geocodedLocation = geocodedPlace?.geometry?.location;
+
+              if (geocodeStatus === 'OK' && geocodedLocation) {
+                resolve({
+                  title: result.title || geocodedPlace.formatted_address,
+                  address: geocodedPlace.formatted_address || result.address || result.title || '',
+                  coords: [geocodedLocation.lng(), geocodedLocation.lat()],
+                });
+                return;
+              }
+
+              resolve(null);
+            });
+          },
+        );
+      });
+    }
+
+    if (!geocoder || !result?.address) {
+      return null;
+    }
+
+    return new Promise((resolve) => {
+      geocoder.geocode({ address: result.address }, (results, status) => {
+        const place = results?.[0];
+        const location = place?.geometry?.location;
+
+        if (status === 'OK' && location) {
+          resolve({
+            title: result.title || place.formatted_address,
+            address: place.formatted_address || result.address || result.title || '',
+            coords: [location.lng(), location.lat()],
+          });
+          return;
+        }
+
+        resolve(null);
+      });
+    });
+  };
+
   const openMapPicker = (field) => {
     const savedCoords = field === 'pickup' ? pickupCoords : dropCoords;
     const savedAddress = field === 'pickup' ? pickup : drop;
@@ -263,6 +402,9 @@ const IntercityDetails = () => {
     setMapCenter(center);
     lastCenterRef.current = center;
     setPickedAddress(savedAddress || (field === 'pickup' ? `${fromCity} location` : toCity));
+    setMapSearchInput(savedAddress || '');
+    setMapSearchResults([]);
+    setIsSearchingMapLocations(false);
     setShowMapPicker(true);
   };
 
@@ -315,6 +457,27 @@ const IntercityDetails = () => {
     );
   };
 
+  const handleMapSearchSuggestionSelect = async (result) => {
+    const resolvedResult = await resolveSuggestionSelection(result);
+    if (!resolvedResult?.coords) {
+      return;
+    }
+
+    const [lng, lat] = resolvedResult.coords;
+    const nextCenter = { lat, lng };
+    lastCenterRef.current = nextCenter;
+    setMapCenter(nextCenter);
+    setPickedAddress(resolvedResult.address);
+    setMapSearchInput(resolvedResult.address);
+    setMapSearchResults([]);
+    resetAutocompleteSessionToken();
+
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.panTo(nextCenter);
+      mapInstanceRef.current.setZoom(17);
+    }
+  };
+
   const handleConfirmMapLocation = () => {
     const selectedCoords = [lastCenterRef.current.lng, lastCenterRef.current.lat];
 
@@ -328,6 +491,60 @@ const IntercityDetails = () => {
 
     setShowMapPicker(false);
   };
+
+  useEffect(() => {
+    if (!showMapPicker || !mapSearchInput.trim() || mapSearchInput.trim().length < 3 || !HAS_VALID_GOOGLE_MAPS_KEY || !autocompleteServiceRef.current) {
+      setMapSearchResults([]);
+      setIsSearchingMapLocations(false);
+      return;
+    }
+
+    const normalizedQuery = `${activeMapField}:${mapSearchInput.trim().toLowerCase()}`;
+    const cached = mapSearchCacheRef.current.get(normalizedQuery);
+    if (cached) {
+      setMapSearchResults(cached);
+      setIsSearchingMapLocations(false);
+      return;
+    }
+
+    const requestId = latestMapSearchRef.current + 1;
+    latestMapSearchRef.current = requestId;
+    setIsSearchingMapLocations(true);
+
+    const timeoutId = window.setTimeout(() => {
+      const city = activeMapField === 'pickup' ? fromCity : toCity;
+
+      autocompleteServiceRef.current.getPlacePredictions(
+        {
+          input: mapSearchInput.trim(),
+          componentRestrictions: { country: 'in' },
+          sessionToken: getAutocompleteSessionToken(),
+          ...(city ? { locationBias: { center: getCityCenter(city), radius: 30000 } } : {}),
+        },
+        (predictions = [], status) => {
+          if (latestMapSearchRef.current !== requestId) {
+            return;
+          }
+
+          const nextResults = status === 'OK'
+            ? predictions.slice(0, 6).map((prediction) => ({
+              title: prediction.structured_formatting?.main_text || prediction.description,
+              address: prediction.description,
+              placeId: prediction.place_id,
+            }))
+            : [];
+
+          mapSearchCacheRef.current.set(normalizedQuery, nextResults);
+          setMapSearchResults(nextResults);
+          setIsSearchingMapLocations(false);
+        },
+      );
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeMapField, fromCity, mapSearchInput, showMapPicker, toCity]);
 
   return (
     <div className="min-h-screen bg-[#FAFBFF] max-w-lg mx-auto font-sans pb-32 relative overflow-x-hidden">
@@ -355,6 +572,47 @@ const IntercityDetails = () => {
                   <p className="text-[14px] font-bold text-slate-900 truncate leading-tight">
                     {isGeocoding ? 'Finding exact address...' : pickedAddress}
                   </p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  Edit location manually
+                </label>
+                <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <Search size={16} className="shrink-0 text-slate-400" />
+                    <input
+                      type="text"
+                      value={mapSearchInput}
+                      onChange={(event) => setMapSearchInput(event.target.value)}
+                      placeholder={activeMapField === 'pickup' ? 'Search pickup address' : 'Search drop address'}
+                      className="w-full bg-transparent text-[14px] font-bold text-slate-900 outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+                  {(isSearchingMapLocations || mapSearchResults.length > 0) ? (
+                    <div className="mt-3 border-t border-slate-100 pt-3">
+                      {isSearchingMapLocations ? (
+                        <div className="flex items-center gap-2 px-1 py-2 text-[12px] font-bold text-slate-500">
+                          <LoaderCircle size={14} className="animate-spin text-blue-500" />
+                          Searching suggestions...
+                        </div>
+                      ) : null}
+                      {mapSearchResults.map((result) => (
+                        <button
+                          key={normalizeSuggestionKey(result)}
+                          type="button"
+                          onClick={() => handleMapSearchSuggestionSelect(result)}
+                          className="flex w-full items-start gap-3 rounded-2xl px-1 py-3 text-left transition hover:bg-slate-50"
+                        >
+                          <MapPin size={15} className="mt-0.5 shrink-0 text-blue-500" />
+                          <span className="min-w-0">
+                            <span className="block truncate text-[13px] font-black text-slate-900">{result.title}</span>
+                            <span className="mt-0.5 block text-[12px] font-bold leading-5 text-slate-500">{result.address}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </div>
               {activeMapField === 'drop' && (

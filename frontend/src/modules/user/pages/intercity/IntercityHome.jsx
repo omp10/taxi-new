@@ -19,6 +19,7 @@ import {
   Check,
   AlertTriangle,
   User,
+  Pencil,
   ArrowUpDown,
   PhoneCall,
   Briefcase,
@@ -75,6 +76,9 @@ const formatTimeTo12Hour = (timeStr) => {
   return `${String(displayHour).padStart(2, '0')}:${minutes} ${ampm}`;
 };
 
+const normalizeSuggestionKey = (result) =>
+  `${String(result?.title || '').trim().toLowerCase()}|${String(result?.address || '').trim().toLowerCase()}`;
+
 const IntercityHome = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -112,9 +116,21 @@ const IntercityHome = () => {
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [mapSearchInput, setMapSearchInput] = useState('');
+  const [mapSearchResults, setMapSearchResults] = useState([]);
+  const [isSearchingMapLocations, setIsSearchingMapLocations] = useState(false);
+  const [isMapSearchFocused, setIsMapSearchFocused] = useState(false);
+  const [isEditingPickup, setIsEditingPickup] = useState(false);
   const mapInstanceRef = useRef(null);
   const lastCenterRef = useRef(INDIA_CENTER);
   const dateTimeInputRef = useRef(null);
+  const mapSearchInputRef = useRef(null);
+  const geocoderRef = useRef(null);
+  const autocompleteServiceRef = useRef(null);
+  const placesServiceRef = useRef(null);
+  const autocompleteSessionTokenRef = useRef(null);
+  const mapSearchCacheRef = useRef(new Map());
+  const latestMapSearchRef = useRef(0);
 
   const { isLoaded } = useAppGoogleMapsLoader();
 
@@ -139,6 +155,17 @@ const IntercityHome = () => {
     loadPackages();
   }, []);
 
+  useEffect(() => {
+    if (!isLoaded || !window.google?.maps?.places?.AutocompleteService) {
+      return;
+    }
+
+    autocompleteServiceRef.current = autocompleteServiceRef.current || new window.google.maps.places.AutocompleteService();
+    placesServiceRef.current = placesServiceRef.current || new window.google.maps.places.PlacesService(document.createElement('div'));
+    autocompleteSessionTokenRef.current = autocompleteSessionTokenRef.current
+      || new window.google.maps.places.AutocompleteSessionToken();
+  }, [isLoaded]);
+
   // Set current location on mount if allowed
   useEffect(() => {
     if (navigator.geolocation) {
@@ -158,7 +185,8 @@ const IntercityHome = () => {
   const reverseGeocode = (coords) => {
     if (!window.google?.maps?.Geocoder) return;
     setIsGeocoding(true);
-    const geocoder = new window.google.maps.Geocoder();
+    const geocoder = geocoderRef.current || new window.google.maps.Geocoder();
+    geocoderRef.current = geocoder;
     geocoder.geocode({ location: coords }, (results, status) => {
       setIsGeocoding(false);
       if (status === 'OK' && results?.[0]) {
@@ -179,6 +207,78 @@ const IntercityHome = () => {
         }
       }
     });
+  };
+
+  const getAutocompleteSessionToken = () => {
+    if (!window.google?.maps?.places?.AutocompleteSessionToken) {
+      return null;
+    }
+
+    if (!autocompleteSessionTokenRef.current) {
+      autocompleteSessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+    }
+
+    return autocompleteSessionTokenRef.current;
+  };
+
+  const resetAutocompleteSessionToken = () => {
+    if (!window.google?.maps?.places?.AutocompleteSessionToken) {
+      autocompleteSessionTokenRef.current = null;
+      return;
+    }
+
+    autocompleteSessionTokenRef.current = new window.google.maps.places.AutocompleteSessionToken();
+  };
+
+  const resolveSuggestionSelection = async (result) => {
+    const placesService = placesServiceRef.current;
+    const geocoder = geocoderRef.current || (window.google?.maps?.Geocoder ? new window.google.maps.Geocoder() : null);
+    geocoderRef.current = geocoder;
+
+    if (result?.placeId && placesService) {
+      return new Promise((resolve) => {
+        placesService.getDetails(
+          {
+            placeId: result.placeId,
+            sessionToken: getAutocompleteSessionToken(),
+            fields: ['formatted_address', 'geometry.location', 'name'],
+          },
+          (place, status) => {
+            const location = place?.geometry?.location;
+
+            if (status === 'OK' && location) {
+              resolve({
+                address: place.formatted_address || result.address || result.title || '',
+                coords: { lat: location.lat(), lng: location.lng() },
+              });
+              return;
+            }
+
+            if (!geocoder || !result.placeId) {
+              resolve(null);
+              return;
+            }
+
+            geocoder.geocode({ placeId: result.placeId }, (results, geocodeStatus) => {
+              const geocodedPlace = results?.[0];
+              const geocodedLocation = geocodedPlace?.geometry?.location;
+
+              if (geocodeStatus === 'OK' && geocodedLocation) {
+                resolve({
+                  address: geocodedPlace.formatted_address || result.address || result.title || '',
+                  coords: { lat: geocodedLocation.lat(), lng: geocodedLocation.lng() },
+                });
+                return;
+              }
+
+              resolve(null);
+            });
+          },
+        );
+      });
+    }
+
+    return null;
   };
 
   const handleMapIdle = () => {
@@ -216,6 +316,116 @@ const IntercityHome = () => {
       { enableHighAccuracy: true }
     );
   };
+
+  const handleOpenMapPicker = () => {
+    const center = Array.isArray(pickupCoords) && pickupCoords.length === 2
+      ? { lat: pickupCoords[1], lng: pickupCoords[0] }
+      : mapCenter;
+
+    setMapCenter(center);
+    lastCenterRef.current = center;
+    setMapSearchInput(pickupAddress || '');
+    setMapSearchResults([]);
+    setIsSearchingMapLocations(false);
+    setIsMapSearchFocused(false);
+    setIsEditingPickup(false);
+    setShowMapPicker(true);
+  };
+
+  const handleEditPickup = () => {
+    setIsEditingPickup(true);
+    setMapSearchInput('');
+    setMapSearchResults([]);
+    setIsMapSearchFocused(true);
+
+    window.setTimeout(() => {
+      mapSearchInputRef.current?.focus();
+    }, 0);
+  };
+
+  const handleMapSearchSuggestionSelect = async (result) => {
+    const resolved = await resolveSuggestionSelection(result);
+    if (!resolved?.coords) {
+      return;
+    }
+
+    const nextCenter = resolved.coords;
+    lastCenterRef.current = nextCenter;
+    setMapCenter(nextCenter);
+    setPickupAddress(resolved.address);
+    setMapSearchInput(resolved.address);
+    setMapSearchResults([]);
+    setIsMapSearchFocused(false);
+    setIsEditingPickup(false);
+    resetAutocompleteSessionToken();
+
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.panTo(nextCenter);
+      mapInstanceRef.current.setZoom(17);
+    }
+  };
+
+  useEffect(() => {
+    const trimmedQuery = mapSearchInput.trim();
+
+    if (
+      !showMapPicker
+      || !isMapSearchFocused
+      || !trimmedQuery
+      || trimmedQuery.length < 4
+      || !HAS_VALID_GOOGLE_MAPS_KEY
+      || !autocompleteServiceRef.current
+      || trimmedQuery === String(pickupAddress || '').trim()
+    ) {
+      setMapSearchResults([]);
+      setIsSearchingMapLocations(false);
+      return;
+    }
+
+    const normalizedQuery = trimmedQuery.toLowerCase();
+    const cached = mapSearchCacheRef.current.get(normalizedQuery);
+    if (cached) {
+      setMapSearchResults(cached);
+      setIsSearchingMapLocations(false);
+      return;
+    }
+
+    const requestId = latestMapSearchRef.current + 1;
+    latestMapSearchRef.current = requestId;
+    setIsSearchingMapLocations(true);
+
+    const timeoutId = window.setTimeout(() => {
+      autocompleteServiceRef.current.getPlacePredictions(
+        {
+          input: trimmedQuery,
+          componentRestrictions: { country: 'in' },
+          sessionToken: getAutocompleteSessionToken(),
+          locationBias: { center: mapCenter, radius: 30000 },
+        },
+        (predictions = [], status) => {
+          if (latestMapSearchRef.current !== requestId) {
+            return;
+          }
+
+          const nextResults = status === 'OK'
+            ? predictions.slice(0, 6).map((prediction) => ({
+              title: prediction.structured_formatting?.main_text || prediction.description,
+              address: prediction.description,
+              placeId: prediction.place_id,
+            }))
+            : [];
+
+          mapSearchCacheRef.current.set(normalizedQuery, nextResults);
+          setMapSearchResults(nextResults);
+          setIsSearchingMapLocations(false);
+        },
+      );
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isMapSearchFocused, mapCenter, mapSearchInput, pickupAddress, showMapPicker]);
 
   const filteredPackages = useMemo(() => {
     const query = normalizeSearchValue(toCitySearch);
@@ -349,12 +559,63 @@ const IntercityHome = () => {
                   <ArrowLeft size={20} className="text-slate-900" strokeWidth={2.5} />
                 </motion.button>
                 <div className="flex-1 bg-white rounded-[24px] shadow-lg border border-blue-50 px-5 py-4 min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-1">Pinpoint Pickup</p>
-                  <p className="text-[14px] font-bold text-slate-900 truncate leading-tight">
-                    {isGeocoding ? 'Finding exact address...' : (pickupAddress || 'Set location on map')}
-                  </p>
+                  <div className="mb-1 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Pinpoint Pickup</p>
+                    <button
+                      type="button"
+                      onClick={handleEditPickup}
+                      className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-600"
+                    >
+                      <Pencil size={10} />
+                      Edit
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isEditingPickup ? (
+                      <>
+                        <Search size={14} className="shrink-0 text-slate-400" />
+                        <input
+                          ref={mapSearchInputRef}
+                          type="text"
+                          value={mapSearchInput}
+                          onChange={(event) => setMapSearchInput(event.target.value)}
+                          onFocus={() => setIsMapSearchFocused(true)}
+                          placeholder={isGeocoding ? 'Finding exact address...' : 'Search pickup location'}
+                          className="w-full bg-transparent text-[14px] font-bold text-slate-900 outline-none placeholder:text-slate-400"
+                        />
+                      </>
+                    ) : (
+                      <p className="truncate text-[14px] font-bold text-slate-900 leading-tight">
+                        {isGeocoding ? 'Finding exact address...' : (pickupAddress || 'Set location on map')}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
+              {(isSearchingMapLocations || mapSearchResults.length > 0) ? (
+                <div className="mt-4 rounded-[24px] border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                  {isSearchingMapLocations ? (
+                    <div className="flex items-center gap-2 px-1 py-2 text-[12px] font-bold text-slate-500">
+                      <LoaderCircle size={14} className="animate-spin text-blue-500" />
+                      Searching suggestions...
+                    </div>
+                  ) : null}
+                  {mapSearchResults.map((result) => (
+                    <button
+                      key={normalizeSuggestionKey(result)}
+                      type="button"
+                      onClick={() => handleMapSearchSuggestionSelect(result)}
+                      className="flex w-full items-start gap-3 rounded-2xl px-1 py-3 text-left transition hover:bg-slate-50"
+                    >
+                      <MapPin size={15} className="mt-0.5 shrink-0 text-blue-500" />
+                      <span className="min-w-0">
+                        <span className="block truncate text-[13px] font-black text-slate-900">{result.title}</span>
+                        <span className="mt-0.5 block text-[12px] font-bold leading-5 text-slate-500">{result.address}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             <div className="flex-1 relative bg-slate-100">
@@ -408,8 +669,10 @@ const IntercityHome = () => {
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  const center = mapInstanceRef.current.getCenter();
-                  setPickupCoords([center.lng(), center.lat()]);
+                  const center = mapInstanceRef.current?.getCenter();
+                  const lng = center?.lng?.() ?? lastCenterRef.current.lng;
+                  const lat = center?.lat?.() ?? lastCenterRef.current.lat;
+                  setPickupCoords([lng, lat]);
                   setShowMapPicker(false);
                 }}
                 disabled={isGeocoding}
@@ -480,7 +743,7 @@ const IntercityHome = () => {
 
             {/* FROM Field */}
             <div
-              onClick={() => setShowMapPicker(true)}
+              onClick={handleOpenMapPicker}
               className="px-5 py-4 flex items-center gap-4 cursor-pointer hover:bg-[#EBF3F7] rounded-t-2xl transition-colors border-b border-slate-200/80"
             >
               <div className="w-6 h-6 shrink-0 flex items-center justify-center text-slate-400">
