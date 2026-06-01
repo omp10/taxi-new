@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
+import simplify from 'simplify-js';
 import {
     MessageSquare,
     Phone,
@@ -34,6 +35,9 @@ const MAP_CONTAINER_STYLE = {
 const DEFAULT_CENTER = { lat: 22.7196, lng: 75.8577 };
 const DEFAULT_DRIVER_COORDS = [75.8577, 22.7196];
 const ARRIVAL_RADIUS_METERS = 100;
+const ROUTE_SIMPLIFY_TOLERANCE = 0.00008;
+const ROUTE_OFF_PATH_METERS = 45;
+const ROUTE_REFRESH_DEBOUNCE_MS = 2500;
 
 const mapStyles = [
     { elementType: 'geometry', stylers: [{ color: '#f8fafc' }] },
@@ -498,6 +502,129 @@ const getDistanceMeters = (from, to) => {
     return earthRadiusMeters * c;
 };
 
+const simplifyRoutePath = (points, tolerance = ROUTE_SIMPLIFY_TOLERANCE) => {
+    const normalized = (Array.isArray(points) ? points : [])
+        .filter((point) => Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lng)))
+        .map((point) => ({ lat: Number(point.lat), lng: Number(point.lng) }));
+
+    if (normalized.length <= 2) {
+        return normalized;
+    }
+
+    const simplified = simplify(
+        normalized.map((point) => ({ x: point.lng, y: point.lat })),
+        tolerance,
+        true,
+    ).map((point) => ({ lat: point.y, lng: point.x }));
+
+    const firstPoint = normalized[0];
+    const lastPoint = normalized[normalized.length - 1];
+    const nextPath = simplified.slice();
+
+    if (!arePositionsNearlyEqual(nextPath[0], firstPoint, 0.000001)) {
+        nextPath.unshift(firstPoint);
+    }
+
+    if (!arePositionsNearlyEqual(nextPath[nextPath.length - 1], lastPoint, 0.000001)) {
+        nextPath.push(lastPoint);
+    }
+
+    return nextPath;
+};
+
+const projectPointOnSegment = (point, segmentStart, segmentEnd) => {
+    const ax = Number(segmentStart?.lng);
+    const ay = Number(segmentStart?.lat);
+    const bx = Number(segmentEnd?.lng);
+    const by = Number(segmentEnd?.lat);
+    const px = Number(point?.lng);
+    const py = Number(point?.lat);
+
+    if (![ax, ay, bx, by, px, py].every(Number.isFinite)) {
+        return null;
+    }
+
+    const abx = bx - ax;
+    const aby = by - ay;
+    const abLengthSquared = (abx * abx) + (aby * aby);
+
+    if (abLengthSquared <= 0) {
+        return { lat: ay, lng: ax, ratio: 0 };
+    }
+
+    const apx = px - ax;
+    const apy = py - ay;
+    const ratio = Math.max(0, Math.min(1, ((apx * abx) + (apy * aby)) / abLengthSquared));
+
+    return {
+        lat: ay + (aby * ratio),
+        lng: ax + (abx * ratio),
+        ratio,
+    };
+};
+
+const trimRoutePathFromPosition = (points, position) => {
+    const normalizedPath = (Array.isArray(points) ? points : [])
+        .filter((point) => Number.isFinite(Number(point?.lat)) && Number.isFinite(Number(point?.lng)))
+        .map((point) => ({ lat: Number(point.lat), lng: Number(point.lng) }));
+
+    if (!position || normalizedPath.length === 0) {
+        return {
+            path: normalizedPath,
+            distanceMeters: Number.POSITIVE_INFINITY,
+            advanced: false,
+        };
+    }
+
+    if (normalizedPath.length === 1) {
+        return {
+            path: [position],
+            distanceMeters: getDistanceMeters(position, normalizedPath[0]),
+            advanced: !arePositionsNearlyEqual(position, normalizedPath[0], 0.00001),
+        };
+    }
+
+    let closestDistanceMeters = Number.POSITIVE_INFINITY;
+    let closestSegmentIndex = 0;
+    let closestProjectedPoint = normalizedPath[0];
+
+    for (let index = 0; index < normalizedPath.length - 1; index += 1) {
+        const projected = projectPointOnSegment(position, normalizedPath[index], normalizedPath[index + 1]);
+        if (!projected) {
+            continue;
+        }
+
+        const distanceMeters = getDistanceMeters(position, projected);
+        if (distanceMeters < closestDistanceMeters) {
+            closestDistanceMeters = distanceMeters;
+            closestSegmentIndex = index;
+            closestProjectedPoint = { lat: projected.lat, lng: projected.lng };
+        }
+    }
+
+    const remainingPath = [
+        position,
+        closestProjectedPoint,
+        ...normalizedPath.slice(closestSegmentIndex + 1),
+    ].filter((point, index, items) => (
+        index === 0 || !arePositionsNearlyEqual(point, items[index - 1], 0.000001)
+    ));
+
+    return {
+        path: simplifyRoutePath(remainingPath),
+        distanceMeters: closestDistanceMeters,
+        advanced: closestSegmentIndex > 0 || !arePositionsNearlyEqual(position, normalizedPath[0], 0.00005),
+    };
+};
+
+const arePathsEquivalent = (first = [], second = [], threshold = 0.00001) => {
+    if (first.length !== second.length) {
+        return false;
+    }
+
+    return first.every((point, index) => arePositionsNearlyEqual(point, second[index], threshold));
+};
+
 const formatDistanceLabel = (meters) => {
     const distance = Number(meters || 0);
 
@@ -804,6 +931,8 @@ const ActiveTrip = () => {
     const hasResolvedLivePositionRef = React.useRef(false);
     const hasHydratedUiStateRef = React.useRef(false);
     const mapFrameKeyRef = React.useRef('');
+    const lastRouteRefreshAtRef = React.useRef(0);
+    const routeTrimStateRef = React.useRef({ distanceMeters: Number.POSITIVE_INFINITY, shouldRefresh: false });
 
     const activeDestination = useMemo(
         () => (phase === 'to_pickup' || phase === 'otp_verification' ? pickupPosition : dropPosition),
@@ -1676,22 +1805,43 @@ const ActiveTrip = () => {
             return;
         }
 
+        if (arePositionsNearlyEqual(driverPosition, activeDestination)) {
+            const nextPath = [driverPosition];
+            setRoutePath((currentPath) => (arePathsEquivalent(currentPath, nextPath) ? currentPath : nextPath));
+            setRouteError('');
+            routeTrimStateRef.current = { distanceMeters: 0, shouldRefresh: false };
+            return;
+        }
+
+        if (routePath.length > 1) {
+            const trimmedRoute = trimRoutePathFromPosition(routePath, driverPosition);
+            routeTrimStateRef.current = {
+                distanceMeters: trimmedRoute.distanceMeters,
+                shouldRefresh: trimmedRoute.distanceMeters > ROUTE_OFF_PATH_METERS,
+            };
+
+            if (!routeTrimStateRef.current.shouldRefresh && !arePathsEquivalent(routePath, trimmedRoute.path)) {
+                setRoutePath(trimmedRoute.path);
+            }
+
+            if (!routeTrimStateRef.current.shouldRefresh) {
+                setRouteError('');
+                return;
+            }
+        }
+
         if (!isLoaded || !window.google?.maps?.DirectionsService) {
             setRoutePath(buildFallbackRoute(driverPosition, activeDestination));
             setRouteError('');
             return;
         }
 
-        if (arePositionsNearlyEqual(driverPosition, activeDestination)) {
-            setRoutePath((currentPath) => (
-                currentPath.length === 1 && arePositionsNearlyEqual(currentPath[0], driverPosition)
-                    ? currentPath
-                    : [driverPosition]
-            ));
-            setRouteError('');
+        const now = Date.now();
+        if (now - lastRouteRefreshAtRef.current < ROUTE_REFRESH_DEBOUNCE_MS) {
             return;
         }
 
+        lastRouteRefreshAtRef.current = now;
         let active = true;
         const directionsService = new window.google.maps.DirectionsService();
 
@@ -1708,17 +1858,20 @@ const ActiveTrip = () => {
                 }
 
                 if (status === 'OK' && result?.routes?.[0]?.overview_path?.length) {
-                    setRoutePath(
+                    const nextPath = simplifyRoutePath(
                         result.routes[0].overview_path.map((point) => ({
                             lat: point.lat(),
                             lng: point.lng(),
                         })),
                     );
+                    setRoutePath(nextPath);
+                    routeTrimStateRef.current = { distanceMeters: 0, shouldRefresh: false };
                     setRouteError('');
                     return;
                 }
 
                 setRoutePath(buildFallbackRoute(driverPosition, activeDestination));
+                routeTrimStateRef.current = { distanceMeters: Number.POSITIVE_INFINITY, shouldRefresh: false };
                 setRouteError(status || 'Directions unavailable');
             },
         );
@@ -1726,7 +1879,7 @@ const ActiveTrip = () => {
         return () => {
             active = false;
         };
-    }, [activeDestination, driverPosition, isLoaded, isSimulationEnabled]);
+    }, [activeDestination, driverPosition, isLoaded, isSimulationEnabled, routePath]);
 
     useEffect(() => {
         if (!map || !window.google?.maps) {
@@ -2016,7 +2169,7 @@ const ActiveTrip = () => {
             <div className="absolute bottom-0 left-0 right-0 z-40">
                 <AnimatePresence mode="wait">
                     {phase === 'to_pickup' && (
-                        <motion.div
+                        <Motion.div
                             key="to_pickup"
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
@@ -2063,7 +2216,7 @@ const ActiveTrip = () => {
                                     {arrivalGuardError}
                                 </p>
                             )}
-                            <motion.button
+                            <Motion.button
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => {
                                     if (!canMarkArrived) {
@@ -2080,12 +2233,12 @@ const ActiveTrip = () => {
                                 style={{ backgroundColor: routeStrokeColor, boxShadow: `0 18px 30px ${routeAccentMuted}` }}
                             >
                                 {isParcel ? 'Arrived at Sender' : 'I Have Arrived'} <CheckCircle2 size={18} strokeWidth={3} />
-                            </motion.button>
-                        </motion.div>
+                            </Motion.button>
+                        </Motion.div>
                     )}
 
                     {phase === 'otp_verification' && (
-                        <motion.div
+                        <Motion.div
                             key="otp_verification"
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
@@ -2166,11 +2319,11 @@ const ActiveTrip = () => {
                                 }} className="flex-1 h-13 border-2 border-slate-100 text-slate-400 rounded-xl text-[12px] font-semibold uppercase tracking-wide active:scale-95 transition-all">Go Back</button>
                                 <button onClick={openSupportChat} className="flex-1 h-13 rounded-xl text-[12px] font-semibold uppercase tracking-wide active:scale-95 transition-all" style={{ backgroundColor: routeAccentSoft, color: routeStrokeColor }}>Support</button>
                             </div>
-                        </motion.div>
+                        </Motion.div>
                     )}
 
                     {phase === 'in_trip' && (
-                        <motion.div
+                        <Motion.div
                             key="in_trip"
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
@@ -2227,7 +2380,7 @@ const ActiveTrip = () => {
                                     {arrivalGuardError}
                                 </p>
                             )}
-                            <motion.button
+                            <Motion.button
                                 whileTap={{ scale: 0.96 }}
                                 onClick={() => {
                                     if (isParcel && !canDeliverParcel) {
@@ -2247,12 +2400,12 @@ const ActiveTrip = () => {
                                 style={{ backgroundColor: routeStrokeColor, boxShadow: `0 18px 30px ${routeAccentMuted}` }}
                             >
                                 {isParcel ? 'Deliver Parcel' : 'Arrived at Destination'} <ChevronRight size={18} strokeWidth={3} />
-                            </motion.button>
-                        </motion.div>
+                            </Motion.button>
+                        </Motion.div>
                     )}
 
                     {phase === 'payment_confirm' && (
-                        <motion.div
+                        <Motion.div
                             key="payment_confirm"
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
@@ -2399,7 +2552,7 @@ const ActiveTrip = () => {
                                 </div>
                             )}
                             {selectedPaymentMode === 'cash' && driverPaymentStatus === 'success' && (
-                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 rounded-3xl border border-emerald-100 bg-emerald-50/80 p-5 text-center shadow-lg">
+                                <Motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-6 rounded-3xl border border-emerald-100 bg-emerald-50/80 p-5 text-center shadow-lg">
                                     <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg" style={{ backgroundColor: routeStrokeColor }}>
                                         <Banknote size={24} strokeWidth={2.5} />
                                     </div>
@@ -2418,13 +2571,13 @@ const ActiveTrip = () => {
                                     >
                                         Cash Received
                                     </button>
-                                </motion.div>
+                                </Motion.div>
                             )}
                             {driverPaymentStatus === 'qr_generated' && (() => {
                                 const isInlineQrImage = String(paymentQr?.imageUrl || '').startsWith('data:image/');
 
                                 return (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-3xl p-5 mb-6 text-center shadow-2xl text-white" style={{ backgroundColor: routeStrokeColor }}>
+                                    <Motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-3xl p-5 mb-6 text-center shadow-2xl text-white" style={{ backgroundColor: routeStrokeColor }}>
                                         <div
                                             onClick={() => !isInlineQrImage && setQrZoomed(!qrZoomed)}
                                             className={`mx-auto mb-3 flex h-[16rem] w-full max-w-[16rem] items-center justify-center rounded-2xl bg-white p-3 relative overflow-hidden select-none transition-all duration-300 ${
@@ -2453,7 +2606,7 @@ const ActiveTrip = () => {
                                                 </div>
                                             )}
                                             {/* Glowing High-Tech Emerald Laser Scan Line */}
-                                            <motion.div
+                                            <Motion.div
                                                 animate={{ top: ['5%', '95%', '5%'] }}
                                                 transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
                                                 className="absolute left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_10px_#34d399] pointer-events-none"
@@ -2483,10 +2636,10 @@ const ActiveTrip = () => {
                                             </a>
                                         )}
                                         <button onClick={() => setDriverPaymentStatus('success')} className="w-full py-3 bg-white/10 text-white rounded-xl text-[10px] font-semibold uppercase tracking-wide border border-white/5">Confirm Received</button>
-                                    </motion.div>
+                                    </Motion.div>
                                 );
                             })()}
-                            <motion.button
+                            <Motion.button
                                 whileTap={{ scale: 0.96 }}
                                 disabled={driverPaymentStatus !== 'success' || selectedPaymentMode === 'cash'}
                                 onClick={async () => {
@@ -2502,12 +2655,12 @@ const ActiveTrip = () => {
                                     : driverPaymentStatus === 'success'
                                         ? 'Finalize Earnings'
                                         : 'Waiting...'} <ChevronRight size={18} strokeWidth={3} />
-                            </motion.button>
-                        </motion.div>
+                            </Motion.button>
+                        </Motion.div>
                     )}
 
                     {phase === 'review' && (
-                        <motion.div
+                        <Motion.div
                             key="review"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -2531,7 +2684,7 @@ const ActiveTrip = () => {
                                 </div>
                             </div>
                             <button onClick={completeRideAndExit} className="w-full h-15 text-white rounded-xl flex items-center justify-center gap-3 text-[14px] font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all" style={{ backgroundColor: routeStrokeColor, boxShadow: `0 18px 30px ${routeAccentMuted}` }}>Done <Check size={20} strokeWidth={4} /></button>
-                        </motion.div>
+                        </Motion.div>
                     )}
                 </AnimatePresence>
             </div>
