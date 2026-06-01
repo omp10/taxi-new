@@ -370,34 +370,34 @@ const SetPrices = ({ mode }) => {
     return (p.zone_name || '').toLowerCase().includes(q) || (p.vehicle_type_name || '').toLowerCase().includes(q);
   });
 
-  const handleDeleteZone = async (prize) => {
-    const zoneId = prize?.zone_id?._id || prize?.zone_id?.id || prize?.zone_id || '';
-    const zoneName = prize?.zone_name || prize?.zone_id?.name || 'this zone';
+  const handleDeleteSetPrice = async (prize) => {
+    const priceId = prize?.id || prize?._id || '';
+    const zoneName = prize?.zone_name || 'this zone';
+    const vehicleName = prize?.vehicle_type_name || 'this vehicle type';
 
-    if (!zoneId) {
-      alert('Zone id is missing for this pricing row.');
+    if (!priceId) {
+      alert('Pricing rule id is missing for this row.');
       return;
     }
 
-    if (!window.confirm(`Delete zone "${zoneName}"? This will remove the zone itself.`)) {
+    if (!window.confirm(`Delete the pricing rule for "${zoneName}" and "${vehicleName}"?`)) {
       return;
     }
 
     try {
-      const response = await adminService.deleteZone(zoneId);
+      const response = await adminService.deleteSetPrice(priceId);
       if (response?.success) {
         setPrizes((previous) =>
-          previous.filter((item) => String(item?.zone_id?._id || item?.zone_id?.id || item?.zone_id || '') !== String(zoneId)),
+          previous.filter((item) => String(item?.id || item?._id || '') !== String(priceId)),
         );
-        setZones((previous) => previous.filter((zone) => String(zone?._id || zone?.id || '') !== String(zoneId)));
         fetchInitialData();
         return;
       }
 
-      alert(response?.message || 'Failed to delete zone.');
+      alert(response?.message || 'Failed to delete pricing rule.');
     } catch (error) {
-      console.error('Delete zone error:', error);
-      alert(error?.response?.data?.message || 'Failed to delete zone.');
+      console.error('Delete set price error:', error);
+      alert(error?.response?.data?.message || 'Failed to delete pricing rule.');
     }
   };
 
@@ -505,8 +505,8 @@ const SetPrices = ({ mode }) => {
                                     <Cone size={14} />
                                  </button>
                                  <button
-                                   title="Delete zone"
-                                   onClick={() => handleDeleteZone(prize)}
+                                   title="Delete pricing rule"
+                                   onClick={() => handleDeleteSetPrice(prize)}
                                    className="w-8 h-8 flex items-center justify-center bg-[#FEF2F2] text-[#DC2626] rounded transition-colors hover:bg-red-100"
                                  >
                                     <Trash2 size={14} />
