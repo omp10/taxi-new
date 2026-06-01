@@ -21,6 +21,7 @@ import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admi
 import { socketService } from '../../../../shared/api/socket';
 import api from '../../../../shared/api/axiosInstance';
 import { BACKEND_ORIGIN } from '../../../../shared/api/runtimeConfig';
+import { subscribeRideRealtime } from '../../../../shared/services/rideRealtime';
 import { clearCurrentRide, getCurrentRide, saveCurrentRide } from '../../services/currentRideService';
 
 // Assets (Using the same icons as RideTracking)
@@ -554,6 +555,60 @@ const ParcelTracking = () => {
     clearCurrentRide();
     navigate(userHomeRoute, { replace: true });
   }, [navigate, tripStatus, userHomeRoute]);
+
+  useEffect(() => {
+    if (!rideId) {
+      return () => {};
+    }
+
+    return subscribeRideRealtime(
+      rideId,
+      (payload) => {
+        if (!payload || String(payload.rideId || '') !== String(rideId)) {
+          return;
+        }
+
+        const nextStatus = String(payload.liveStatus || payload.status || 'accepted').toLowerCase();
+        const mergedDriver = mergeDriverSnapshot(latestDriverRef.current, payload.driver || {});
+
+        setRideRealtime((prev) => ({
+          ...(prev || {}),
+          pickup: payload.pickup || prev?.pickup || {
+            coordinates: latestStateRef.current.pickupCoords,
+            address: latestStateRef.current.pickup || 'Pickup',
+          },
+          drop: payload.drop || prev?.drop || {
+            coordinates: latestStateRef.current.dropCoords,
+            address: latestStateRef.current.drop || 'Drop',
+          },
+          driverLocation: payload.driverLocation || prev?.driverLocation || latestRideRealtimeRef.current?.driverLocation || null,
+          status: payload.liveStatus || payload.status || prev?.status || 'accepted',
+          fare: payload.fare || prev?.fare || latestStateRef.current.fare || 0,
+          paymentMethod: payload.paymentMethod || prev?.paymentMethod || latestStateRef.current.paymentMethod || 'Cash',
+          vehicleIconType: payload.vehicleIconType || prev?.vehicleIconType || latestStateRef.current.vehicleIconType || '',
+          vehicleIconUrl: payload.vehicleIconUrl || prev?.vehicleIconUrl || latestStateRef.current.vehicleIconUrl || '',
+          otp: payload.otp || prev?.otp || latestStateRef.current.otp || '',
+          completedAt: payload.completedAt || prev?.completedAt || null,
+          feedback: payload.feedback || prev?.feedback || null,
+          driver: mergedDriver,
+        }));
+
+        if (COMPLETED_TRACKING_STATUSES.has(nextStatus)) {
+          saveCurrentRide({
+            ...latestStateRef.current,
+            ...payload,
+            rideId,
+            driver: mergedDriver,
+            status: nextStatus,
+            liveStatus: nextStatus,
+            completedAt: payload.completedAt || Date.now(),
+            feedback: payload.feedback || null,
+          });
+        }
+      },
+      () => {},
+    );
+  }, [rideId]);
 
   // Route Path Update
   useEffect(() => {

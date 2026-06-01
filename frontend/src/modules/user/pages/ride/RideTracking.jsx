@@ -7,6 +7,7 @@ import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admi
 import { socketService } from '../../../../shared/api/socket';
 import api from '../../../../shared/api/axiosInstance';
 import { BACKEND_ORIGIN } from '../../../../shared/api/runtimeConfig';
+import { subscribeRideRealtime } from '../../../../shared/services/rideRealtime';
 import { clearCurrentRide, getCurrentRide, saveCurrentRide } from '../../services/currentRideService';
 import carIcon from '../../../../assets/icons/car.png';
 import bikeIcon from '../../../../assets/icons/bike.png';
@@ -895,6 +896,58 @@ const RideTracking = () => {
       socketService.off('ride:driver-location:updated', onLocationUpdated);
       socketService.off('ride:status:updated', onStatusUpdated);
     };
+  }, [rideId]);
+
+  useEffect(() => {
+    if (!rideId) {
+      return () => {};
+    }
+
+    return subscribeRideRealtime(
+      rideId,
+      (payload) => {
+        if (!payload || String(payload.rideId || '') !== String(rideId)) {
+          return;
+        }
+
+        const nextStatus = String(payload.liveStatus || payload.status || 'accepted').toLowerCase();
+        const latestState = latestStateRef.current;
+        const latestFallbackDriver = latestFallbackDriverRef.current;
+
+        setRideRealtime((prev) => ({
+          ...(prev || {}),
+          pickup: payload.pickup || prev?.pickup || {
+            coordinates: latestState.pickupCoords,
+            address: latestState.pickup || 'Pickup',
+          },
+          drop: payload.drop || prev?.drop || {
+            coordinates: latestState.dropCoords,
+            address: latestState.drop || 'Drop',
+          },
+          driverLocation: payload.driverLocation || prev?.driverLocation || null,
+          status: payload.liveStatus || payload.status || prev?.status || latestState.liveStatus || latestState.status || 'accepted',
+          fare: payload.fare || prev?.fare || latestState.fare || 0,
+          paymentMethod: payload.paymentMethod || prev?.paymentMethod || latestState.paymentMethod || 'Cash',
+          vehicleIconType: payload.vehicleIconType || prev?.vehicleIconType || latestState.vehicleIconType || '',
+          vehicleIconUrl: payload.vehicleIconUrl || prev?.vehicleIconUrl || latestState.vehicleIconUrl || '',
+          scheduledAt: payload.scheduledAt || prev?.scheduledAt || latestState.scheduledAt || null,
+          otp: payload.otp || prev?.otp || latestState.otp || latestState.ride_otp || '',
+          acceptedAt: payload.acceptedAt || prev?.acceptedAt || latestState.acceptedAt || null,
+          arrivedAt: payload.arrivedAt || prev?.arrivedAt || latestState.arrivedAt || '',
+          startedAt: payload.startedAt || prev?.startedAt || latestState.startedAt || null,
+          pricingSnapshot: payload.pricingSnapshot || prev?.pricingSnapshot || latestState.pricingSnapshot || null,
+          driverPaymentCollection: payload.driverPaymentCollection || prev?.driverPaymentCollection || latestState.driverPaymentCollection || null,
+          completedAt: payload.completedAt || prev?.completedAt || null,
+          feedback: payload.feedback || prev?.feedback || null,
+          driver: mergeDriverSnapshot(prev?.driver || latestFallbackDriver, payload.driver || {}),
+        }));
+
+        if (POST_RIDE_REDIRECT_STATUSES.has(nextStatus)) {
+          latestCompleteTrackingRef.current(nextStatus);
+        }
+      },
+      () => {},
+    );
   }, [rideId]);
 
   useEffect(() => {

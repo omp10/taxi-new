@@ -10,6 +10,10 @@ import {
   updateRideDriverLocation,
   updateRideLifecycle,
 } from '../../services/rideService.js';
+import {
+  mirrorRideDriverLocation,
+  mirrorRideRealtimeState,
+} from '../../services/rideRealtimeSyncService.js';
 import { authorizeRideRoomAccess } from '../middleware/rideRoomAuth.js';
 import { SOCKET_EVENTS } from '../events.js';
 import { clearDriverRoute, updateDriverRoute } from '../services/driverRouteService.js';
@@ -26,6 +30,9 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
   const emitRideState = (ride) => {
     const payload = serializeRideRealtime(ride);
     io.to(getRideRoom(ride._id)).emit(SOCKET_EVENTS.RIDE_STATE, payload);
+    setImmediate(() => {
+      mirrorRideRealtimeState(payload).catch(() => {});
+    });
     return payload;
   };
 
@@ -51,7 +58,11 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
       });
 
       if (activeRide && String(activeRide._id) === String(ride._id)) {
-        socket.emit(SOCKET_EVENTS.RIDE_STATE, serializeRideRealtime(activeRide));
+        const payload = serializeRideRealtime(activeRide);
+        socket.emit(SOCKET_EVENTS.RIDE_STATE, payload);
+        setImmediate(() => {
+          mirrorRideRealtimeState(payload).catch(() => {});
+        });
       }
     }),
   );
@@ -76,7 +87,11 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
         room,
         rejoined: true,
       });
-      socket.emit(SOCKET_EVENTS.RIDE_STATE, serializeRideRealtime(ride));
+      const payload = serializeRideRealtime(ride);
+      socket.emit(SOCKET_EVENTS.RIDE_STATE, payload);
+      setImmediate(() => {
+        mirrorRideRealtimeState(payload).catch(() => {});
+      });
     }),
   );
 
@@ -98,6 +113,14 @@ export const registerRideSocketHandlers = ({ io, socket, onAsync }) => {
       });
 
       io.to(getRideRoom(rideId)).emit(SOCKET_EVENTS.RIDE_DRIVER_LOCATION_UPDATED, locationUpdate);
+      setImmediate(() => {
+        mirrorRideDriverLocation({
+          rideId,
+          coordinates: locationUpdate.coordinates,
+          heading: locationUpdate.heading,
+          speed: locationUpdate.speed,
+        }).catch(() => {});
+      });
 
       updateDriverRoute({
         io,
