@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { 
   ArrowLeft, 
   ChevronRight, 
@@ -19,6 +20,11 @@ import moversImg from '@/assets/images/delivery/movers.png';
 const Motion = motion;
 const PARCEL_BOOKING_DRAFT_KEY = 'parcelBookingDraft';
 const FALLBACK_PICKUP_LABEL = 'Choose your location';
+const unwrapResults = (response) => {
+  const payload = response?.data?.data || response?.data || response;
+  return payload?.results || (Array.isArray(payload) ? payload : []);
+};
+
 const toPlainData = (value) => {
   if (value === null || value === undefined) {
     return value;
@@ -92,7 +98,7 @@ const ParcelType = () => {
       try {
         setLoading(true);
         const response = await api.get('/users/vehicle-types');
-        const items = response?.results || response?.data?.results || [];
+        const items = unwrapResults(response);
         setVehicleTypes(items.filter(v => v.active && (v.transport_type === 'delivery' || v.transport_type === 'both')));
       } catch (err) {
         console.error('Failed to load vehicles:', err);
@@ -185,6 +191,13 @@ const ParcelType = () => {
   }, [isGoogleMapsLoaded, pickupCoords]);
 
   const handleCategorySelect = (category) => {
+    if (loading) {
+      toast('Vehicle options are still loading. Try again in a sec.', {
+        duration: 2200,
+      });
+      return;
+    }
+
     const filteredVehicles = vehicleTypes.filter((vehicle) => {
       const configuredCategory = String(vehicle.delivery_category || '').trim().toLowerCase();
       if (configuredCategory) {
@@ -208,8 +221,6 @@ const ParcelType = () => {
 
       return String(left?.name || '').localeCompare(String(right?.name || ''));
     });
-
-    if (loading || vehicleTypes.length === 0) return;
 
     const selectedVehicle = prioritizedVehicles[0] || vehicleTypes[0];
     const selectedVehicles = (prioritizedVehicles.length ? prioritizedVehicles : selectedVehicle ? [selectedVehicle] : [])
@@ -281,6 +292,7 @@ const ParcelType = () => {
           {DELIVERY_CATEGORY_OPTIONS.map((cat, idx) => (
             <motion.button
               key={cat.id}
+              type="button"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.1 }}
