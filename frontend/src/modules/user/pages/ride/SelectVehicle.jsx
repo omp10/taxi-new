@@ -1127,12 +1127,17 @@ const SelectVehicle = () => {
   );
   const routeServiceLocationId = routeState.service_location_id || routeState.serviceLocationId || '';
   const routeZoneId = routeState.zone_id || routeState.zoneId || '';
+  const hasCompleteRouteZoneContext = Boolean(routeServiceLocationId && routeZoneId);
   const [resolvedServiceLocationId, setResolvedServiceLocationId] = useState(routeServiceLocationId);
   const [resolvedZoneId, setResolvedZoneId] = useState(routeZoneId);
-  const [isResolvingServiceLocation, setIsResolvingServiceLocation] = useState(!(routeServiceLocationId && routeZoneId));
+  const [isResolvingServiceLocation, setIsResolvingServiceLocation] = useState(!hasCompleteRouteZoneContext);
   const [hasLoadedAvailability, setHasLoadedAvailability] = useState(false);
-  const serviceLocationId = resolvedServiceLocationId || routeServiceLocationId || '';
-  const zoneId = resolvedZoneId || routeZoneId || '';
+  const serviceLocationId = hasCompleteRouteZoneContext
+    ? (resolvedServiceLocationId || routeServiceLocationId || '')
+    : resolvedServiceLocationId;
+  const zoneId = hasCompleteRouteZoneContext
+    ? (resolvedZoneId || routeZoneId || '')
+    : resolvedZoneId;
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
   const pickupPosition = useMemo(() => toLatLng(pickupCoords), [pickupCoords]);
   const dropPosition = useMemo(() => toLatLng(dropCoords, null), [dropCoords]);
@@ -1141,16 +1146,23 @@ const SelectVehicle = () => {
   const maxScheduledAt = useMemo(() => getMaxScheduledDateTime(), []);
 
   useEffect(() => {
-    setResolvedServiceLocationId(routeServiceLocationId);
-    setResolvedZoneId(routeZoneId);
-    setIsResolvingServiceLocation(!(routeServiceLocationId && routeZoneId));
-  }, [routeServiceLocationId, routeZoneId]);
+    if (hasCompleteRouteZoneContext) {
+      setResolvedServiceLocationId(routeServiceLocationId);
+      setResolvedZoneId(routeZoneId);
+      setIsResolvingServiceLocation(false);
+      return;
+    }
+
+    setResolvedServiceLocationId('');
+    setResolvedZoneId('');
+    setIsResolvingServiceLocation(true);
+  }, [hasCompleteRouteZoneContext, routeServiceLocationId, routeZoneId]);
 
   useEffect(() => {
     let active = true;
 
     const resolveServiceLocationFromPickup = async () => {
-      if (routeServiceLocationId && routeZoneId) {
+      if (hasCompleteRouteZoneContext) {
         if (active) {
           setIsResolvingServiceLocation(false);
         }
@@ -1189,12 +1201,8 @@ const SelectVehicle = () => {
 
         const nextZoneId = getZoneId(matchedZone);
         const nextServiceLocationId = getZoneServiceLocationId(matchedZone);
-        if (nextZoneId) {
-          setResolvedZoneId(nextZoneId);
-        }
-        if (nextServiceLocationId) {
-          setResolvedServiceLocationId(nextServiceLocationId);
-        }
+        setResolvedZoneId(nextZoneId || '');
+        setResolvedServiceLocationId(nextServiceLocationId || '');
       } catch {
         if (active) {
           setResolvedServiceLocationId('');
@@ -1212,7 +1220,7 @@ const SelectVehicle = () => {
     return () => {
       active = false;
     };
-  }, [pickupCoords, routeServiceLocationId, routeZoneId]);
+  }, [hasCompleteRouteZoneContext, pickupCoords]);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;

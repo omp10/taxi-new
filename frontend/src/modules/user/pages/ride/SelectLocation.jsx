@@ -241,7 +241,7 @@ const SelectLocation = () => {
         }
 
         const matchingZones = unwrapResults(zonesResponse)
-          .filter((zone) => isZoneActive(zone) && String(getZoneServiceLocationId(zone)) === String(serviceLocationId));
+          .filter((zone) => isZoneActive(zone));
         const matchingPaths = matchingZones
           .map(normalizeZonePath)
           .filter((path) => path.length >= 3);
@@ -250,7 +250,7 @@ const SelectLocation = () => {
             return false;
           }
 
-          return String(store?.service_location_id) === String(serviceLocationId);
+          return true;
         });
 
         setZones(matchingZones);
@@ -702,8 +702,8 @@ const SelectLocation = () => {
     });
 
     const matchedPickupZone = findMatchingZone(resolvedPickupCoords, zones);
-    const nextServiceLocationId = getZoneServiceLocationId(matchedPickupZone) || serviceLocationId;
-    const nextZoneId = getZoneId(matchedPickupZone);
+    const nextServiceLocationId = getZoneServiceLocationId(matchedPickupZone) || '';
+    const nextZoneId = getZoneId(matchedPickupZone) || '';
 
     navigate(`${routePrefix}/ride/select-vehicle`, {
       state: {

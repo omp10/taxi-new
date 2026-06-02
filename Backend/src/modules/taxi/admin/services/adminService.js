@@ -6165,10 +6165,24 @@ export const listSetPrices = async (queryArgs = {}, currentAdmin = null) => {
       'payment_type',
       'transport_type',
       'zone_id',
+      'status',
       'active',
       'capacity',
       'enable_shared_ride',
+      'service_tax',
+      'base_price',
+      'base_distance',
+      'price_per_distance',
+      'time_price',
+      'waiting_charge',
+      'free_waiting_before',
+      'free_waiting_after',
+      'outstation_base_price',
+      'outstation_base_distance',
+      'outstation_price_per_distance',
+      'outstation_time_price',
       'createdAt',
+      'updatedAt',
     ].join(' '))
     .populate('vehicle_type', 'name icon capacity')
     .populate('service_location_id', 'name service_location_name currency_symbol')
@@ -6226,6 +6240,20 @@ export const listSetPrices = async (queryArgs = {}, currentAdmin = null) => {
       payment_type: Array.isArray(item.payment_type)
         ? item.payment_type
         : (item.payment_type ? String(item.payment_type).split(',') : ['cash', 'online', 'wallet']),
+      status: item.status || (item.active === false ? 'inactive' : 'active'),
+      service_tax: Number(item.service_tax ?? 0),
+      base_price: Number(item.base_price ?? 0),
+      base_distance: Number(item.base_distance ?? 0),
+      price_per_distance: Number(item.price_per_distance ?? 0),
+      time_price: Number(item.time_price ?? 0),
+      waiting_charge: Number(item.waiting_charge ?? 0),
+      free_waiting_before: Number(item.free_waiting_before ?? 0),
+      free_waiting_after: Number(item.free_waiting_after ?? 0),
+      outstation_base_price: Number(item.outstation_base_price ?? 0),
+      outstation_base_distance: Number(item.outstation_base_distance ?? 0),
+      outstation_price_per_distance: Number(item.outstation_price_per_distance ?? 0),
+      outstation_time_price: Number(item.outstation_time_price ?? 0),
+      updatedAt: item.updatedAt,
     };
   });
 
