@@ -166,12 +166,11 @@ const SelectCategory = () => {
                   }`}
                 >
                   {/* Top Section: Large Premium Vehicle Pedestal */}
-                  <div className={`relative h-40 w-full ${cat.pedestalBg} flex items-center justify-center overflow-hidden border-b border-slate-100/40`}>
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.7)_0%,transparent_80%)] pointer-events-none" />
+                  <div className="relative h-60 w-full flex items-center justify-center overflow-hidden border-b border-slate-100/40 bg-[#eaeaea]">
                     <img
                       src={cat.icon}
                       alt={cat.title}
-                      className="h-32 w-auto object-contain scale-110 drop-shadow-[0_8px_16px_rgba(0,0,0,0.1)] relative z-10"
+                      className="w-full h-full object-cover relative z-10"
                     />
                   </div>
 
