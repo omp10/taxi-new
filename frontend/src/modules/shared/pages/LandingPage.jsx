@@ -107,7 +107,7 @@ function LandingPage() {
              </div>
              <div className="top-contact-item">
                <Mail size={16} />
-               <span>supportrydon@gmail.com</span>
+               <span>customercare@rydon24.com</span>
              </div>
           </div>
         </div>

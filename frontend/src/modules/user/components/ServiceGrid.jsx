@@ -1,8 +1,53 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSettings, normalizeAssetUrl } from '../../../shared/context/SettingsContext';
-import toast from 'react-hot-toast';
+
+const normalizeModuleText = (value = '') => String(value || '').trim().toLowerCase();
+
+const isDeliveryModule = (module = {}) => {
+  const name = normalizeModuleText(module?.name);
+  const serviceType = normalizeModuleText(module?.service_type);
+  const transportType = normalizeModuleText(module?.transport_type);
+
+  return (
+    transportType === 'delivery' ||
+    serviceType === 'delivery' ||
+    name.includes('delivery') ||
+    name.includes('delhivery')
+  );
+};
+
+const isNormalRideModule = (module = {}) => {
+  const name = normalizeModuleText(module?.name);
+  const serviceType = normalizeModuleText(module?.service_type);
+  const transportType = normalizeModuleText(module?.transport_type);
+
+  if (isDeliveryModule(module)) {
+    return false;
+  }
+
+  if (['rental', 'outstation', 'bus', 'pooling'].includes(serviceType)) {
+    return false;
+  }
+
+  return (
+    ['normal', 'taxi', 'ride', 'ride_hailing', 'ride-hailing'].includes(serviceType) ||
+    ['taxi', 'both'].includes(transportType) ||
+    name.includes('taxi') ||
+    name.includes('cab') ||
+    name.includes('ride') ||
+    name.includes('normal')
+  );
+};
+
+const getPinnedModuleOrder = (module = {}) => {
+  if (isNormalRideModule(module)) return 1;
+  if (isDeliveryModule(module)) return 2;
+  return null;
+};
+
+const Motion = motion;
 
 const ServiceTile = ({ icon, label, description, path, accentClass, loading }) => {
   const navigate = useNavigate();
@@ -43,9 +88,6 @@ const ServiceTile = ({ icon, label, description, path, accentClass, loading }) =
 };
 
 const ServiceGrid = () => {
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const getServiceKey = (service, index) => {
     const label = String(service?.label || '').trim();
     const path = String(service?.path || '').trim();
@@ -94,31 +136,53 @@ const ServiceGrid = () => {
   };
 
   const { modules, loading: settingsLoading } = useSettings();
+  const loading = settingsLoading;
+  const services = loading
+    ? []
+    : (modules || [])
+        .filter((m) => m.active)
+        .slice()
+        .sort((a, b) => {
+          const pinnedA = getPinnedModuleOrder(a);
+          const pinnedB = getPinnedModuleOrder(b);
 
-  useEffect(() => {
-    if (settingsLoading) return;
-    
-    // Only show active modules
-    const activeModules = (modules || []).filter(m => m.active);
-    
-    const mapped = activeModules.map((m, idx) => ({
-      icon: normalizeAssetUrl(m.mobile_menu_icon),
-      label: m.name,
-      description: m.short_description,
-      path: getPath(m),
-      accentClass: getAccent(idx)
-    }));
-    
-    setServices(mapped);
-    setLoading(false);
-  }, [modules, settingsLoading]);
+          if (pinnedA !== null || pinnedB !== null) {
+            if (pinnedA === null) return 1;
+            if (pinnedB === null) return -1;
+            if (pinnedA !== pinnedB) return pinnedA - pinnedB;
+          }
+
+          const orderA = Number(a?.order_by);
+          const orderB = Number(b?.order_by);
+          const hasOrderA = Number.isFinite(orderA);
+          const hasOrderB = Number.isFinite(orderB);
+
+          if (hasOrderA && hasOrderB && orderA !== orderB) {
+            return orderA - orderB;
+          }
+
+          if (hasOrderA !== hasOrderB) {
+            return hasOrderA ? -1 : 1;
+          }
+
+          return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { sensitivity: 'base' });
+        })
+        .map((m, idx) => {
+          return {
+            icon: normalizeAssetUrl(m.mobile_menu_icon),
+            label: m.name,
+            description: m.short_description,
+            path: getPath(m),
+            accentClass: getAccent(idx),
+          };
+        });
 
   const optionCount = loading ? '...' : services.length;
   const optionLabel = services.length === 1 ? 'option' : 'options';
 
   return (
     <div className="px-5">
-      <motion.section
+      <Motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: 'easeOut' }}
@@ -145,7 +209,7 @@ const ServiceGrid = () => {
             ))
           )}
         </div>
-      </motion.section>
+      </Motion.section>
     </div>
   );
 };

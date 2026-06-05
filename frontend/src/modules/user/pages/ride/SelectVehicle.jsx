@@ -1138,6 +1138,7 @@ const SelectVehicle = () => {
   const [showScrollArrow, setShowScrollArrow] = useState(false);
   const scrollRef = React.useRef(null);
   const availabilityHistoryRef = useRef({});
+  const selectedVehicleIdRef = useRef('');
   const scheduledAtInputRef = useRef(null);
   const navigate = useNavigate();
   const { settings } = useSettings();
@@ -1778,6 +1779,10 @@ const SelectVehicle = () => {
   }, [selected]);
 
   useEffect(() => {
+    selectedVehicleIdRef.current = selected;
+  }, [selected]);
+
+  useEffect(() => {
     if (!hasAvailabilityResults || !displayedVehicles.length) {
       return;
     }
@@ -1894,7 +1899,7 @@ const SelectVehicle = () => {
       }
 
       const activeVehicle =
-        vehicles.find((vehicle) => vehicle.id === selected)
+        vehicles.find((vehicle) => vehicle.id === selectedVehicleIdRef.current)
         || vehicles.find((vehicle) => vehicle.vehicleTypeId);
 
       if (!activeVehicle) {
@@ -1919,7 +1924,7 @@ const SelectVehicle = () => {
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isResolvingServiceLocation, pickupCoords, routeState.transportType, routeState.transport_type, selected, serviceLocationId, vehicles]);
+  }, [isResolvingServiceLocation, pickupCoords, routeState.transportType, routeState.transport_type, serviceLocationId, vehicles]);
 
   const isInitialVehicleResultsLoading =
     isLoadingVehicles ||
@@ -2066,7 +2071,7 @@ const SelectVehicle = () => {
 
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-40 flex max-h-[69dvh] min-h-[360px] flex-col overflow-hidden rounded-t-[26px] bg-white shadow-[0_-12px_44px_rgba(15,23,42,0.16)]">
+      <div className="absolute bottom-0 left-0 right-0 z-40 flex max-h-[69dvh] min-h-[360px] min-w-0 flex-col overflow-hidden rounded-t-[26px] bg-white shadow-[0_-12px_44px_rgba(15,23,42,0.16)]">
         <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-2.5 mb-2 shrink-0" />
 
         <div className="shrink-0 border-b border-slate-100 px-4 pb-3">
@@ -2135,11 +2140,11 @@ const SelectVehicle = () => {
           </div>
         </div>
 
-        <div className="relative flex-1 overflow-hidden">
+        <div className="relative min-h-0 flex-1 overflow-hidden">
           <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto no-scrollbar px-3 pt-3 pb-2 space-y-2.5"
+            className="h-full min-h-0 overflow-y-auto no-scrollbar px-3 pt-3 pb-2 space-y-2.5 touch-pan-y"
           >
             {isInitialVehicleResultsLoading && (
               <div className="min-h-[180px] flex flex-col items-center justify-center gap-3 text-slate-400">

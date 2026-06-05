@@ -3,7 +3,7 @@ export const SUPPORT_INFO = {
   ownerName: 'Sandeep Kumar',
   phone: '93893 94808',
   phoneHref: '91-93-911-911',
-  email: 'supportrydon@gmail.com',
+  email: 'customercare@rydon24.com',
   supportLabel: '24/7 client support',
   responseTime: 'Replies typically within 2 hours',
   serviceArea: 'Taxi rides, parcels, bookings, payments, and account help',
