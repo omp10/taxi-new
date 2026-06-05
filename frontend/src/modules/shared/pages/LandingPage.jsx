@@ -454,12 +454,12 @@ function LandingPage() {
           <div className="footer-col-3">
             <h3>Our Services</h3>
             <ul>
-              <li><Link to="/services">City Rides</Link></li>
-              <li><Link to="/services">Airport transfers</Link></li>
-              <li><Link to="/services">Outstation Trips</Link></li>
-              <li><Link to="/services">Parcel Delivery</Link></li>
-              <li><Link to="/services">Bike Taxis</Link></li>
-              <li><Link to="/contact">24/7 Customer Support</Link></li>
+              <li><Link to="/login">City Rides</Link></li>
+              <li><Link to="/login">Airport transfers</Link></li>
+              <li><Link to="/login">Outstation Trips</Link></li>
+              <li><Link to="/login">Parcel Delivery</Link></li>
+              <li><Link to="/login">Bike Taxis</Link></li>
+              <li><Link to="/login">24/7 Customer Support</Link></li>
             </ul>
           </div>
         </div>
