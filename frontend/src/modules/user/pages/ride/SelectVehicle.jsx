@@ -1292,12 +1292,12 @@ const SelectVehicle = () => {
           .map(normalizeVehicleType);
 
         const categoryFilter = String(routeState?.selectedCategory || '').trim().toLowerCase();
-        const filteredVehicles = categoryFilter
-          ? nextVehicles.filter(v => v.category === categoryFilter)
-          : nextVehicles;
+        const preselectedVehicle = categoryFilter
+          ? nextVehicles.find((v) => v.category === categoryFilter)
+          : null;
 
-        setVehicles(filteredVehicles);
-        setSelected((current) => current || filteredVehicles[0]?.id || '');
+        setVehicles(nextVehicles);
+        setSelected((current) => current || preselectedVehicle?.id || nextVehicles[0]?.id || '');
       } catch (error) {
         if (active) {
           setVehicleLoadError(error.message || 'Could not load vehicle types.');
@@ -2140,11 +2140,11 @@ const SelectVehicle = () => {
           </div>
         </div>
 
-        <div className="relative min-h-0 flex-1 overflow-hidden">
+        <div className="relative min-h-0 flex-1 flex flex-col overflow-hidden">
           <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="h-full min-h-0 overflow-y-auto no-scrollbar px-3 pt-3 pb-2 space-y-2.5 touch-pan-y"
+            className="flex-1 min-h-0 overflow-y-auto no-scrollbar px-3 pt-3 pb-2 space-y-2.5 touch-pan-y"
           >
             {isInitialVehicleResultsLoading && (
               <div className="min-h-[180px] flex flex-col items-center justify-center gap-3 text-slate-400">
