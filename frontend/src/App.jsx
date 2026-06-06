@@ -2,12 +2,10 @@ import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, FileText } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
-import toast from 'react-hot-toast';
 import api from './shared/api/axiosInstance';
 import { socketService } from './shared/api/socket';
 import { SettingsProvider } from './shared/context/SettingsContext';
 import AppAutoUpdater from './modules/shared/components/AppAutoUpdater';
-import { addRealtimeNotification } from './modules/user/utils/realtimeNotificationStore';
 import { clearLocalUserSession, getLocalUserToken } from './modules/user/services/authService';
 import { clearCurrentRide } from './modules/user/services/currentRideService';
 import RentalLocationTracker from './modules/user/components/RentalLocationTracker';
@@ -453,45 +451,6 @@ const UserAccountInvalidationListener = () => {
       navigate('/taxi/user/login', { replace: true, state: loginState });
     };
 
-    const handleAdminChatMessage = (payload = {}) => {
-      const senderRole = String(payload.senderRole || payload.sender?.role || '').toLowerCase();
-      const receiverRole = String(payload.receiverRole || payload.receiver?.role || '').toLowerCase();
-      const messageBody = String(payload.message || payload.body || '').trim();
-
-      if (senderRole !== 'admin' || !messageBody) {
-        return;
-      }
-
-      if (receiverRole && receiverRole !== 'user') {
-        return;
-      }
-
-      const notificationWasAdded = addRealtimeNotification({
-        id: `support-chat:${payload.id || payload._id || `${Date.now()}-${messageBody}`}`,
-        title: 'Support message',
-        body: messageBody,
-        sentAt: payload.createdAt || new Date().toISOString(),
-        type: 'support',
-        source: 'support-chat',
-      });
-
-      if (!notificationWasAdded) {
-        return;
-      }
-
-      toast(messageBody, {
-        duration: 4500,
-        className: 'font-bold text-[13px] rounded-2xl shadow-xl border border-sky-50 bg-white',
-      });
-    };
-
-    let socket = null;
-    if (getLocalUserToken()) {
-        socket = socketService.connect({ role: 'user' });
-        socketService.on('account:deleted', handleLogout);
-        socketService.on('chat:message', handleAdminChatMessage);
-    }
-
     const handleAuthStale = (event) => {
       const staleToken = event.detail?.token || '';
       const currentUserToken = localStorage.getItem('userToken') || localStorage.getItem('token') || '';
@@ -511,13 +470,7 @@ const UserAccountInvalidationListener = () => {
     window.addEventListener('app:auth-stale', handleAuthStale);
 
     return () => {
-      socketService.off('account:deleted', handleLogout);
-      socketService.off('chat:message', handleAdminChatMessage);
       window.removeEventListener('app:auth-stale', handleAuthStale);
-
-      if (socket) {
-        socketService.disconnect();
-      }
     };
   }, [location.pathname, navigate]);
 
@@ -526,24 +479,40 @@ const UserAccountInvalidationListener = () => {
 
 const getResponsePayload = (response) => response?.data?.data || response?.data || response || {};
 
+const USER_REMINDER_SYNC_INTERVAL_MS = 10 * 60 * 1000;
+const USER_REMINDER_SYNC_COOLDOWN_MS = 60 * 1000;
+
 const UserUpcomingRideReminderBootstrap = () => {
   const location = useLocation();
+  const isUserReminderRoute =
+    location.pathname.startsWith('/taxi/user') ||
+    location.pathname === '/user' ||
+    location.pathname.startsWith('/ride') ||
+    location.pathname.startsWith('/pooling') ||
+    location.pathname.startsWith('/bus');
 
   useEffect(() => {
-    const isUserRoute =
-      location.pathname.startsWith('/taxi/user') ||
-      location.pathname === '/user' ||
-      location.pathname.startsWith('/ride') ||
-      location.pathname.startsWith('/pooling') ||
-      location.pathname.startsWith('/bus');
-
-    if (!isUserRoute || !getLocalUserToken()) {
+    if (!isUserReminderRoute || !getLocalUserToken()) {
       return undefined;
     }
 
     let cancelled = false;
+    let syncInFlight = false;
+    let lastSyncAt = 0;
 
-    const syncReminders = async () => {
+    const syncReminders = async (reason = 'timer') => {
+      if (cancelled || syncInFlight) {
+        return;
+      }
+
+      const now = Date.now();
+      if (reason !== 'mount' && now - lastSyncAt < USER_REMINDER_SYNC_COOLDOWN_MS) {
+        return;
+      }
+
+      syncInFlight = true;
+      lastSyncAt = now;
+
       try {
         const [busResult, poolingResult, scheduledRideResult] = await Promise.all([
           userBusService.getMyBookings({ page: 1, limit: 20, tripState: 'upcoming' }),
@@ -609,27 +578,33 @@ const UserUpcomingRideReminderBootstrap = () => {
         });
       } catch {
         // Reminder sync is non-blocking.
+      } finally {
+        syncInFlight = false;
       }
     };
 
     const handleVisibilitySync = () => {
-      if (document.visibilityState === 'visible') {
-        syncReminders();
+      if (document.visibilityState === 'visible' && document.hasFocus()) {
+        syncReminders('visibility');
       }
     };
 
-    syncReminders();
-    const intervalId = window.setInterval(syncReminders, 10 * 60 * 1000);
-    window.addEventListener('focus', syncReminders);
+    const handleFocusSync = () => {
+      syncReminders('focus');
+    };
+
+    syncReminders('mount');
+    const intervalId = window.setInterval(() => syncReminders('timer'), USER_REMINDER_SYNC_INTERVAL_MS);
+    window.addEventListener('focus', handleFocusSync);
     document.addEventListener('visibilitychange', handleVisibilitySync);
 
     return () => {
       cancelled = true;
       window.clearInterval(intervalId);
-      window.removeEventListener('focus', syncReminders);
+      window.removeEventListener('focus', handleFocusSync);
       document.removeEventListener('visibilitychange', handleVisibilitySync);
     };
-  }, [location.pathname]);
+  }, [isUserReminderRoute]);
 
   return null;
 };

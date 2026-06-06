@@ -155,6 +155,7 @@ const hexToRgba = (hex, alpha = 1) => {
 };
 
 const getJobRideId = (job = {}) => String(job.rideId || job.id || job._id || job.requestId || '').trim();
+const ACTIVE_TRIP_HYDRATION_RETRY_DELAYS_MS = [0, 700, 1500, 2500, 4000];
 
 const getActiveTripPhaseKey = (id) => (id ? `driverActiveTripPhase:${id}` : '');
 const getActiveTripUiStateKey = (id) => (id ? `driverActiveTripUiState:${id}` : '');
@@ -747,55 +748,81 @@ const ActiveTrip = () => {
         }
 
         const hydrateTripState = async () => {
+            let lastRestoreError = '';
+            let restoredActiveTrip = false;
+
             try {
-                const driverToken = getLocalDriverToken();
-                const [activeDelivery, activeRide] = await Promise.allSettled([
-                    api.get('/deliveries/active/me', withDriverAuthorization(driverToken)),
-                    api.get('/rides/active/me', withDriverAuthorization(driverToken)),
-                ]);
+                for (let attemptIndex = 0; attemptIndex < ACTIVE_TRIP_HYDRATION_RETRY_DELAYS_MS.length; attemptIndex += 1) {
+                    const delayMs = ACTIVE_TRIP_HYDRATION_RETRY_DELAYS_MS[attemptIndex];
 
-                if (!active) {
-                    return;
+                    if (delayMs > 0) {
+                        await new Promise((resolve) => window.setTimeout(resolve, delayMs));
+                    }
+
+                    if (!active) {
+                        return;
+                    }
+
+                    const driverToken = getLocalDriverToken();
+                    const [activeDelivery, activeRide] = await Promise.allSettled([
+                        api.get('/deliveries/active/me', withDriverAuthorization(driverToken)),
+                        api.get('/rides/active/me', withDriverAuthorization(driverToken)),
+                    ]);
+
+                    if (!active) {
+                        return;
+                    }
+
+                    const deliveryPayload =
+                        activeDelivery.status === 'fulfilled' ? unwrapApiPayload(activeDelivery.value) : null;
+                    const ridePayload =
+                        activeRide.status === 'fulfilled' ? unwrapApiPayload(activeRide.value) : null;
+
+                    const currentJob = getJobRideId(deliveryPayload)
+                        ? deliveryPayload
+                        : getJobRideId(ridePayload)
+                            ? ridePayload
+                            : null;
+                    const currentRideId = getJobRideId(currentJob);
+                    const currentStatus = String(currentJob?.liveStatus || currentJob?.status || '').toLowerCase();
+
+                    if (currentRideId && currentStatus !== 'cancelled' && currentStatus !== 'canceled') {
+                        const restoredPhase = resolvePhaseFromJob(currentJob);
+                        const nextPersistedState = buildPersistedTripState(currentJob, {
+                            phase: restoredPhase,
+                        });
+
+                        setHydratedTripState(nextPersistedState);
+                        writeStoredActiveTripSnapshot(nextPersistedState);
+                        setPhase(restoredPhase);
+                        restoredActiveTrip = true;
+                        return;
+                    }
+
+                    if (currentRideId && (currentStatus === 'cancelled' || currentStatus === 'canceled')) {
+                        lastRestoreError = 'Ride was cancelled or is no longer active.';
+                        break;
+                    }
                 }
-
-                const deliveryPayload =
-                    activeDelivery.status === 'fulfilled' ? unwrapApiPayload(activeDelivery.value) : null;
-                const ridePayload =
-                    activeRide.status === 'fulfilled' ? unwrapApiPayload(activeRide.value) : null;
-
-                const currentJob = getJobRideId(deliveryPayload)
-                    ? deliveryPayload
-                    : getJobRideId(ridePayload)
-                        ? ridePayload
-                        : null;
-                const currentRideId = getJobRideId(currentJob);
-                const currentStatus = String(currentJob?.liveStatus || currentJob?.status || '').toLowerCase();
-
-                if (!currentRideId || currentStatus === 'cancelled' || currentStatus === 'canceled') {
-                    exitToDriverHome('Ride was cancelled or is no longer active.');
-                    return;
-                }
-
-                const restoredPhase = resolvePhaseFromJob(currentJob);
-                const nextPersistedState = buildPersistedTripState(currentJob, {
-                    phase: restoredPhase,
-                });
-
-                setHydratedTripState(nextPersistedState);
-                writeStoredActiveTripSnapshot(nextPersistedState);
-                setPhase(restoredPhase);
             } catch {
+                lastRestoreError = 'Could not restore active trip.';
+            } finally {
                 if (active) {
                     const fallbackSnapshot = readStoredActiveTripSnapshot();
+                    if (restoredActiveTrip) {
+                        setIsHydratingTrip(false);
+                        return;
+                    }
+
                     if (fallbackSnapshot?.rideId) {
                         setHydratedTripState(fallbackSnapshot);
                         setPhase(resolvePhaseFromJob(fallbackSnapshot?.request?.raw || fallbackSnapshot));
+                    } else if (lastRestoreError) {
+                        exitToDriverHome(lastRestoreError);
                     } else {
-                        exitToDriverHome('Could not restore active trip.');
+                        exitToDriverHome('Ride was cancelled or is no longer active.');
                     }
-                }
-            } finally {
-                if (active) {
+
                     setIsHydratingTrip(false);
                 }
             }
@@ -981,6 +1008,11 @@ const ActiveTrip = () => {
 
         const handleTripClosed = (payload = {}) => {
             if (String(payload.rideId || '') !== String(currentRideId)) {
+                return;
+            }
+
+            const closeReason = String(payload.reason || '').toLowerCase();
+            if (closeReason === 'accepted-by-another-driver') {
                 return;
             }
 

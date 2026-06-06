@@ -189,6 +189,9 @@ const normalizeRentalCurrentRideSnapshot = (ride = {}, previousRide = {}) => {
   };
 };
 
+const isRentalCurrentRide = (ride) =>
+  String(ride?.serviceType || ride?.type || '').toLowerCase() === 'rental';
+
 const Home = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -332,7 +335,7 @@ const Home = () => {
         return;
       }
 
-      const nextInterval = currentRideRef.current
+      const nextInterval = currentRideRef.current && !isRentalCurrentRide(currentRideRef.current)
         ? ACTIVE_RIDE_SYNC_INTERVAL_MS
         : IDLE_RIDE_SYNC_INTERVALS_MS[Math.min(consecutiveIdleMissesRef.current, IDLE_RIDE_SYNC_INTERVALS_MS.length - 1)];
       syncTimer = window.setTimeout(() => {
@@ -360,6 +363,13 @@ const Home = () => {
         if (!token) {
           persistCurrentRide(null);
           currentRideRef.current = null;
+          consecutiveIdleMissesRef.current = 0;
+          return;
+        }
+
+        // Rental booking state is synchronized globally by RentalLocationTracker.
+        // Avoid re-polling the same "active rental" endpoint from the home page.
+        if (isRentalCurrentRide(currentRideRef.current)) {
           consecutiveIdleMissesRef.current = 0;
           return;
         }
@@ -404,47 +414,6 @@ const Home = () => {
             consecutiveIdleMissesRef.current = 0;
             persistCurrentRide(normalizedRide);
             currentRideRef.current = normalizedRide;
-            return;
-          }
-        }
-
-        try {
-          const rentalResponse = await userService.getActiveRentalBooking();
-          const rentalRide = rentalResponse?.id ? rentalResponse : (rentalResponse?.data || null);
-
-          if (rentalRide?.id) {
-            const status = String(rentalRide.status || '').toLowerCase();
-            const isTerminal = ['completed', 'cancelled', 'delivered'].includes(status);
-
-            if (isTerminal) {
-              if (cancelled) return;
-              consecutiveIdleMissesRef.current = Math.min(
-                consecutiveIdleMissesRef.current + 1,
-                IDLE_RIDE_SYNC_INTERVALS_MS.length - 1,
-              );
-              clearCurrentRide();
-              currentRideRef.current = null;
-              return;
-            }
-
-            if (cancelled) return;
-            consecutiveIdleMissesRef.current = 0;
-            const previousRentalRide = currentRideRef.current && String(currentRideRef.current.serviceType || '').toLowerCase() === 'rental'
-              ? currentRideRef.current
-              : {};
-            const nextRentalRide = normalizeRentalCurrentRideSnapshot({
-              ...rentalRide,
-              pickup: rentalRide.serviceLocation?.name || rentalRide.serviceLocation?.address || 'Rental pickup',
-              drop: rentalRide.assignedVehicle?.name || rentalRide.vehicleName || 'Assigned vehicle',
-            }, previousRentalRide);
-            persistCurrentRide(nextRentalRide);
-            currentRideRef.current = nextRentalRide;
-            return;
-          }
-        } catch (error) {
-          const status = Number(error?.response?.status || 0);
-          if (status !== 404) {
-            // Keep the previous card on transient failures, but don't block normal cleanup on 404/not found.
             return;
           }
         }

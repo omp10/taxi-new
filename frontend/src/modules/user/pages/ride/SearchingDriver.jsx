@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShieldCheck, Phone, MessageCircle, Shield, CheckCircle2, Navigation, AlertTriangle, Star, MapPin, Calendar, Clock3, LoaderCircle } from 'lucide-react';
@@ -210,6 +210,7 @@ const SearchingDriver = () => {
   const cleanupDelayRef = useRef(null);
   const trackingStartedRef = useRef(false);
   const driverRef = useRef(driver);
+  const cancellingRef = useRef(false);
   const routePrefix = useMemo(
     () => (location.pathname.startsWith('/taxi/user') ? '/taxi/user' : ''),
     [location.pathname],
@@ -226,6 +227,8 @@ const SearchingDriver = () => {
   const isBiddingRide = isDriverBidRide;
   const isScheduledRide = Boolean(routeState.scheduledAt);
   const isScheduledBiddingRide = isScheduledRide && isBiddingRide;
+  const isSearching = stage === STAGES.SEARCHING;
+  const isAccepted  = stage === STAGES.ACCEPTED || stage === STAGES.COMPLETING;
   const fareIncreaseCountdownMs = Math.max(0, new Date(biddingSummary.nextFareIncreaseAt || 0).getTime() - now);
   const canIncreaseFare = !isUserIncrementRide || !biddingSummary.nextFareIncreaseAt || fareIncreaseCountdownMs <= 0;
   const formatCountdown = (milliseconds) => {
@@ -746,7 +749,12 @@ const SearchingDriver = () => {
     };
   }, [isScheduledBiddingRide, isScheduledRide, navigate, routePrefix, routeState, searchNonce, selectedVehicleTypeId, userHomeRoute]);
 
-  const handleCancel = async () => {
+  const handleCancel = useCallback(async () => {
+    if (cancellingRef.current) {
+      return;
+    }
+
+    cancellingRef.current = true;
     clearTimeout(timerRef.current);
 
     const rideId = activeRideIdRef.current;
@@ -760,7 +768,40 @@ const SearchingDriver = () => {
     }
 
     navigate(userHomeRoute, { replace: true });
-  };
+  }, [navigate, userHomeRoute]);
+
+  useEffect(() => {
+    if (!isSearching || trackingStartedRef.current) {
+      return undefined;
+    }
+
+    const historyState = window.history.state || {};
+    const hasSearchBackGuard = Boolean(historyState?.__searchBackGuard);
+
+    if (!hasSearchBackGuard) {
+      window.history.pushState(
+        { ...historyState, __searchBackGuard: true, __searchNonce: searchNonce || Date.now() },
+        '',
+        window.location.href,
+      );
+    }
+
+    const handlePopState = () => {
+      if (trackingStartedRef.current || cancellingRef.current) {
+        return;
+      }
+
+      // Keep the current entry alive long enough to reuse the existing cancel flow.
+      window.history.go(1);
+      handleCancel();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [handleCancel, isSearching, searchNonce]);
 
   const handleAcceptBid = async (bidId) => {
     const rideId = activeRideIdRef.current;
@@ -834,9 +875,6 @@ const SearchingDriver = () => {
       },
     });
   };
-
-  const isSearching = stage === STAGES.SEARCHING;
-  const isAccepted  = stage === STAGES.ACCEPTED || stage === STAGES.COMPLETING;
 
   if (isScheduledRide && !isScheduledBiddingRide) {
     return (

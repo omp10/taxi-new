@@ -779,14 +779,14 @@ const findBestPricingRule = ({ rules, vehicleTypeId, zoneId, serviceLocationId, 
   }
 
   const genericTransportMatch = candidates.find((rule) => (
-    !getRuleServiceLocationId(rule) && exactTransportMatch(rule)
+    !getRuleServiceLocationId(rule) && !getRuleZoneId(rule) && exactTransportMatch(rule)
   ));
 
   if (genericTransportMatch) {
     return genericTransportMatch;
   }
 
-  const genericBoth = candidates.find((rule) => !getRuleServiceLocationId(rule));
+  const genericBoth = candidates.find((rule) => !getRuleServiceLocationId(rule) && !getRuleZoneId(rule));
   if (genericBoth) {
     return genericBoth;
   }
@@ -1320,12 +1320,21 @@ const SelectVehicle = () => {
     let active = true;
 
     const loadPricingRules = async () => {
+      if (isResolvingServiceLocation) {
+        return;
+      }
+
       setIsLoadingPricingRules(true);
 
       try {
         const aggregatedRules = [];
         let page = 1;
         let lastPage = 1;
+        const pricingTransportType = resolveRideTransportType(
+          routeState.transport_type,
+          routeState.transportType,
+          'taxi',
+        );
 
         do {
           const response = await api.get('/users/set-prices', {
@@ -1333,6 +1342,8 @@ const SelectVehicle = () => {
               scope: 'ride',
               page,
               limit: 100,
+              ...(zoneId ? { zone_id: zoneId } : {}),
+              ...(pricingTransportType ? { transport_type: pricingTransportType } : {}),
             },
           });
 
@@ -1367,7 +1378,7 @@ const SelectVehicle = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [isResolvingServiceLocation, routeState.transportType, routeState.transport_type, zoneId]);
 
   useEffect(() => {
     const fallbackDistanceMeters = calculateDistanceMeters(pickupCoords, dropCoords);

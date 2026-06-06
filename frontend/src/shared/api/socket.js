@@ -3,6 +3,32 @@ import { BACKEND_ORIGIN } from './runtimeConfig';
 
 const SOCKET_ORIGIN = import.meta.env.VITE_SOCKET_URL || BACKEND_ORIGIN;
 
+const isLocalLikeHostname = (hostname = '') => {
+  const value = String(hostname || '').trim().toLowerCase();
+  return value === 'localhost' || value === '127.0.0.1' || value === '::1';
+};
+
+const shouldPreferWebsocketFirst = () => {
+  try {
+    const socketUrl = new URL(
+      SOCKET_ORIGIN,
+      typeof window !== 'undefined' ? window.location.origin : undefined,
+    );
+
+    if (isLocalLikeHostname(socketUrl.hostname)) {
+      return true;
+    }
+  } catch {
+    // Fall back to current window detection below.
+  }
+
+  if (typeof window !== 'undefined' && isLocalLikeHostname(window.location.hostname)) {
+    return true;
+  }
+
+  return false;
+};
+
 const decodeBase64Url = (value) => {
   const normalized = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
   const padding = (4 - (normalized.length % 4)) % 4;
@@ -148,13 +174,15 @@ class SocketService {
     }
 
     this.currentToken = token;
+    const preferWebsocketFirst = shouldPreferWebsocketFirst();
     this.socket = io(SOCKET_ORIGIN, {
       auth: { token },
-      // Start with polling and upgrade when possible so reverse proxies that
-      // don't immediately pass WebSocket upgrades can still complete the
-      // Socket.IO handshake in production.
-      transports: ['polling', 'websocket'],
+      // Prefer WebSocket on localhost to avoid noisy dev polling, but keep
+      // polling-first for production environments where some proxies still
+      // require the classic Socket.IO handshake path.
+      transports: preferWebsocketFirst ? ['websocket', 'polling'] : ['polling', 'websocket'],
       upgrade: true,
+      rememberUpgrade: true,
       withCredentials: true,
       reconnection: true,
       reconnectionDelay: 750,

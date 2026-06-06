@@ -389,6 +389,8 @@ const createScheduledRidePreview = (ride) => ({
     },
 });
 
+const getJobRideId = (job = {}) => String(job?.rideId || job?.id || job?._id || job?.requestId || '').trim();
+
 const normalizeJobType = (job = {}) => {
     const value = String(job.type || job.serviceType || 'ride').toLowerCase();
     if (value === 'parcel') return 'parcel';
@@ -667,8 +669,10 @@ const DriverHome = () => {
     const acceptingRideIdRef = useRef('');
     const currentRequestRef = useRef(null);
     const recoveryTimeoutsRef = useRef([]);
+    const acceptRecoveryTimeoutsRef = useRef([]);
     const recoveryInFlightRef = useRef(false);
     const lastDutyToggleAtRef = useRef(0);
+    const isHandlingHistoryNavigationRef = useRef(false);
     const driverPosition = useMemo(() => toLatLng(driverCoords || DEFAULT_MAP_COORDS), [driverCoords]);
     const mapVehicleIcon = useMemo(
         () => getMapIconForVehicle(vehicleIconUrl || vehicleIconType),
@@ -702,6 +706,30 @@ const DriverHome = () => {
     }, [walletAlertState]);
 
     const { isLoaded } = useAppGoogleMapsLoader();
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return undefined;
+        }
+
+        window.history.pushState({ driverHome: true }, '', window.location.href);
+
+        const handlePopState = () => {
+            if (isHandlingHistoryNavigationRef.current) {
+                isHandlingHistoryNavigationRef.current = false;
+                return;
+            }
+
+            isHandlingHistoryNavigationRef.current = true;
+            window.history.pushState({ driverHome: true }, '', window.location.href);
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
 
     const refreshNotificationCount = useCallback(async () => {
         try {
@@ -858,6 +886,13 @@ const DriverHome = () => {
 
     useEffect(() => clearRecoveryBurst, [clearRecoveryBurst]);
 
+    const clearAcceptRecovery = useCallback(() => {
+        acceptRecoveryTimeoutsRef.current.forEach((timeoutId) => clearTimeout(timeoutId));
+        acceptRecoveryTimeoutsRef.current = [];
+    }, []);
+
+    useEffect(() => clearAcceptRecovery, [clearAcceptRecovery]);
+
 
     const fetchActiveJob = useCallback(async (type = 'ride') => {
         const normalizedType = String(type || 'ride').toLowerCase();
@@ -871,9 +906,13 @@ const DriverHome = () => {
     }, []);
 
     const openActiveJob = useCallback((job) => {
-        if (!job?.rideId) {
+        const currentRideId = getJobRideId(job);
+
+        if (!currentRideId) {
             return false;
         }
+
+        clearAcceptRecovery();
 
         const currentType = normalizeJobType(job);
 
@@ -881,7 +920,7 @@ const DriverHome = () => {
             replace: true,
             state: {
                 type: currentType,
-                rideId: job.rideId,
+                rideId: currentRideId,
                 otp: job.otp || '',
                 request: {
                     type: currentType,
@@ -891,8 +930,8 @@ const DriverHome = () => {
                     pickup: job.pickupAddress || formatPoint(job.pickupLocation, 'Pickup Location'),
                     drop: job.dropAddress || formatPoint(job.dropLocation, 'Drop Location'),
                     distance: formatTripDistance(job),
-                    requestId: job.rideId,
-                    rideId: job.rideId,
+                    requestId: currentRideId,
+                    rideId: currentRideId,
                     otp: job.otp || '',
                     raw: job,
                 },
@@ -901,7 +940,30 @@ const DriverHome = () => {
         });
 
         return true;
-    }, [navigate]);
+    }, [clearAcceptRecovery, navigate]);
+
+    const scheduleAcceptRecovery = useCallback((type = 'ride') => {
+        clearAcceptRecovery();
+
+        [700, 1500, 3000, 5000].forEach((delay) => {
+            const timeoutId = window.setTimeout(async () => {
+                if (!acceptingRideIdRef.current) {
+                    return;
+                }
+
+                try {
+                    const activeJob = await fetchActiveJob(type);
+                    if (getJobRideId(activeJob)) {
+                        openActiveJob(activeJob);
+                    }
+                } catch {
+                    // Let later retries continue if the active job is not visible yet.
+                }
+            }, delay);
+
+            acceptRecoveryTimeoutsRef.current.push(timeoutId);
+        });
+    }, [clearAcceptRecovery, fetchActiveJob, openActiveJob]);
 
     const onLoad = useCallback(function callback(map) {
         setMap(map);
@@ -1084,15 +1146,13 @@ const DriverHome = () => {
                 const ridePayload =
                     activeRide.status === 'fulfilled' ? activeRide.value : null;
 
-                const currentJob = deliveryPayload?.rideId
+                const currentJob = getJobRideId(deliveryPayload)
                     ? deliveryPayload
-                    : ridePayload?.rideId
+                    : getJobRideId(ridePayload)
                         ? ridePayload
                         : null;
 
-                if (currentJob?.rideId) {
-                    const currentType = normalizeJobType(currentJob);
-
+                if (getJobRideId(currentJob)) {
                     openActiveJob(currentJob);
                     return;
                 }
@@ -1515,13 +1575,13 @@ const DriverHome = () => {
                 ]);
                 const deliveryPayload = activeDelivery.status === 'fulfilled' ? activeDelivery.value : null;
                 const ridePayload = activeRide.status === 'fulfilled' ? activeRide.value : null;
-                const currentJob = deliveryPayload?.rideId
+                const currentJob = getJobRideId(deliveryPayload)
                     ? deliveryPayload
-                    : ridePayload?.rideId
+                    : getJobRideId(ridePayload)
                         ? ridePayload
                         : null;
 
-                if (currentJob?.rideId) {
+                if (getJobRideId(currentJob)) {
                     openActiveJob(currentJob);
                     return;
                 }
@@ -1619,6 +1679,7 @@ const DriverHome = () => {
             const onRideRequestClosed = ({ rideId, reason, message }) => {
                 console.info('[driver-home] rideRequestClosed received', { rideId, reason, message });
                 if (acceptingRideIdRef.current && acceptingRideIdRef.current === rideId) {
+                    clearAcceptRecovery();
                     return;
                 }
                 const activeRequest = currentRequestRef.current;
@@ -1644,6 +1705,7 @@ const DriverHome = () => {
                     setCurrentRequest(null);
                     stopRideRequestAlertSound();
                 }
+                clearAcceptRecovery();
                 acceptingRideIdRef.current = '';
                 setAcceptingRideId('');
             };
@@ -1711,6 +1773,7 @@ const DriverHome = () => {
 
                 setShowRequest(false);
                 stopRideRequestAlertSound();
+                clearAcceptRecovery();
                 acceptingRideIdRef.current = '';
                 setAcceptingRideId('');
                 if (isScheduledRideForFuture(scheduledAt)) {
@@ -1830,7 +1893,7 @@ const DriverHome = () => {
             socketService.disconnect();
         }
         return undefined;
-    }, [clearRecoveryBurst, fetchActiveJob, isOnline, isOwnerManagedDriver, loadScheduledRides, navigate, scheduleRecoveryBurst]);
+    }, [clearAcceptRecovery, clearRecoveryBurst, fetchActiveJob, isOnline, isOwnerManagedDriver, loadScheduledRides, navigate, scheduleRecoveryBurst]);
 
     useEffect(() => {
         if (!isOnline) {
@@ -1911,11 +1974,31 @@ const DriverHome = () => {
             return;
         }
 
+        const acceptedRequestType = currentRequest.type || 'ride';
         acceptingRideIdRef.current = currentRequest.rideId;
         setAcceptingRideId(currentRequest.rideId);
         setStatusMessage('Accepting ride...');
         stopRideRequestAlertSound();
+        setShowRequest(false);
         socketService.emit('acceptRide', { rideId: currentRequest.rideId });
+        scheduleAcceptRecovery(acceptedRequestType);
+        navigate('/taxi/driver/active-trip', {
+            state: {
+                type: acceptedRequestType,
+                rideId: currentRequest.rideId,
+                otp: currentRequest?.raw?.otp || currentRequest?.otp || '',
+                request: {
+                    ...currentRequest,
+                    requestId: currentRequest.requestId || currentRequest.rideId,
+                    rideId: currentRequest.rideId,
+                    raw: {
+                        ...(currentRequest.raw || {}),
+                        rideId: currentRequest.rideId,
+                    },
+                },
+                currentDriverCoords: driverCoordsRef.current || readStoredDriverCoords() || null,
+            },
+        });
     };
 
     const handleDecline = () => {

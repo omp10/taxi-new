@@ -43,10 +43,48 @@ const FacebookIcon = ({ size = 24, ...props }) => (
 
 function LandingPage() {
   const navigate = useNavigate();
-  const { settings } = useSettings();
+  const { settings, modules } = useSettings();
   const appName = settings.general?.app_name || 'easytaxi';
   const [activeTab, setActiveTab] = React.useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const serviceNames = React.useMemo(() => {
+    const activeModules = Array.isArray(modules)
+      ? modules
+          .filter((module) => module?.active)
+          .slice()
+          .sort((a, b) => {
+            const orderA = Number(a?.order_by);
+            const orderB = Number(b?.order_by);
+            const hasOrderA = Number.isFinite(orderA);
+            const hasOrderB = Number.isFinite(orderB);
+
+            if (hasOrderA && hasOrderB && orderA !== orderB) {
+              return orderA - orderB;
+            }
+
+            if (hasOrderA !== hasOrderB) {
+              return hasOrderA ? -1 : 1;
+            }
+
+            return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { sensitivity: 'base' });
+          })
+          .map((module) => String(module?.name || '').trim())
+          .filter(Boolean)
+      : [];
+
+    if (activeModules.length > 0) {
+      return activeModules;
+    }
+
+    return [
+      'City Rides',
+      'Airport transfers',
+      'Outstation Trips',
+      'Parcel Delivery',
+      'Bike Taxis',
+      '24/7 Customer Support',
+    ];
+  }, [modules]);
   const appLinks = [
     {
       label: 'User App',
@@ -453,12 +491,9 @@ function LandingPage() {
           <div className="footer-col-3">
             <h3>Our Services</h3>
             <ul>
-              <li><Link to="/login">City Rides</Link></li>
-              <li><Link to="/login">Airport transfers</Link></li>
-              <li><Link to="/login">Outstation Trips</Link></li>
-              <li><Link to="/login">Parcel Delivery</Link></li>
-              <li><Link to="/login">Bike Taxis</Link></li>
-              <li><Link to="/login">24/7 Customer Support</Link></li>
+              {serviceNames.map((serviceName) => (
+                <li key={serviceName}><Link to="/login">{serviceName}</Link></li>
+              ))}
             </ul>
           </div>
         </div>
