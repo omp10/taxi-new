@@ -48,7 +48,11 @@ const DriverList = ({ mode = 'approved' }) => {
       });
       const driversList = responseData.data?.results || [];
       if (responseData.success) {
-        const approved = driversList.map((d) => ({
+        const visibleDrivers = mode === 'active'
+          ? driversList.filter((d) => Boolean(d.isOnline))
+          : driversList;
+
+        const approved = visibleDrivers.map((d) => ({
           id: d._id,
           name: d.name || 'Unknown',
           driverCode: d.driver_code || d.referralCode || (d.phone ? `DRV${String(d.phone).slice(-4)}${String(d._id || d.id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : 'N/A'),
