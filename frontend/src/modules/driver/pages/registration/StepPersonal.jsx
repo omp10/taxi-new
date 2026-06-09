@@ -44,7 +44,10 @@ const StepPersonal = () => {
         if (!phone || !registrationId) {
             navigate(`${routePrefix}/reg-phone`, { replace: true });
         }
-    }, [navigate, phone, registrationId, routePrefix]);
+        if (session.roleConfirmed === false) {
+            navigate('/taxi/driver/select-role', { replace: true });
+        }
+    }, [navigate, phone, registrationId, routePrefix, session.roleConfirmed]);
 
     const handleContinue = async () => {
         const fullName = formData.fullName.trim();

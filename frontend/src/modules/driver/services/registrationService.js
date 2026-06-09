@@ -185,6 +185,9 @@ export const getDriverOnboardingSession = ({ registrationId, phone }) =>
     params: phone ? { phone } : {},
   });
 
+export const saveDriverOnboardingRole = (payload) =>
+  api.patch("/drivers/onboarding/role", payload);
+
 export const saveDriverPersonalDetails = (payload) =>
   api.patch("/drivers/onboarding/personal", payload);
 
@@ -218,6 +221,7 @@ export const buildDriverOnboardingSessionSnapshot = (payload = {}, fallbackSessi
     registrationId: serverSession.registrationId || fallbackSession.registrationId || "",
     phone: serverSession.phone || fallbackSession.phone || "",
     role: serverSession.role || fallbackSession.role || "driver",
+    roleConfirmed: serverSession.roleConfirmed ?? fallbackSession.roleConfirmed ?? true,
     status: serverSession.status || fallbackSession.status || "",
     otpVerified:
       serverSession.otpVerified === true
@@ -266,6 +270,7 @@ export const buildDriverOnboardingSessionSnapshot = (payload = {}, fallbackSessi
 export const getDriverOnboardingResumeStep = (session = {}) => {
   const status = String(session?.status || "").toLowerCase();
   const hasOtp = Boolean(session?.otpVerified);
+  const roleConfirmed = session?.roleConfirmed !== false;
   const hasPersonal = Boolean(
     String(session?.fullName || "").trim()
     && String(session?.email || "").trim()
@@ -282,6 +287,10 @@ export const getDriverOnboardingResumeStep = (session = {}) => {
 
   if (!hasOtp && status !== "otp_verified" && status !== "personal_saved" && status !== "vehicle_saved" && status !== "documents_saved") {
     return "otp-verify";
+  }
+
+  if (!roleConfirmed) {
+    return "select-role";
   }
 
   if (status === "vehicle_saved" || status === "documents_saved" || hasVehicle) {

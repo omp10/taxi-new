@@ -80,6 +80,7 @@ const OTPVerification = () => {
     const routePrefix = location.pathname.startsWith('/taxi/owner') ? '/taxi/owner' : '/taxi/driver';
     const phone = String(session.phone || '').replace(/\D/g, '').slice(-10);
     const role = session.role || 'driver';
+    const roleConfirmed = session.roleConfirmed !== false;
     const registrationId = session.registrationId || '';
     const isLoginFlow = Boolean(session.loginMode);
     const isPoolingOnboardingFlow = Boolean(session.poolingOnboarding);
@@ -95,6 +96,7 @@ const OTPVerification = () => {
         locationId: session.locationId || '',
         vehicleTypeId: session.vehicleTypeId || '',
         role: session.role || '',
+        roleConfirmed: session.roleConfirmed !== false,
     });
 
     useEffect(() => {
@@ -147,6 +149,13 @@ const OTPVerification = () => {
 
                 if (isPoolingOnboardingFlow) {
                     navigate('/taxi/driver/pooling/onboarding', {
+                        replace: true,
+                    });
+                    return;
+                }
+
+                if (nextSession.roleConfirmed === false) {
+                    navigate('/taxi/driver/select-role', {
                         replace: true,
                     });
                     return;
@@ -249,11 +258,18 @@ const OTPVerification = () => {
 
             const response = await verifyDriverOtp({ registrationId, phone, otp: otp.join('') });
             const payload = unwrap(response);
-            saveDriverRegistrationSession({
+            const nextSession = saveDriverRegistrationSession({
                 ...session,
                 otpVerified: true,
+                role: payload?.session?.role || session.role || 'driver',
+                roleConfirmed: payload?.session?.roleConfirmed ?? session.roleConfirmed ?? true,
+                status: payload?.session?.status || 'otp_verified',
                 otpSession: payload?.session || null,
             });
+            if (nextSession.roleConfirmed === false) {
+                navigate('/taxi/driver/select-role');
+                return;
+            }
             navigate(`${routePrefix}/step-personal`);
         } catch (err) {
             setError(err?.message || 'Invalid code');
@@ -271,7 +287,7 @@ const OTPVerification = () => {
                 ? await sendDriverLoginOtp({ phone, role })
                 : isPoolingOnboardingFlow
                     ? await startPoolingDriverOnboarding({ phone })
-                    : await sendDriverOtp({ phone, role });
+                    : await sendDriverOtp(roleConfirmed ? { phone, role } : { phone });
             const payload = unwrap(response);
             const nextSession = isLoginFlow
                 ? saveDriverRegistrationSession({

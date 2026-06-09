@@ -126,6 +126,7 @@ import DriverLayout from './modules/driver/components/DriverLayout';
 // Driver Module - Registration
 const PhoneRegistration = lazy(() => import('./modules/driver/pages/registration/PhoneRegistration'));
 const OTPVerification = lazy(() => import('./modules/driver/pages/registration/OTPVerification'));
+const RoleSelection = lazy(() => import('./modules/driver/pages/registration/RoleSelection'));
 const RegistrationStatus = lazy(() => import('./modules/driver/pages/registration/RegistrationStatus'));
 const StepPersonal = lazy(() => import('./modules/driver/pages/registration/StepPersonal'));
 const StepReferral = lazy(() => import('./modules/driver/pages/registration/StepReferral'));
@@ -974,6 +975,7 @@ function App() {
                   <Route path="privacy" element={<LegalPage />} />
                   <Route path="reg-phone" element={<Navigate to="/taxi/driver/login" replace />} />
                 <Route path="otp-verify" element={<OTPVerification />} />
+                <Route path="select-role" element={<RoleSelection />} />
                 <Route path="step-personal" element={<StepPersonal />} />
                 <Route path="step-referral" element={<StepReferral />} />
                 <Route path="step-vehicle" element={<StepVehicle />} />
@@ -1042,6 +1044,7 @@ function App() {
                   <Route path="privacy" element={<LegalPage />} />
                   <Route path="reg-phone" element={<Navigate to="/taxi/owner/login" replace />} />
                 <Route path="otp-verify" element={<OTPVerification />} />
+                <Route path="select-role" element={<RoleSelection />} />
                 <Route path="lang-select" element={<Navigate to="/taxi/owner/login" replace />} />
                 <Route path="step-personal" element={<StepPersonal />} />
                 <Route path="step-referral" element={<StepReferral />} />

@@ -192,6 +192,15 @@ const publicPoolingDriverPayload = (vehicle) => ({
   vehicleColor: vehicle.color || '',
 });
 
+const LOGIN_ROLE_PRIORITY = [
+  'owner',
+  'service_center',
+  'service_center_staff',
+  'bus_driver',
+  'pooling_driver',
+  'driver',
+];
+
 const isApprovedDriver = (driver) =>
   Boolean(driver) &&
   driver.approve !== false &&
@@ -218,13 +227,12 @@ const isApprovedServiceCenterStaff = (staff) =>
   staff.active !== false &&
   String(staff.status || '').toLowerCase() !== 'inactive';
 
-export const startDriverLoginOtp = async ({ phone, role = 'driver' }) => {
-  const normalizedPhone = normalizePhone(phone);
+export const findDriverPortalAccountByPhone = async ({ phone, role } = {}) => {
   const normalizedRole = normalizeRole(role);
   const phoneCandidates = buildPhoneCandidates(phone);
 
-  if (!normalizedPhone || normalizedPhone.length !== 10) {
-    throw new ApiError(400, 'A valid 10-digit mobile number is required');
+  if (!phoneCandidates.length) {
+    return null;
   }
 
   const account =
@@ -241,6 +249,68 @@ export const startDriverLoginOtp = async ({ phone, role = 'driver' }) => {
       : normalizedRole === 'pooling_driver'
         ? await PoolingVehicle.findOne({ driverPhone: { $in: phoneCandidates } })
         : await Driver.findOne({ phone: { $in: phoneCandidates } });
+
+  return account ? { role: normalizedRole, account } : null;
+};
+
+const buildDriverPortalExistenceQuery = (role, phoneCandidates) => {
+  if (role === 'owner') {
+    return Owner.findOne({
+      $or: [{ mobile: { $in: phoneCandidates } }, { phone: { $in: phoneCandidates } }],
+    }).select('_id').lean();
+  }
+
+  if (role === 'service_center') {
+    return ServiceStore.findOne({ owner_phone: { $in: phoneCandidates } }).select('_id').lean();
+  }
+
+  if (role === 'service_center_staff') {
+    return ServiceCenterStaff.findOne({ phone: { $in: phoneCandidates } }).select('_id').lean();
+  }
+
+  if (role === 'bus_driver') {
+    return BusDriver.findOne({ phone: { $in: phoneCandidates } }).select('_id').lean();
+  }
+
+  if (role === 'pooling_driver') {
+    return PoolingVehicle.findOne({ driverPhone: { $in: phoneCandidates } }).select('_id').lean();
+  }
+
+  return Driver.findOne({ phone: { $in: phoneCandidates } }).select('_id').lean();
+};
+
+export const findPreferredDriverPortalAccountByPhone = async (phone) => {
+  const phoneCandidates = buildPhoneCandidates(phone);
+
+  if (!phoneCandidates.length) {
+    return null;
+  }
+
+  const results = await Promise.all(
+    LOGIN_ROLE_PRIORITY.map(async (role) => {
+      const account = await buildDriverPortalExistenceQuery(role, phoneCandidates);
+      return account ? { role, account } : null;
+    }),
+  );
+
+  for (const role of LOGIN_ROLE_PRIORITY) {
+    const match = results.find((item) => item?.role === role);
+    if (match) return match;
+  }
+
+  return null;
+};
+
+export const startDriverLoginOtp = async ({ phone, role = 'driver' }) => {
+  const normalizedPhone = normalizePhone(phone);
+  const normalizedRole = normalizeRole(role);
+
+  if (!normalizedPhone || normalizedPhone.length !== 10) {
+    throw new ApiError(400, 'A valid 10-digit mobile number is required');
+  }
+
+  const match = await findDriverPortalAccountByPhone({ phone: normalizedPhone, role: normalizedRole });
+  const account = match?.account;
 
   if (!account) {
     throw new ApiError(

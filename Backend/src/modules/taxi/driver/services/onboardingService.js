@@ -17,7 +17,10 @@ import {
   listOwnerNeededDocuments,
 } from '../../admin/services/adminService.js';
 import { hashPassword, signAccessToken } from './authService.js';
-import { startDriverLoginOtp } from './loginOtpService.js';
+import {
+  findPreferredDriverPortalAccountByPhone,
+  startDriverLoginOtp,
+} from './loginOtpService.js';
 import { findZoneByPickup } from './locationService.js';
 import { sendOtpSms } from '../../services/smsService.js';
 import { WalletTransaction } from '../models/WalletTransaction.js';
@@ -49,6 +52,7 @@ const normalizePhone = (phone) => {
 };
 
 const normalizeRole = (role) => (String(role || 'driver').toLowerCase() === 'owner' ? 'owner' : 'driver');
+const hasExplicitSignupRole = (role) => ['driver', 'owner'].includes(String(role || '').trim().toLowerCase());
 const normalizeServiceCategories = (value, fallback = 'taxi') => {
   const rawValues = Array.isArray(value)
     ? value
@@ -390,6 +394,7 @@ const publicSessionPayload = (session, debugOtp = null) => ({
   registrationId: session.registrationId,
   phone: session.phone,
   role: session.role,
+  roleConfirmed: session.roleConfirmed !== false,
   status: session.status,
   otpVerified: Boolean(session.otpVerifiedAt),
   documentsUploaded: Object.keys(session.documents || {}).filter((key) => Boolean(session.documents?.[key])),
@@ -502,17 +507,21 @@ const uploadRegistrationDocument = async (documentKey, value) => {
   };
 };
 
-export const startDriverOnboarding = async ({ phone, role = 'driver' }) => {
+export const startDriverOnboarding = async ({ phone, role }) => {
   const normalizedPhone = normalizePhone(phone);
 
   if (!normalizedPhone || normalizedPhone.length !== 10) {
     throw new ApiError(400, 'A valid 10-digit mobile number is required');
   }
 
+  const roleProvided = hasExplicitSignupRole(role);
   const normalizedRole = normalizeRole(role);
-  const existingDriver = await Driver.findOne({ phone: normalizedPhone });
+  const preferredExistingAccount = roleProvided
+    ? null
+    : await findPreferredDriverPortalAccountByPhone(normalizedPhone);
+  const existingDriver = roleProvided ? await Driver.findOne({ phone: normalizedPhone }) : null;
   const existingOwner =
-    normalizedRole === 'owner'
+    roleProvided && normalizedRole === 'owner'
       ? await Owner.findOne({
           $or: [
             { mobile: normalizedPhone },
@@ -521,21 +530,24 @@ export const startDriverOnboarding = async ({ phone, role = 'driver' }) => {
         })
       : null;
 
-  const hasExistingAccount =
-    normalizedRole === 'owner' ? Boolean(existingOwner) : Boolean(existingDriver);
+  const hasExistingAccount = roleProvided
+    ? (normalizedRole === 'owner' ? Boolean(existingOwner) : Boolean(existingDriver))
+    : Boolean(preferredExistingAccount);
 
   if (hasExistingAccount) {
     const loginResult = await startDriverLoginOtp({
       phone: normalizedPhone,
-      role: normalizedRole,
+      role: preferredExistingAccount?.role || normalizedRole,
     });
 
     return {
       ...loginResult,
       loginMode: true,
       existingAccount: true,
+      detectedRole: preferredExistingAccount?.role || normalizedRole,
       session: {
         ...(loginResult.session || {}),
+        role: preferredExistingAccount?.role || normalizedRole,
         loginMode: true,
         existingAccount: true,
       },
@@ -552,6 +564,7 @@ export const startDriverOnboarding = async ({ phone, role = 'driver' }) => {
       registrationId,
       phone: normalizedPhone,
       role: normalizedRole,
+      roleConfirmed: roleProvided,
       status: 'otp_sent',
       otpHash: hashOtp(otp),
       otpExpiresAt: new Date(now + OTP_TTL_MS),
@@ -608,12 +621,34 @@ export const verifyDriverOtp = async ({ registrationId, phone, otp }) => {
   };
 };
 
+export const setDriverOnboardingRole = async ({ registrationId, phone, role }) => {
+  const session = await getSession(registrationId, phone);
+
+  if (!session.otpVerifiedAt) {
+    throw new ApiError(400, 'Verify OTP before selecting a role');
+  }
+
+  const normalizedRole = normalizeRole(role);
+  session.role = normalizedRole;
+  session.roleConfirmed = true;
+  await session.save();
+
+  return {
+    message: 'Signup role selected successfully',
+    session: publicSessionPayload(session),
+  };
+};
+
 export const saveDriverPersonalDetails = async ({ registrationId, phone, fullName, email, gender, password }) => {
   const session = await getSession(registrationId, phone);
   const isOwner = String(session.role || '').toLowerCase() === 'owner';
 
   if (!session.otpVerifiedAt) {
     throw new ApiError(400, 'Verify OTP before continuing');
+  }
+
+  if (session.roleConfirmed === false) {
+    throw new ApiError(400, 'Select your signup role before continuing');
   }
 
   if (!fullName || !email || !gender) {

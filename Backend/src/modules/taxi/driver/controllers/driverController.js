@@ -78,6 +78,7 @@ import {
   completeDriverOnboarding,
   getDriverOnboardingSession,
   saveDriverDocuments,
+  setDriverOnboardingRole,
   saveDriverPersonalDetails,
   saveDriverReferral,
   saveDriverVehicle,
@@ -8593,6 +8594,11 @@ export const startOnboarding = async (req, res) => {
 
 export const verifyOnboardingOtp = async (req, res) => {
   const result = await verifyDriverOtp(req.body);
+  res.json({ success: true, data: result });
+};
+
+export const saveOnboardingRole = async (req, res) => {
+  const result = await setDriverOnboardingRole(req.body);
   res.json({ success: true, data: result });
 };
 

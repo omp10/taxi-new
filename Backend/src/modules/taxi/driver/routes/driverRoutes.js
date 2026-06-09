@@ -67,6 +67,7 @@ import {
   startDriverLoginOtpRequest,
   startPoolingOnboardingRequest,
   saveOnboardingDocuments,
+  saveOnboardingRole,
   saveOnboardingPersonal,
   saveOnboardingReferral,
   saveOnboardingVehicle,
@@ -511,6 +512,7 @@ driverRouter.get(
 );
 driverRouter.post("/onboarding/send-otp", asyncHandler(startOnboarding));
 driverRouter.post("/onboarding/verify-otp", asyncHandler(verifyOnboardingOtp));
+driverRouter.patch("/onboarding/role", asyncHandler(saveOnboardingRole));
 driverRouter.patch(
   "/onboarding/personal",
   asyncHandler(saveOnboardingPersonal),

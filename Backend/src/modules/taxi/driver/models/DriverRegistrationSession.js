@@ -20,6 +20,10 @@ const driverRegistrationSessionSchema = new mongoose.Schema(
       enum: ['driver', 'owner'],
       default: 'driver',
     },
+    roleConfirmed: {
+      type: Boolean,
+      default: true,
+    },
     status: {
       type: String,
       enum: ['otp_sent', 'otp_verified', 'personal_saved', 'vehicle_saved', 'documents_saved', 'completed'],
