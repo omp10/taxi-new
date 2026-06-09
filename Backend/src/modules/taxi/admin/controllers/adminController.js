@@ -592,6 +592,12 @@ export const getServiceLocations = asyncHandler(async (req, res) =>
 export const getServiceStores = asyncHandler(async (req, res) =>
   ok(res, { results: await adminService.listServiceStores(req.auth?.admin) }),
 );
+export const getPendingServiceStoreSignups = asyncHandler(async (req, res) =>
+  ok(res, { results: await adminService.listPendingServiceStoreSignups(req.auth?.admin) }),
+);
+export const getPendingServiceCenterStaffSignups = asyncHandler(async (req, res) =>
+  ok(res, { results: await adminService.listPendingServiceCenterStaffSignups(req.auth?.admin) }),
+);
 export const getCountries = asyncHandler(async (_req, res) =>
   ok(res, { results: await adminService.listCountries() }),
 );
@@ -609,6 +615,18 @@ export const updateServiceStore = asyncHandler(async (req, res) =>
 );
 export const createServiceStoreStaff = asyncHandler(async (req, res) =>
   ok(res, await adminService.createServiceStoreStaff(req.params.id, req.body, req.auth?.admin)),
+);
+export const approveServiceStoreSignup = asyncHandler(async (req, res) =>
+  ok(res, await adminService.approveServiceStoreSignup(req.params.id, req.auth?.admin)),
+);
+export const rejectServiceStoreSignup = asyncHandler(async (req, res) =>
+  ok(res, await adminService.rejectServiceStoreSignup(req.params.id, req.body, req.auth?.admin)),
+);
+export const approveServiceCenterStaffSignup = asyncHandler(async (req, res) =>
+  ok(res, await adminService.approveServiceCenterStaffSignup(req.params.id, req.auth?.admin)),
+);
+export const rejectServiceCenterStaffSignup = asyncHandler(async (req, res) =>
+  ok(res, await adminService.rejectServiceCenterStaffSignup(req.params.id, req.body, req.auth?.admin)),
 );
 export const deleteServiceLocation = asyncHandler(async (req, res) => {
   await adminService.deleteServiceLocation(req.params.id, req.auth?.admin);
@@ -795,6 +813,9 @@ export const deleteAirport = asyncHandler(async (req, res) => {
 export const getBusServices = asyncHandler(async (_req, res) =>
   ok(res, { results: await adminService.listBusServices() }),
 );
+export const getPendingBusDriverSignups = asyncHandler(async (_req, res) =>
+  ok(res, { results: await adminService.listPendingBusDriverSignups() }),
+);
 export const createBusService = asyncHandler(async (req, res) =>
   ok(res, await adminService.createBusService(req.body)),
 );
@@ -805,6 +826,12 @@ export const deleteBusService = asyncHandler(async (req, res) => {
   await adminService.deleteBusService(req.params.id);
   ok(res, { deleted: true });
 });
+export const approveBusDriverSignup = asyncHandler(async (req, res) =>
+  ok(res, await adminService.approveBusDriverSignup(req.params.id)),
+);
+export const rejectBusDriverSignup = asyncHandler(async (req, res) =>
+  ok(res, await adminService.rejectBusDriverSignup(req.params.id, req.body)),
+);
 
 export const getAdminBusBookings = asyncHandler(async (req, res) => {
   const busServiceId = toCleanString(req.query?.busServiceId);

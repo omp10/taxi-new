@@ -1801,6 +1801,10 @@ const serializeServiceStore = (store) => ({
     },
     serviceTaxPercentage: Math.max(0, Number(store.rentalCommission?.serviceTaxPercentage || 0)),
   },
+  approve: store.approve !== false,
+  rejectionReason: store.rejectionReason || '',
+  signupSource: store.signupSource || 'admin',
+  onboarding: store.onboarding || null,
   status: store.status || (store.active === false ? 'inactive' : 'active'),
   active: store.active !== false,
   staff: Array.isArray(store.staff)
@@ -1810,6 +1814,10 @@ const serializeServiceStore = (store) => ({
         name: member.name || '',
         phone: member.phone || '',
         active: member.active !== false,
+        approve: member.approve !== false,
+        rejectionReason: member.rejectionReason || '',
+        signupSource: member.signupSource || 'admin',
+        onboarding: member.onboarding || null,
         status: member.status || (member.active === false ? 'inactive' : 'active'),
         createdAt: member.createdAt || null,
         updatedAt: member.updatedAt || null,
@@ -7990,6 +7998,10 @@ export const getDashboardData = async () => {
       ...point,
       status,
       active: status === 'active',
+      approve: payload.approve !== false,
+      rejectionReason: String(payload.rejectionReason || '').trim(),
+      signupSource: payload.signupSource === 'self_signup' ? 'self_signup' : 'admin',
+      onboarding: payload.onboarding || null,
     });
 
     const populatedStore = await ServiceStore.findById(store._id)
@@ -8069,6 +8081,17 @@ export const updateServiceStore = async (id, payload, currentAdmin = null) => {
       store.active = store.status === 'active';
     }
 
+    if (payload.approve !== undefined) {
+      store.approve = payload.approve !== false;
+      if (store.approve) {
+        store.rejectionReason = '';
+      }
+    }
+
+    if (payload.rejectionReason !== undefined) {
+      store.rejectionReason = String(payload.rejectionReason || '').trim();
+    }
+
     await store.save();
 
     const populatedStore = await ServiceStore.findById(store._id)
@@ -8122,6 +8145,10 @@ export const updateServiceStore = async (id, payload, currentAdmin = null) => {
       phone,
       active: true,
       status: 'active',
+      approve: payload?.approve !== false,
+      rejectionReason: String(payload?.rejectionReason || '').trim(),
+      signupSource: payload?.signupSource === 'self_signup' ? 'self_signup' : 'admin',
+      onboarding: payload?.onboarding || null,
     });
 
     return {
@@ -8130,9 +8157,152 @@ export const updateServiceStore = async (id, payload, currentAdmin = null) => {
       name: created.name || '',
       phone: created.phone || '',
       active: created.active !== false,
+      approve: created.approve !== false,
       status: created.status || (created.active === false ? 'inactive' : 'active'),
       createdAt: created.createdAt || null,
       updatedAt: created.updatedAt || null,
+    };
+  };
+
+  export const listPendingServiceStoreSignups = async (currentAdmin = null) => {
+    if (currentAdmin) {
+      assertAdminPermission(currentAdmin, 'service_stores.view', 'service stores');
+    }
+
+    const stores = await ServiceStore.find({
+      signupSource: 'self_signup',
+      approve: false,
+    })
+      .populate('service_location_id', 'name service_location_name country')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return stores.map((item) => serializeServiceStore({ ...item, staff: [] }));
+  };
+
+  export const approveServiceStoreSignup = async (id, currentAdmin = null) => {
+    const store = await ServiceStore.findById(id);
+    if (!store) {
+      throw new ApiError(404, 'Service center request not found');
+    }
+
+    if (currentAdmin) {
+      assertAdminPermission(currentAdmin, 'service_stores.view', 'service stores');
+    }
+
+    store.approve = true;
+    store.rejectionReason = '';
+    store.active = store.status !== 'inactive';
+    await store.save();
+
+    const populated = await ServiceStore.findById(store._id)
+      .populate('service_location_id', 'name service_location_name country')
+      .lean();
+
+    return serializeServiceStore({ ...populated, staff: [] });
+  };
+
+  export const rejectServiceStoreSignup = async (id, payload = {}, currentAdmin = null) => {
+    const store = await ServiceStore.findById(id);
+    if (!store) {
+      throw new ApiError(404, 'Service center request not found');
+    }
+
+    if (currentAdmin) {
+      assertAdminPermission(currentAdmin, 'service_stores.view', 'service stores');
+    }
+
+    store.approve = false;
+    store.rejectionReason = String(payload?.rejectionReason || payload?.reason || 'Rejected by admin').trim();
+    await store.save();
+
+    const populated = await ServiceStore.findById(store._id)
+      .populate('service_location_id', 'name service_location_name country')
+      .lean();
+
+    return serializeServiceStore({ ...populated, staff: [] });
+  };
+
+  export const listPendingServiceCenterStaffSignups = async (currentAdmin = null) => {
+    if (currentAdmin) {
+      assertAdminPermission(currentAdmin, 'service_stores.view', 'service stores');
+    }
+
+    const staff = await ServiceCenterStaff.find({
+      signupSource: 'self_signup',
+      approve: false,
+    })
+      .populate('serviceCenterId', 'name address owner_phone')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return staff.map((item) => ({
+      _id: item._id,
+      id: item._id,
+      name: item.name || '',
+      phone: item.phone || '',
+      approve: item.approve !== false,
+      status: item.approve === false ? 'pending' : item.status,
+      rejectionReason: item.rejectionReason || '',
+      signupSource: item.signupSource || 'admin',
+      serviceCenterId: item.serviceCenterId?._id || item.serviceCenterId || null,
+      serviceCenterName: item.serviceCenterId?.name || item.onboarding?.roleDetails?.serviceCenterName || '',
+      serviceCenterAddress: item.serviceCenterId?.address || item.onboarding?.roleDetails?.serviceCenterAddress || '',
+      onboarding: item.onboarding || null,
+      createdAt: item.createdAt || null,
+    }));
+  };
+
+  export const approveServiceCenterStaffSignup = async (id, currentAdmin = null) => {
+    const staff = await ServiceCenterStaff.findById(id);
+    if (!staff) {
+      throw new ApiError(404, 'Service staff request not found');
+    }
+
+    if (currentAdmin) {
+      assertAdminPermission(currentAdmin, 'service_stores.view', 'service stores');
+    }
+
+    staff.approve = true;
+    staff.rejectionReason = '';
+    staff.active = true;
+    if (!staff.status) {
+      staff.status = 'active';
+    }
+    await staff.save();
+
+    return {
+      _id: staff._id,
+      id: staff._id,
+      name: staff.name || '',
+      phone: staff.phone || '',
+      approve: staff.approve,
+      status: staff.status,
+    };
+  };
+
+  export const rejectServiceCenterStaffSignup = async (id, payload = {}, currentAdmin = null) => {
+    const staff = await ServiceCenterStaff.findById(id);
+    if (!staff) {
+      throw new ApiError(404, 'Service staff request not found');
+    }
+
+    if (currentAdmin) {
+      assertAdminPermission(currentAdmin, 'service_stores.view', 'service stores');
+    }
+
+    staff.approve = false;
+    staff.rejectionReason = String(payload?.rejectionReason || payload?.reason || 'Rejected by admin').trim();
+    await staff.save();
+
+    return {
+      _id: staff._id,
+      id: staff._id,
+      name: staff.name || '',
+      phone: staff.phone || '',
+      approve: staff.approve,
+      status: staff.approve === false ? 'pending' : staff.status,
+      rejectionReason: staff.rejectionReason || '',
     };
   };
 
@@ -8539,6 +8709,79 @@ export const updateBusService = async (id, payload = {}, options = {}) => {
     }
     return true;
   };
+
+export const listPendingBusDriverSignups = async () => {
+  const items = await BusDriver.find({
+    signupSource: 'self_signup',
+    approve: false,
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return items.map((item) => ({
+    _id: item._id,
+    id: item._id,
+    name: item.name || '',
+    phone: item.phone || '',
+    email: item.email || '',
+    approve: item.approve !== false,
+    status: item.status || 'pending',
+    rejectionReason: item.rejectionReason || '',
+    operatorName: item.operatorName || '',
+    busName: item.busName || '',
+    serviceNumber: item.serviceNumber || '',
+    routeName: item.routeName || '',
+    originCity: item.originCity || '',
+    destinationCity: item.destinationCity || '',
+    assignedBusServiceId: item.assignedBusServiceId || null,
+    onboarding: item.onboarding || null,
+    createdAt: item.createdAt || null,
+  }));
+};
+
+export const approveBusDriverSignup = async (id) => {
+  const item = await BusDriver.findById(id);
+  if (!item) {
+    throw new ApiError(404, 'Bus driver request not found');
+  }
+
+  item.approve = true;
+  item.status = 'approved';
+  item.active = true;
+  item.rejectionReason = '';
+  await item.save();
+
+  return {
+    _id: item._id,
+    id: item._id,
+    name: item.name || '',
+    phone: item.phone || '',
+    approve: item.approve,
+    status: item.status,
+  };
+};
+
+export const rejectBusDriverSignup = async (id, payload = {}) => {
+  const item = await BusDriver.findById(id);
+  if (!item) {
+    throw new ApiError(404, 'Bus driver request not found');
+  }
+
+  item.approve = false;
+  item.status = 'pending';
+  item.rejectionReason = String(payload?.rejectionReason || payload?.reason || 'Rejected by admin').trim();
+  await item.save();
+
+  return {
+    _id: item._id,
+    id: item._id,
+    name: item.name || '',
+    phone: item.phone || '',
+    approve: item.approve,
+    status: item.status,
+    rejectionReason: item.rejectionReason || '',
+  };
+};
 
   export const listRentalVehicleTypes = async () => {
     await RentalVehicleType.updateMany(

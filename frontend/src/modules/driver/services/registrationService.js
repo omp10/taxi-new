@@ -185,8 +185,14 @@ export const getDriverOnboardingSession = ({ registrationId, phone }) =>
     params: phone ? { phone } : {},
   });
 
+export const getDriverOnboardingSignupOptions = () =>
+  api.get("/drivers/onboarding/signup-options");
+
 export const saveDriverOnboardingRole = (payload) =>
   api.patch("/drivers/onboarding/role", payload);
+
+export const saveDriverOnboardingRoleDetails = (payload) =>
+  api.patch("/drivers/onboarding/role-details", payload);
 
 export const saveDriverPersonalDetails = (payload) =>
   api.patch("/drivers/onboarding/personal", payload);
@@ -253,6 +259,7 @@ export const buildDriverOnboardingSessionSnapshot = (payload = {}, fallbackSessi
     postalCode: vehicle.postalCode || fallbackSession.postalCode || "",
     taxNumber: vehicle.taxNumber || fallbackSession.taxNumber || "",
     customFields: vehicle.customFields || fallbackSession.customFields || {},
+    roleDetails: payload?.roleDetails || fallbackSession.roleDetails || {},
     documents,
     otpSession: payload?.session || fallbackSession.otpSession || null,
     personalSession: payload?.session || fallbackSession.personalSession || null,
@@ -269,6 +276,7 @@ export const buildDriverOnboardingSessionSnapshot = (payload = {}, fallbackSessi
 
 export const getDriverOnboardingResumeStep = (session = {}) => {
   const status = String(session?.status || "").toLowerCase();
+  const role = normalizeDriverPortalRole(session?.role);
   const hasOtp = Boolean(session?.otpVerified);
   const roleConfirmed = session?.roleConfirmed !== false;
   const hasPersonal = Boolean(
@@ -291,6 +299,13 @@ export const getDriverOnboardingResumeStep = (session = {}) => {
 
   if (!roleConfirmed) {
     return "select-role";
+  }
+
+  if (["bus_driver", "service_center", "service_center_staff"].includes(role)) {
+    if (status === "personal_saved" || status === "role_details_saved" || Object.keys(session?.roleDetails || {}).length > 0) {
+      return "role-signup";
+    }
+    return "step-personal";
   }
 
   if (status === "vehicle_saved" || status === "documents_saved" || hasVehicle) {

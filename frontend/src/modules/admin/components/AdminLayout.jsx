@@ -861,6 +861,8 @@ const AdminLayout = () => {
             label: 'Rental',
             subItems: [
               { label: 'Service Stores', path: '/admin/pricing/service-stores', permission: 'service_stores.view' },
+              { label: 'Pending Service Stores', path: '/admin/pricing/service-stores/pending', permission: 'service_stores.view' },
+              { label: 'Pending Service Staff', path: '/admin/pricing/service-stores/pending-staff', permission: 'service_stores.view' },
               { label: 'Rental Commission', path: '/admin/pricing/rental-commission', permission: 'rental.view' },
               { label: 'Rental Vehicles', path: '/admin/pricing/rental-vehicles', permission: 'rental.view' },
               { label: 'Track Vehicles', path: '/admin/pricing/rental-tracking', permission: 'rental.view' },
@@ -875,6 +877,7 @@ const AdminLayout = () => {
             label: 'Bus Service',
             subItems: [
               { label: 'Fleet Manager', path: '/admin/bus-service', permission: 'bus_service.view' },
+              { label: 'Pending Bus Drivers', path: '/admin/bus-service/pending-drivers', permission: 'bus_service.view' },
               { label: 'Bus Commission', path: '/admin/bus-service/commission', permission: 'bus_service.view' },
               { label: 'Bus Bookings', path: '/admin/bus-service/bookings', permission: 'bus_service.view' },
             ],

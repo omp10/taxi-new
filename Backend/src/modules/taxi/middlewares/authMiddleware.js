@@ -99,6 +99,7 @@ export const authenticate = (allowedRoles = [], options = {}) => async (req, _re
 
     if (
       normalizedRole === 'bus_driver' &&
+      !allowPending &&
       (entity.active === false ||
         entity.approve === false ||
         ['pending', 'blocked'].includes(String(entity.status || '').toLowerCase()))
@@ -124,14 +125,20 @@ export const authenticate = (allowedRoles = [], options = {}) => async (req, _re
 
     if (
       normalizedRole === 'service_center' &&
-      (entity.active === false || String(entity.status || '').toLowerCase() === 'inactive')
+      !allowPending &&
+      (entity.active === false ||
+        entity.approve === false ||
+        String(entity.status || '').toLowerCase() === 'inactive')
     ) {
       throw new ApiError(403, 'Service center account is inactive');
     }
 
     if (
       normalizedRole === 'service_center_staff' &&
-      (entity.active === false || String(entity.status || '').toLowerCase() === 'inactive')
+      !allowPending &&
+      (entity.active === false ||
+        entity.approve === false ||
+        String(entity.status || '').toLowerCase() === 'inactive')
     ) {
       throw new ApiError(403, 'Service center staff account is inactive');
     }

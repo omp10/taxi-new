@@ -24,6 +24,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { adminService } from '../../services/adminService';
 import {
   BUS_BLUEPRINT_TEMPLATES,
   createBusBlueprint,
@@ -355,6 +356,9 @@ const BusServiceManager = ({
   const getBuses = api.getBuses || defaultGetBuses;
   const upsertBus = api.upsertBus || defaultUpsertBus;
   const deleteBus = api.deleteBus || defaultDeleteBus;
+  const getPendingBusDrivers = api.getPendingBusDrivers || adminService.getPendingBusDrivers;
+  const approvePendingBusDriver = api.approvePendingBusDriver || adminService.approvePendingBusDriver;
+  const rejectPendingBusDriver = api.rejectPendingBusDriver || adminService.rejectPendingBusDriver;
   const getDrivers = api.getDrivers;
   const resolvedPathMode = useMemo(() => {
     const pathname = String(location.pathname || '');
@@ -376,6 +380,7 @@ const BusServiceManager = ({
   const currentMode = modeProp || resolvedPathMode || searchParams.get('mode') || 'list';
   const currentBusId = routeBusId || searchParams.get('bus') || '';
   const [catalog, setCatalog] = useState([]);
+  const [pendingBusDrivers, setPendingBusDrivers] = useState([]);
   const [selectedBusId, setSelectedBusId] = useState(null);
   const [detailBusId, setDetailBusId] = useState(null);
   const [catalogSearch, setCatalogSearch] = useState('');
@@ -410,9 +415,13 @@ const BusServiceManager = ({
       setIsLoadingCatalog(true);
       try {
         const buses = await getBuses();
+        const pendingResponse = await getPendingBusDrivers?.();
         if (!active) return;
 
         setCatalog(buses);
+        setPendingBusDrivers(Array.isArray(pendingResponse?.data?.data?.results || pendingResponse?.data?.results)
+          ? (pendingResponse?.data?.data?.results || pendingResponse?.data?.results)
+          : []);
         if (currentMode === 'create') {
           return;
         }
@@ -442,6 +451,42 @@ const BusServiceManager = ({
       active = false;
     };
   }, [currentMode]);
+
+  const refreshPendingBusDrivers = async () => {
+    if (typeof getPendingBusDrivers !== 'function') {
+      return;
+    }
+    try {
+      const response = await getPendingBusDrivers();
+      setPendingBusDrivers(response?.data?.data?.results || response?.data?.results || []);
+    } catch (error) {
+      toast.error(error?.message || 'Failed to load pending bus driver requests');
+    }
+  };
+
+  const handleApprovePendingBusDriver = async (driverId) => {
+    if (typeof approvePendingBusDriver !== 'function') return;
+    try {
+      await approvePendingBusDriver(driverId);
+      await refreshPendingBusDrivers();
+      toast.success('Bus driver request approved');
+    } catch (error) {
+      toast.error(error?.message || 'Failed to approve bus driver request');
+    }
+  };
+
+  const handleRejectPendingBusDriver = async (driverId) => {
+    if (typeof rejectPendingBusDriver !== 'function') return;
+    const rejectionReason = window.prompt('Reason for rejection', '');
+    if (rejectionReason === null) return;
+    try {
+      await rejectPendingBusDriver(driverId, rejectionReason);
+      await refreshPendingBusDrivers();
+      toast.success('Bus driver request updated');
+    } catch (error) {
+      toast.error(error?.message || 'Failed to reject bus driver request');
+    }
+  };
 
   useEffect(() => {
     if (typeof getDrivers !== 'function') {
@@ -1245,6 +1290,31 @@ const BusServiceManager = ({
             </button>
           </div>
         </div>
+
+        {pendingBusDrivers.length > 0 ? (
+          <div className="mt-6 rounded-[28px] border border-amber-200 bg-amber-50/40 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-600">Pending Bus Driver Requests</p>
+                <h3 className="mt-1 text-lg font-black text-slate-900">{pendingBusDrivers.length} waiting for approval</h3>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              {pendingBusDrivers.map((item) => (
+                <div key={item.id || item._id} className="rounded-[22px] border border-white bg-white p-4 shadow-sm">
+                  <p className="text-sm font-black text-slate-900">{item.name || 'Bus Driver'}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500">{item.phone || 'No phone'}{item.email ? ` - ${item.email}` : ''}</p>
+                  <p className="mt-2 text-xs text-slate-500">{item.operatorName || 'Operator'} - {item.busName || 'Bus'}{item.serviceNumber ? ` - ${item.serviceNumber}` : ''}</p>
+                  <p className="mt-1 text-xs text-slate-500">{item.originCity || 'Origin'} to {item.destinationCity || 'Destination'}</p>
+                  <div className="mt-3 flex gap-2">
+                    <button onClick={() => handleApprovePendingBusDriver(item.id || item._id)} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white">Approve</button>
+                    <button onClick={() => handleRejectPendingBusDriver(item.id || item._id)} className="rounded-xl border border-rose-200 px-3 py-2 text-xs font-black text-rose-600">Reject</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-8 space-y-3 md:hidden">
           {isLoadingCatalog ? (

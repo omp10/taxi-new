@@ -132,6 +132,7 @@ const StepPersonal = lazy(() => import('./modules/driver/pages/registration/Step
 const StepReferral = lazy(() => import('./modules/driver/pages/registration/StepReferral'));
 const StepVehicle = lazy(() => import('./modules/driver/pages/registration/StepVehicle'));
 const StepDocuments = lazy(() => import('./modules/driver/pages/registration/StepDocuments'));
+const RoleSpecificOnboarding = lazy(() => import('./modules/driver/pages/registration/RoleSpecificOnboarding'));
 const ApplicationStatus = lazy(() => import('./modules/driver/pages/registration/ApplicationStatus'));
 
 // Driver Module - Core
@@ -225,6 +226,8 @@ const AdminBannerImage = lazy(() => import('./modules/admin/pages/promotions/Ban
 // Price Management
 const AdminServiceLocation = lazy(() => import('./modules/admin/pages/price-management/ServiceLocation'));
 const AdminServiceStores = lazy(() => import('./modules/admin/pages/price-management/ServiceStores'));
+const AdminPendingServiceStores = lazy(() => import('./modules/admin/pages/price-management/PendingServiceStores'));
+const AdminPendingServiceStaff = lazy(() => import('./modules/admin/pages/price-management/PendingServiceStaff'));
 const AdminZoneManagement = lazy(() => import('./modules/admin/pages/price-management/ZoneManagement'));
 const AdminAirportManagement = lazy(() => import('./modules/admin/pages/price-management/Airport'));
 const AdminSetPrices = lazy(() => import('./modules/admin/pages/price-management/SetPrices'));
@@ -248,6 +251,7 @@ const AdminPoolingVehicleForm = lazy(() => import('./modules/admin/pages/pooling
 const AdminPoolingBookings = lazy(() => import('./modules/admin/pages/pooling/PoolingBookings'));
 const AdminPoolingCommissionManager = lazy(() => import('./modules/admin/pages/pooling/PoolingCommissionManager'));
 const AdminBusServiceManager = lazy(() => import('./modules/admin/pages/bus-service/BusServiceManager'));
+const AdminPendingBusDrivers = lazy(() => import('./modules/admin/pages/bus-service/PendingBusDrivers'));
 const AdminBusServiceDetails = lazy(() => import('./modules/admin/pages/bus-service/BusServiceDetails'));
 const AdminBusBookingManager = lazy(() => import('./modules/admin/pages/bus-service/BusBookingManager'));
 const AdminBusCommissionManager = lazy(() => import('./modules/admin/pages/bus-service/BusCommissionManager'));
@@ -977,6 +981,7 @@ function App() {
                 <Route path="otp-verify" element={<OTPVerification />} />
                 <Route path="select-role" element={<RoleSelection />} />
                 <Route path="step-personal" element={<StepPersonal />} />
+                <Route path="role-signup" element={<RoleSpecificOnboarding />} />
                 <Route path="step-referral" element={<StepReferral />} />
                 <Route path="step-vehicle" element={<StepVehicle />} />
                 <Route path="step-documents" element={<StepDocuments />} />
@@ -1047,6 +1052,7 @@ function App() {
                 <Route path="select-role" element={<RoleSelection />} />
                 <Route path="lang-select" element={<Navigate to="/taxi/owner/login" replace />} />
                 <Route path="step-personal" element={<StepPersonal />} />
+                <Route path="role-signup" element={<RoleSpecificOnboarding />} />
                 <Route path="step-referral" element={<StepReferral />} />
                 <Route path="step-vehicle" element={<StepVehicle />} />
                 <Route path="step-documents" element={<StepDocuments />} />
@@ -1108,6 +1114,7 @@ function App() {
                 <Route path="deliveries" element={<AdminDeliveries />} />
                 <Route path="ongoing" element={<AdminOngoing />} />
                 <Route path="bus-service" element={<AdminBusServiceManager />} />
+                <Route path="bus-service/pending-drivers" element={<AdminPendingBusDrivers />} />
                 <Route path="bus-service/create" element={<AdminBusServiceManager mode="create" />} />
                 <Route path="bus-service/edit/:id" element={<AdminBusServiceManager mode="edit" />} />
                 <Route path="bus-service/commission" element={<AdminBusCommissionManager />} />
@@ -1388,6 +1395,14 @@ function App() {
                   <Route
                     path="service-stores"
                     element={<AdminServiceStores />}
+                  />
+                  <Route
+                    path="service-stores/pending"
+                    element={<AdminPendingServiceStores />}
+                  />
+                  <Route
+                    path="service-stores/pending-staff"
+                    element={<AdminPendingServiceStaff />}
                   />
                   <Route
                     path="rental-commission"

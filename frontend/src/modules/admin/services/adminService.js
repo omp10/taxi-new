@@ -105,9 +105,17 @@ export const adminService = {
   updateServiceLocation: (id, data) => api.patch(`/admin/service-locations/${id}`, data),
   deleteServiceLocation: (id) => api.delete(`/admin/service-locations/${id}`),
   getServiceStores: () => api.get('/admin/service-stores'),
+  getPendingServiceStores: () => api.get('/admin/service-stores/pending'),
+  approvePendingServiceStore: (id) => api.patch(`/admin/service-stores/${id}/approve`),
+  rejectPendingServiceStore: (id, rejectionReason = '') =>
+    api.patch(`/admin/service-stores/${id}/reject`, { rejectionReason }),
   createServiceStore: (data) => api.post('/admin/service-stores', data),
   updateServiceStore: (id, data) => api.patch(`/admin/service-stores/${id}`, data),
   createServiceStoreStaff: (id, data) => api.post(`/admin/service-stores/${id}/staff`, data),
+  getPendingServiceStoreStaff: () => api.get('/admin/service-stores/pending-staff'),
+  approvePendingServiceStoreStaff: (id) => api.patch(`/admin/service-stores/staff/${id}/approve`),
+  rejectPendingServiceStoreStaff: (id, rejectionReason = '') =>
+    api.patch(`/admin/service-stores/staff/${id}/reject`, { rejectionReason }),
   deleteServiceStore: (id) => api.delete(`/admin/service-stores/${id}`),
   getCountries: () => api.get('/countries'),
   getVehicleTypes: (transportType) => api.get(`/admin/types/vehicle-types/list${transportType ? `?transport_type=${transportType}` : ''}`),
@@ -250,6 +258,10 @@ export const adminService = {
   updatePoolingBookingStatus: (id, status) => api.patch(`/admin/pooling-bookings/${id}/status`, { status }),
 
   getAdminBusBookings: (params = {}) => api.get('/admin/bus-bookings', { params }),
+  getPendingBusDrivers: () => api.get('/admin/bus-services/pending-drivers'),
+  approvePendingBusDriver: (id) => api.patch(`/admin/bus-services/pending-drivers/${id}/approve`),
+  rejectPendingBusDriver: (id, rejectionReason = '') =>
+    api.patch(`/admin/bus-services/pending-drivers/${id}/reject`, { rejectionReason }),
   getAdminBusBookingCalendar: (params = {}) => api.get('/admin/bus-bookings/calendar', { params }),
   createAdminBusBooking: (payload) => api.post('/admin/bus-bookings/manual', payload),
   cancelAdminBusBookingSeats: (id, payload = {}) => api.post(`/admin/bus-bookings/${id}/cancel`, payload),

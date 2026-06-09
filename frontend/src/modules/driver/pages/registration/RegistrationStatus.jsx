@@ -19,6 +19,14 @@ import {
 } from "../../services/registrationService";
 
 const APPROVAL_POLL_MS = 2500;
+const normalizePortalRole = (role) => {
+  const normalized = String(role || "").toLowerCase();
+  if (normalized === "owner") return "owner";
+  if (normalized === "bus_driver" || normalized === "bus-driver" || normalized === "busdriver") return "bus_driver";
+  if (normalized === "service_center" || normalized === "service-center" || normalized === "servicecenter") return "service_center";
+  if (normalized === "service_center_staff" || normalized === "service-center-staff" || normalized === "servicecenterstaff") return "service_center_staff";
+  return "driver";
+};
 
 const unwrapDriver = (response) =>
   response?.data?.data || response?.data || response;
@@ -72,10 +80,7 @@ const RegistrationStatus = () => {
 
   useEffect(() => {
     if (location.state?.role) {
-      const normalizedRole =
-        String(location.state.role).toLowerCase() === "owner"
-          ? "owner"
-          : "driver";
+      const normalizedRole = normalizePortalRole(location.state.role);
       persistDriverAuthSession({ role: normalizedRole });
     }
 
@@ -88,7 +93,7 @@ const RegistrationStatus = () => {
       const roleFromState = String(location.state?.role || "").toLowerCase();
       persistDriverAuthSession({
         token: onboardingToken,
-        role: roleFromState === "owner" ? "owner" : "driver",
+        role: normalizePortalRole(roleFromState),
       });
     }
 
@@ -98,7 +103,7 @@ const RegistrationStatus = () => {
 
     const fetchTemplates = async () => {
         try {
-            const role = getStoredDriverRole() || location.state?.role || "driver";
+            const role = normalizePortalRole(getStoredDriverRole() || location.state?.role || "driver");
             const response = await getDriverDocumentTemplates(role);
             const templates = response?.data?.data?.results || response?.data?.results || [];
             if (mountedRef.current) setDocumentTemplates(templates);
@@ -142,11 +147,17 @@ const RegistrationStatus = () => {
 
         if (isApproved) {
           clearDriverRegistrationSession();
-          const normalizedRole =
-            String(getStoredDriverRole() || location.state?.role || "driver").toLowerCase();
-          
-          const isOwner = normalizedRole === "owner";
-          const path = isOwner ? "/taxi/owner/home" : "/taxi/driver/home";
+          const normalizedRole = normalizePortalRole(
+            getStoredDriverRole() || location.state?.role || "driver",
+          );
+          const path =
+            normalizedRole === "owner"
+              ? "/taxi/owner/home"
+              : normalizedRole === "bus_driver"
+                ? "/taxi/driver/bus-home"
+                : normalizedRole === "service_center" || normalizedRole === "service_center_staff"
+                  ? "/taxi/driver/service-center"
+                  : "/taxi/driver/home";
           
           navigate(path, { replace: true });
           requestInFlightRef.current = false;
@@ -265,6 +276,9 @@ const getStatusColor = (status) => {
   };
 
   const docDetails = getDocumentDetails();
+  const isSpecialRole = ["bus_driver", "service_center", "service_center_staff"].includes(
+    normalizePortalRole(getStoredDriverRole() || location.state?.role || "driver"),
+  );
   const rejectedDocs = docDetails.filter(d => d.status === 'rejected' || d.status === 'declined');
   const pendingReverificationDocs = docDetails.filter((doc) => doc.reverificationPending);
 
@@ -385,7 +399,11 @@ const getStatusColor = (status) => {
                             </button>
                         )}
                     </div>
-                )) : (
+                )) : isSpecialRole ? (
+                    <div className="bg-white rounded-[1.8rem] border border-slate-100 p-10 text-center shadow-sm">
+                        <p className="text-[12px] font-black uppercase tracking-widest text-slate-400 opacity-60">No document uploads required for this role.</p>
+                    </div>
+                ) : (
                     <div className="bg-white rounded-[1.8rem] border border-slate-100 p-10 text-center shadow-sm">
                         <div className="h-6 w-6 border-2 border-slate-100 border-t-slate-900 rounded-full animate-spin mx-auto mb-4" />
                         <p className="text-[12px] font-black uppercase tracking-widest text-slate-400 opacity-60">Syncing documents...</p>

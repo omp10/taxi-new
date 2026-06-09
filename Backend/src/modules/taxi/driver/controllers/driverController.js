@@ -77,7 +77,9 @@ import { assignPushTokenToEntity } from "../../services/pushTokenService.js";
 import {
   completeDriverOnboarding,
   getDriverOnboardingSession,
+  getDriverOnboardingSignupOptions,
   saveDriverDocuments,
+  saveDriverRoleDetails,
   setDriverOnboardingRole,
   saveDriverPersonalDetails,
   saveDriverReferral,
@@ -6733,11 +6735,13 @@ export const getDriverApprovalStatus = async (req, res) => {
 
   const payload = verifyAccessToken(token);
 
-  if (!["driver", "owner"].includes(String(payload.role || "").toLowerCase())) {
+  const normalizedRole = String(payload.role || "").toLowerCase();
+
+  if (!["driver", "owner", "bus_driver", "service_center", "service_center_staff"].includes(normalizedRole)) {
     throw new ApiError(403, "Insufficient permissions for this resource");
   }
 
-  if (String(payload.role || "").toLowerCase() === "owner") {
+  if (normalizedRole === "owner") {
     const owner = await Owner.findById(payload.sub);
 
     if (!owner) {
@@ -6761,6 +6765,93 @@ export const getDriverApprovalStatus = async (req, res) => {
         status: owner.status,
         documents: owner.documents || {},
         onboarding: owner.onboarding || {},
+        isOnline: false,
+        isOnRide: false,
+      },
+    });
+    return;
+  }
+
+  if (normalizedRole === "bus_driver") {
+    const busDriver = await BusDriver.findById(payload.sub);
+
+    if (!busDriver) {
+      throw new ApiError(404, "Bus driver not found");
+    }
+
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    res.json({
+      success: true,
+      data: {
+        id: busDriver._id,
+        name: busDriver.name || "",
+        phone: busDriver.phone || "",
+        approve: busDriver.approve,
+        status: busDriver.status,
+        documents: {},
+        onboarding: busDriver.onboarding || {},
+        rejectionReason: busDriver.rejectionReason || "",
+        isOnline: false,
+        isOnRide: false,
+      },
+    });
+    return;
+  }
+
+  if (normalizedRole === "service_center") {
+    const center = await ServiceStore.findById(payload.sub);
+
+    if (!center) {
+      throw new ApiError(404, "Service center not found");
+    }
+
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    res.json({
+      success: true,
+      data: {
+        id: center._id,
+        name: center.name || "",
+        phone: center.owner_phone || "",
+        approve: center.approve,
+        status: center.approve === false ? "pending" : center.status,
+        documents: {},
+        onboarding: center.onboarding || {},
+        rejectionReason: center.rejectionReason || "",
+        isOnline: false,
+        isOnRide: false,
+      },
+    });
+    return;
+  }
+
+  if (normalizedRole === "service_center_staff") {
+    const staff = await ServiceCenterStaff.findById(payload.sub);
+
+    if (!staff) {
+      throw new ApiError(404, "Service staff not found");
+    }
+
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    res.json({
+      success: true,
+      data: {
+        id: staff._id,
+        name: staff.name || "",
+        phone: staff.phone || "",
+        approve: staff.approve,
+        status: staff.approve === false ? "pending" : staff.status,
+        documents: {},
+        onboarding: staff.onboarding || {},
+        rejectionReason: staff.rejectionReason || "",
         isOnline: false,
         isOnRide: false,
       },
@@ -8599,6 +8690,16 @@ export const verifyOnboardingOtp = async (req, res) => {
 
 export const saveOnboardingRole = async (req, res) => {
   const result = await setDriverOnboardingRole(req.body);
+  res.json({ success: true, data: result });
+};
+
+export const getOnboardingSignupOptions = async (_req, res) => {
+  const result = await getDriverOnboardingSignupOptions();
+  res.json({ success: true, data: result });
+};
+
+export const saveOnboardingRoleDetails = async (req, res) => {
+  const result = await saveDriverRoleDetails(req.body);
   res.json({ success: true, data: result });
 };
 

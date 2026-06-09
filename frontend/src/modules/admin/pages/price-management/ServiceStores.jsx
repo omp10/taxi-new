@@ -58,6 +58,8 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
   const { id } = useParams();
   const [view, setView] = useState(initialMode);
   const [stores, setStores] = useState([]);
+  const [pendingStores, setPendingStores] = useState([]);
+  const [pendingStaff, setPendingStaff] = useState([]);
   const [zones, setZones] = useState([]);
   const [serviceLocations, setServiceLocations] = useState([]);
   const [rentalVehicles, setRentalVehicles] = useState([]);
@@ -114,10 +116,12 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [storesRes, zonesRes, locationsRes] = await Promise.allSettled([
+      const [storesRes, zonesRes, locationsRes, pendingStoresRes, pendingStaffRes] = await Promise.allSettled([
         adminService.getServiceStores(),
         adminService.getZones(),
         adminService.getServiceLocations(),
+        adminService.getPendingServiceStores(),
+        adminService.getPendingServiceStoreStaff(),
       ]);
       const nextStores = storesRes.status === 'fulfilled' ? (storesRes.value?.data?.data?.results || storesRes.value?.data?.results || storesRes.value?.results || []) : [];
       const nextZones = zonesRes.status === 'fulfilled' ? (zonesRes.value?.data?.data?.results || zonesRes.value?.data?.results || zonesRes.value?.results || []) : [];
@@ -126,6 +130,8 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
       setStores(nextStores);
       setZones(nextZones);
       setServiceLocations(nextServiceLocations);
+      setPendingStores(pendingStoresRes.status === 'fulfilled' ? (pendingStoresRes.value?.data?.data?.results || pendingStoresRes.value?.data?.results || []) : []);
+      setPendingStaff(pendingStaffRes.status === 'fulfilled' ? (pendingStaffRes.value?.data?.data?.results || pendingStaffRes.value?.data?.results || []) : []);
 
       if (id && initialMode === 'edit') {
         const store = nextStores.find(s => String(s._id || s.id) === String(id));
@@ -266,6 +272,46 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
     } catch (e) { alert('Delete failed.'); }
   };
 
+  const handleApprovePendingStore = async (storeId) => {
+    try {
+      await adminService.approvePendingServiceStore(storeId);
+      fetchData();
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to approve service center request.');
+    }
+  };
+
+  const handleRejectPendingStore = async (storeId) => {
+    const rejectionReason = window.prompt('Reason for rejection', '');
+    if (rejectionReason === null) return;
+    try {
+      await adminService.rejectPendingServiceStore(storeId, rejectionReason);
+      fetchData();
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to reject service center request.');
+    }
+  };
+
+  const handleApprovePendingStaff = async (staffId) => {
+    try {
+      await adminService.approvePendingServiceStoreStaff(staffId);
+      fetchData();
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to approve service staff request.');
+    }
+  };
+
+  const handleRejectPendingStaff = async (staffId) => {
+    const rejectionReason = window.prompt('Reason for rejection', '');
+    if (rejectionReason === null) return;
+    try {
+      await adminService.rejectPendingServiceStoreStaff(staffId, rejectionReason);
+      fetchData();
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Unable to reject service staff request.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] p-6 lg:p-8 font-sans">
       <AnimatePresence mode="wait">
@@ -283,13 +329,57 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
               </button>
             </div>
             <div className="grid gap-6 md:grid-cols-3">
-              {[{ label: 'Total Registry', val: stores.length, icon: Building2 }, { label: 'Zones', val: new Set(stores.map(s => s.zone_id?._id || s.zone_id)).size, icon: MapPin }, { label: 'Active', val: stores.filter(s => s.status === 'active').length, icon: ShieldCheck }].map((s, i) => (
+              {[{ label: 'Total Registry', val: stores.length, icon: Building2 }, { label: 'Pending Requests', val: pendingStores.length + pendingStaff.length, icon: Users }, { label: 'Active', val: stores.filter(s => s.status === 'active').length, icon: ShieldCheck }].map((s, i) => (
                 <div key={i} className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
                   <div className="flex justify-between mb-4"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</p><s.icon size={16} className="text-slate-300" /></div>
                   <p className="text-4xl font-black text-slate-900">{s.val}</p>
                 </div>
               ))}
             </div>
+            {(pendingStores.length > 0 || pendingStaff.length > 0) ? (
+              <div className="grid gap-6 xl:grid-cols-2">
+                <div className="rounded-[2.5rem] border border-amber-200 bg-white p-6 shadow-sm">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Pending Centers</p>
+                      <h3 className="mt-1 text-xl font-black text-slate-900">{pendingStores.length} requests</h3>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {pendingStores.map((store) => (
+                      <div key={store.id || store._id} className="rounded-[22px] border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm font-black text-slate-900">{store.name}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">{store.owner_name || 'Owner'} - {store.owner_phone || 'No phone'}</p>
+                        <p className="mt-1 text-xs text-slate-500">{store.address || 'No address'}</p>
+                        <div className="mt-3 flex gap-2">
+                          <button onClick={() => handleApprovePendingStore(store.id || store._id)} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white">Approve</button>
+                          <button onClick={() => handleRejectPendingStore(store.id || store._id)} className="rounded-xl border border-rose-200 px-3 py-2 text-xs font-black text-rose-600">Reject</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-[2.5rem] border border-rose-200 bg-white p-6 shadow-sm">
+                  <div className="mb-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-rose-500">Pending Staff</p>
+                    <h3 className="mt-1 text-xl font-black text-slate-900">{pendingStaff.length} requests</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {pendingStaff.map((staffItem) => (
+                      <div key={staffItem.id || staffItem._id} className="rounded-[22px] border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-sm font-black text-slate-900">{staffItem.name}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">{staffItem.phone}</p>
+                        <p className="mt-1 text-xs text-slate-500">{staffItem.serviceCenterName || 'No center selected'}</p>
+                        <div className="mt-3 flex gap-2">
+                          <button onClick={() => handleApprovePendingStaff(staffItem.id || staffItem._id)} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-black text-white">Approve</button>
+                          <button onClick={() => handleRejectPendingStaff(staffItem.id || staffItem._id)} className="rounded-xl border border-rose-200 px-3 py-2 text-xs font-black text-rose-600">Reject</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <div className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-100 bg-slate-50/50 p-6">
                 <div className="relative max-w-md"><Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search registry..." className="w-full rounded-2xl border border-slate-200 py-3.5 pl-12 pr-5 text-[13px] font-bold text-slate-900 outline-none focus:border-slate-900 focus:ring-8 focus:ring-slate-900/5" /></div>

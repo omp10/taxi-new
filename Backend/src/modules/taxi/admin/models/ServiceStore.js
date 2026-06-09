@@ -58,9 +58,28 @@ const serviceStoreSchema = new mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
+    approve: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
     active: {
       type: Boolean,
       default: true,
+    },
+    rejectionReason: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    signupSource: {
+      type: String,
+      enum: ['admin', 'self_signup'],
+      default: 'admin',
+    },
+    onboarding: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
     },
     fcmTokenWeb: {
       type: String,

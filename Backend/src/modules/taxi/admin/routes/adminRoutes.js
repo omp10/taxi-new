@@ -3,6 +3,9 @@ import { authenticate } from '../../middlewares/authMiddleware.js';
 import {
   approveOwner,
   approveOwnerSignupFromDriver,
+  approveBusDriverSignup,
+  approveServiceCenterStaffSignup,
+  approveServiceStoreSignup,
   createAirport,
   createAdminAccount,
   createAdminBusBooking,
@@ -67,6 +70,9 @@ import {
   getAdminBusBookings,
   getAdminEarnings,
   getAirports,
+  getPendingBusDriverSignups,
+  getPendingServiceCenterStaffSignups,
+  getPendingServiceStoreSignups,
   getBusServices,
   getAppModules,
   getCancelChart,
@@ -146,6 +152,9 @@ import {
   getRideRequests,
   rejectUserDeletionRequest,
   rejectDriverDeletionRequest,
+  rejectBusDriverSignup,
+  rejectServiceCenterStaffSignup,
+  rejectServiceStoreSignup,
   getUserRequests,
   getUserWalletHistory,
   getVehiclePreferenceOptions,
@@ -306,9 +315,15 @@ adminRouter.post('/admin/service-locations', createServiceLocation);
 adminRouter.patch('/admin/service-locations/:id', updateServiceLocation);
 adminRouter.delete('/admin/service-locations/:id', deleteServiceLocation);
 adminRouter.get('/admin/service-stores', getServiceStores);
+adminRouter.get('/admin/service-stores/pending', getPendingServiceStoreSignups);
+adminRouter.get('/admin/service-stores/pending-staff', getPendingServiceCenterStaffSignups);
 adminRouter.post('/admin/service-stores', createServiceStore);
 adminRouter.patch('/admin/service-stores/:id', updateServiceStore);
 adminRouter.post('/admin/service-stores/:id/staff', createServiceStoreStaff);
+adminRouter.patch('/admin/service-stores/:id/approve', approveServiceStoreSignup);
+adminRouter.patch('/admin/service-stores/:id/reject', rejectServiceStoreSignup);
+adminRouter.patch('/admin/service-stores/staff/:id/approve', approveServiceCenterStaffSignup);
+adminRouter.patch('/admin/service-stores/staff/:id/reject', rejectServiceCenterStaffSignup);
 adminRouter.delete('/admin/service-stores/:id', deleteServiceStore);
 adminRouter.get('/common/ride_modules', getRideModules);
 adminRouter.get('/admin/types/vehicle-types/list', getVehicleTypes);
@@ -327,8 +342,11 @@ adminRouter.post('/admin/airports', createAirport);
 adminRouter.patch('/admin/airports/:id', updateAirport);
 adminRouter.delete('/admin/airports/:id', deleteAirport);
 adminRouter.get('/admin/bus-services', getBusServices);
+adminRouter.get('/admin/bus-services/pending-drivers', getPendingBusDriverSignups);
 adminRouter.post('/admin/bus-services', createBusService);
 adminRouter.patch('/admin/bus-services/:id', updateBusService);
+adminRouter.patch('/admin/bus-services/pending-drivers/:id/approve', approveBusDriverSignup);
+adminRouter.patch('/admin/bus-services/pending-drivers/:id/reject', rejectBusDriverSignup);
 adminRouter.delete('/admin/bus-services/:id', deleteBusService);
 adminRouter.get('/admin/bus-bookings', getAdminBusBookings);
 adminRouter.get('/admin/bus-bookings/calendar', getAdminBusBookingCalendar);

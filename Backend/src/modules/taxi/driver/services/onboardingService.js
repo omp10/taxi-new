@@ -6,7 +6,10 @@ import { uploadDataUrlToCloudinary } from '../../../../utils/cloudinaryUpload.js
 import { Driver } from '../models/Driver.js';
 import { DriverRegistrationSession } from '../models/DriverRegistrationSession.js';
 import { Owner } from '../../admin/models/Owner.js';
+import { ServiceStore } from '../../admin/models/ServiceStore.js';
+import { ServiceCenterStaff } from '../../admin/models/ServiceCenterStaff.js';
 import { ServiceLocation } from '../../admin/models/ServiceLocation.js';
+import { BusService } from '../../admin/models/BusService.js';
 import { Vehicle } from '../../admin/models/Vehicle.js';
 import { AdminBusinessSetting } from '../../admin/models/AdminBusinessSetting.js';
 import {
@@ -24,6 +27,7 @@ import {
 import { findZoneByPickup } from './locationService.js';
 import { sendOtpSms } from '../../services/smsService.js';
 import { WalletTransaction } from '../models/WalletTransaction.js';
+import { BusDriver } from '../models/BusDriver.js';
 import { applyDriverWalletAdjustment } from './walletService.js';
 
 const OTP_TTL_MS = 10 * 60 * 1000;
@@ -51,8 +55,26 @@ const normalizePhone = (phone) => {
   return digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
 };
 
-const normalizeRole = (role) => (String(role || 'driver').toLowerCase() === 'owner' ? 'owner' : 'driver');
-const hasExplicitSignupRole = (role) => ['driver', 'owner'].includes(String(role || '').trim().toLowerCase());
+const SPECIAL_SIGNUP_ROLES = ['bus_driver', 'service_center', 'service_center_staff'];
+const normalizeRole = (role) => {
+  const normalized = String(role || 'driver').trim().toLowerCase();
+  if (normalized === 'owner') return 'owner';
+  if (normalized === 'bus_driver' || normalized === 'bus-driver' || normalized === 'busdriver') return 'bus_driver';
+  if (normalized === 'service_center' || normalized === 'service-center' || normalized === 'servicecenter') return 'service_center';
+  if (
+    normalized === 'service_center_staff' ||
+    normalized === 'service-center-staff' ||
+    normalized === 'servicecenterstaff' ||
+    normalized === 'center_staff'
+  ) {
+    return 'service_center_staff';
+  }
+  return 'driver';
+};
+const hasExplicitSignupRole = (role) =>
+  ['driver', 'owner', 'bus_driver', 'service_center', 'service_center_staff'].includes(
+    normalizeRole(role),
+  );
 const normalizeServiceCategories = (value, fallback = 'taxi') => {
   const rawValues = Array.isArray(value)
     ? value
@@ -345,6 +367,32 @@ const getValidatedServiceLocationCoordinates = (serviceLocation = {}) => {
   }
 };
 
+const isSpecialSignupRole = (role = '') => SPECIAL_SIGNUP_ROLES.includes(normalizeRole(role));
+
+const serializeSignupBusServiceOption = (busService = {}) => ({
+  id: busService._id,
+  operatorName: busService.operatorName || '',
+  busName: busService.busName || '',
+  serviceNumber: busService.serviceNumber || '',
+  routeName: busService.route?.routeName || '',
+  originCity: busService.route?.originCity || '',
+  destinationCity: busService.route?.destinationCity || '',
+  status: busService.status || 'draft',
+});
+
+const serializeSignupServiceCenterOption = (center = {}) => ({
+  id: center._id,
+  name: center.name || '',
+  address: center.address || '',
+  ownerName: center.owner_name || '',
+  ownerPhone: center.owner_phone || '',
+  serviceLocationId: center.service_location_id?._id || center.service_location_id || null,
+  serviceLocationName:
+    center.service_location_id?.service_location_name ||
+    center.service_location_id?.name ||
+    '',
+});
+
 const normalizeStoredDocument = (value) => {
   if (!value) {
     return null;
@@ -519,19 +567,26 @@ export const startDriverOnboarding = async ({ phone, role }) => {
   const preferredExistingAccount = roleProvided
     ? null
     : await findPreferredDriverPortalAccountByPhone(normalizedPhone);
-  const existingDriver = roleProvided ? await Driver.findOne({ phone: normalizedPhone }) : null;
-  const existingOwner =
-    roleProvided && normalizedRole === 'owner'
-      ? await Owner.findOne({
-          $or: [
-            { mobile: normalizedPhone },
-            { phone: normalizedPhone },
-          ],
-        })
-      : null;
+  let roleSpecificExistingAccount = null;
+
+  if (roleProvided) {
+    if (normalizedRole === 'owner') {
+      roleSpecificExistingAccount = await Owner.findOne({
+        $or: [{ mobile: normalizedPhone }, { phone: normalizedPhone }],
+      }).lean();
+    } else if (normalizedRole === 'bus_driver') {
+      roleSpecificExistingAccount = await BusDriver.findOne({ phone: normalizedPhone }).lean();
+    } else if (normalizedRole === 'service_center') {
+      roleSpecificExistingAccount = await ServiceStore.findOne({ owner_phone: normalizedPhone }).lean();
+    } else if (normalizedRole === 'service_center_staff') {
+      roleSpecificExistingAccount = await ServiceCenterStaff.findOne({ phone: normalizedPhone }).lean();
+    } else {
+      roleSpecificExistingAccount = await Driver.findOne({ phone: normalizedPhone }).lean();
+    }
+  }
 
   const hasExistingAccount = roleProvided
-    ? (normalizedRole === 'owner' ? Boolean(existingOwner) : Boolean(existingDriver))
+    ? Boolean(roleSpecificExistingAccount)
     : Boolean(preferredExistingAccount);
 
   if (hasExistingAccount) {
@@ -635,6 +690,139 @@ export const setDriverOnboardingRole = async ({ registrationId, phone, role }) =
 
   return {
     message: 'Signup role selected successfully',
+    session: publicSessionPayload(session),
+  };
+};
+
+export const getDriverOnboardingSignupOptions = async () => {
+  const [serviceLocations, serviceCenters, busServices] = await Promise.all([
+    ServiceLocation.find({ active: { $ne: false } })
+      .select('name service_location_name address country latitude longitude location')
+      .sort({ service_location_name: 1, name: 1 })
+      .lean(),
+    ServiceStore.find({
+      active: { $ne: false },
+      approve: true,
+    })
+      .populate('service_location_id', 'name service_location_name')
+      .sort({ name: 1 })
+      .lean(),
+    BusService.find({
+      status: { $in: ['active', 'paused'] },
+    })
+      .select('operatorName busName serviceNumber route status')
+      .sort({ operatorName: 1, busName: 1 })
+      .lean(),
+  ]);
+
+  return {
+    serviceLocations: (Array.isArray(serviceLocations) ? serviceLocations : []).map((item) => ({
+      _id: item._id,
+      id: item._id,
+      name: item.service_location_name || item.name || '',
+      service_location_name: item.service_location_name || item.name || '',
+      address: item.address || '',
+      country: item.country || '',
+      latitude: item.latitude ?? item.location?.coordinates?.[1] ?? null,
+      longitude: item.longitude ?? item.location?.coordinates?.[0] ?? null,
+      location: item.location || null,
+    })),
+    serviceCenters: (Array.isArray(serviceCenters) ? serviceCenters : []).map(serializeSignupServiceCenterOption),
+    busServices: (Array.isArray(busServices) ? busServices : []).map(serializeSignupBusServiceOption),
+  };
+};
+
+export const saveDriverRoleDetails = async ({ registrationId, phone, roleDetails = {} }) => {
+  const session = await getSession(registrationId, phone);
+  const normalizedRole = normalizeRole(session.role);
+
+  if (!session.personal?.fullName) {
+    throw new ApiError(400, 'Save personal details before continuing');
+  }
+
+  if (!isSpecialSignupRole(normalizedRole)) {
+    throw new ApiError(400, 'This role does not use the self-signup details form');
+  }
+
+  if (normalizedRole === 'service_center') {
+    const centerName = String(roleDetails.centerName || roleDetails.name || '').trim();
+    const address = String(roleDetails.address || '').trim();
+    const serviceLocationId = String(roleDetails.serviceLocationId || '').trim();
+
+    if (!centerName) {
+      throw new ApiError(400, 'Service center name is required');
+    }
+
+    if (!address) {
+      throw new ApiError(400, 'Service center address is required');
+    }
+
+    if (!serviceLocationId || !/^[a-f\d]{24}$/i.test(serviceLocationId)) {
+      throw new ApiError(400, 'Select a valid service location');
+    }
+
+    const serviceLocation = await ServiceLocation.findById(serviceLocationId).lean();
+    if (!serviceLocation) {
+      throw new ApiError(404, 'Service location not found');
+    }
+
+    session.roleDetails = {
+      centerName,
+      address,
+      serviceLocationId,
+      serviceLocationName: serviceLocation.service_location_name || serviceLocation.name || '',
+    };
+  }
+
+  if (normalizedRole === 'service_center_staff') {
+    const serviceCenterId = String(roleDetails.serviceCenterId || '').trim();
+    if (!serviceCenterId || !/^[a-f\d]{24}$/i.test(serviceCenterId)) {
+      throw new ApiError(400, 'Select a valid service center');
+    }
+
+    const serviceCenter = await ServiceStore.findOne({
+      _id: serviceCenterId,
+      active: { $ne: false },
+      approve: true,
+    }).lean();
+
+    if (!serviceCenter) {
+      throw new ApiError(404, 'Service center not found');
+    }
+
+    session.roleDetails = {
+      serviceCenterId,
+      serviceCenterName: serviceCenter.name || '',
+      serviceCenterAddress: serviceCenter.address || '',
+    };
+  }
+
+  if (normalizedRole === 'bus_driver') {
+    const busServiceId = String(roleDetails.busServiceId || '').trim();
+    const requestNote = String(roleDetails.requestNote || '').trim().slice(0, 300);
+
+    if (!busServiceId || !/^[a-f\d]{24}$/i.test(busServiceId)) {
+      throw new ApiError(400, 'Select a valid bus service');
+    }
+
+    const busService = await BusService.findById(busServiceId).lean();
+    if (!busService) {
+      throw new ApiError(404, 'Bus service not found');
+    }
+
+    session.roleDetails = {
+      busServiceId,
+      requestNote,
+      busServiceSnapshot: serializeSignupBusServiceOption(busService),
+    };
+  }
+
+  session.status = 'role_details_saved';
+  await session.save();
+
+  return {
+    message: 'Signup details saved successfully',
+    roleDetails: session.roleDetails,
     session: publicSessionPayload(session),
   };
 };
@@ -933,6 +1121,206 @@ export const completeDriverOnboarding = async ({ registrationId, phone, document
     throw new ApiError(400, 'Personal details are incomplete');
   }
 
+  const normalizedRole = normalizeRole(session.role);
+  const submittedAt = new Date();
+
+  if (isSpecialSignupRole(normalizedRole)) {
+    if (!session.roleDetails || Object.keys(session.roleDetails || {}).length === 0) {
+      throw new ApiError(400, 'Signup details are incomplete');
+    }
+
+    if (normalizedRole === 'service_center') {
+      const serviceLocation = await ServiceLocation.findById(session.roleDetails.serviceLocationId).lean();
+      if (!serviceLocation) {
+        throw new ApiError(404, 'Service location not found');
+      }
+
+      const coordinates = getValidatedServiceLocationCoordinates(serviceLocation);
+      if (!coordinates) {
+        throw new ApiError(400, 'Service location coordinates are not configured');
+      }
+
+      const existingCenter = await ServiceStore.findOne({ owner_phone: session.phone }).lean();
+      if (existingCenter) {
+        throw new ApiError(409, 'Service center already exists with this phone number');
+      }
+
+      const zone = await findZoneByPickup(coordinates);
+      if (!zone?._id) {
+        throw new ApiError(400, 'No service zone is configured for the selected location');
+      }
+
+      const center = await ServiceStore.create({
+        name: session.roleDetails.centerName,
+        zone_id: zone._id,
+        service_location_id: serviceLocation._id,
+        address: session.roleDetails.address,
+        owner_name: session.personal.fullName,
+        owner_phone: session.phone,
+        latitude: coordinates[1],
+        longitude: coordinates[0],
+        location: toPoint(coordinates, 'location'),
+        status: 'active',
+        active: true,
+        approve: false,
+        signupSource: 'self_signup',
+        onboarding: {
+          registrationId: session.registrationId,
+          role: normalizedRole,
+          verifiedAt: session.otpVerifiedAt,
+          submittedAt,
+          personal: {
+            fullName: session.personal.fullName,
+            email: session.personal.email,
+            gender: session.personal.gender,
+          },
+          roleDetails: session.roleDetails,
+        },
+      });
+
+      session.finalEntityId = center._id;
+      session.finalEntityRole = normalizedRole;
+      session.status = 'completed';
+      session.completedAt = submittedAt;
+      await session.save();
+      await DriverRegistrationSession.deleteOne({ _id: session._id });
+
+      return {
+        message: 'Service center signup submitted successfully',
+        serviceCenter: {
+          id: center._id,
+          name: center.name || '',
+          phone: center.owner_phone || '',
+          approve: center.approve,
+          status: center.status,
+        },
+        token: signAccessToken({ sub: String(center._id), role: 'service_center' }),
+        session: publicSessionPayload(session),
+      };
+    }
+
+    if (normalizedRole === 'service_center_staff') {
+      const existingStaff = await ServiceCenterStaff.findOne({ phone: session.phone }).lean();
+      if (existingStaff) {
+        throw new ApiError(409, 'Service staff already exists with this phone number');
+      }
+
+      const serviceCenter = await ServiceStore.findOne({
+        _id: session.roleDetails.serviceCenterId,
+        active: { $ne: false },
+        approve: true,
+      }).lean();
+
+      if (!serviceCenter) {
+        throw new ApiError(404, 'Selected service center is not available');
+      }
+
+      const staff = await ServiceCenterStaff.create({
+        serviceCenterId: serviceCenter._id,
+        name: session.personal.fullName,
+        phone: session.phone,
+        active: true,
+        status: 'active',
+        approve: false,
+        signupSource: 'self_signup',
+        onboarding: {
+          registrationId: session.registrationId,
+          role: normalizedRole,
+          verifiedAt: session.otpVerifiedAt,
+          submittedAt,
+          personal: {
+            fullName: session.personal.fullName,
+            email: session.personal.email,
+            gender: session.personal.gender,
+          },
+          roleDetails: session.roleDetails,
+        },
+      });
+
+      session.finalEntityId = staff._id;
+      session.finalEntityRole = normalizedRole;
+      session.status = 'completed';
+      session.completedAt = submittedAt;
+      await session.save();
+      await DriverRegistrationSession.deleteOne({ _id: session._id });
+
+      return {
+        message: 'Service staff signup submitted successfully',
+        serviceStaff: {
+          id: staff._id,
+          name: staff.name || '',
+          phone: staff.phone || '',
+          approve: staff.approve,
+          status: staff.status,
+        },
+        token: signAccessToken({ sub: String(staff._id), role: 'service_center_staff' }),
+        session: publicSessionPayload(session),
+      };
+    }
+
+    if (normalizedRole === 'bus_driver') {
+      const existingBusDriver = await BusDriver.findOne({ phone: session.phone }).lean();
+      if (existingBusDriver) {
+        throw new ApiError(409, 'Bus driver already exists with this phone number');
+      }
+
+      const busService = await BusService.findById(session.roleDetails.busServiceId).lean();
+      if (!busService) {
+        throw new ApiError(404, 'Selected bus service is no longer available');
+      }
+
+      const busDriver = await BusDriver.create({
+        name: session.personal.fullName,
+        phone: session.phone,
+        email: session.personal.email,
+        approve: false,
+        active: true,
+        status: 'pending',
+        assignedBusServiceId: busService._id,
+        operatorName: busService.operatorName || '',
+        busName: busService.busName || '',
+        serviceNumber: busService.serviceNumber || '',
+        registrationNumber: busService.registrationNumber || '',
+        routeName: busService.route?.routeName || '',
+        originCity: busService.route?.originCity || '',
+        destinationCity: busService.route?.destinationCity || '',
+        signupSource: 'self_signup',
+        onboarding: {
+          registrationId: session.registrationId,
+          role: normalizedRole,
+          verifiedAt: session.otpVerifiedAt,
+          submittedAt,
+          personal: {
+            fullName: session.personal.fullName,
+            email: session.personal.email,
+            gender: session.personal.gender,
+          },
+          roleDetails: session.roleDetails,
+        },
+      });
+
+      session.finalEntityId = busDriver._id;
+      session.finalEntityRole = normalizedRole;
+      session.status = 'completed';
+      session.completedAt = submittedAt;
+      await session.save();
+      await DriverRegistrationSession.deleteOne({ _id: session._id });
+
+      return {
+        message: 'Bus driver signup submitted successfully',
+        busDriver: {
+          id: busDriver._id,
+          name: busDriver.name || '',
+          phone: busDriver.phone || '',
+          approve: busDriver.approve,
+          status: busDriver.status,
+        },
+        token: signAccessToken({ sub: String(busDriver._id), role: 'bus_driver' }),
+        session: publicSessionPayload(session),
+      };
+    }
+  }
+
   if (!session.vehicle?.locationName) {
     throw new ApiError(400, 'Vehicle details are incomplete');
   }
@@ -1013,8 +1401,6 @@ export const completeDriverOnboarding = async ({ registrationId, phone, document
   const vehicleType = selectedVehicle
     ? getGenericVehicleTypeFromCatalog(selectedVehicle)
     : getVehicleType(session.vehicle.vehicleTypeId, session.vehicle.registerFor);
-  const submittedAt = new Date();
-
   if (isOwnerRegistration) {
     const normalizedEmail = String(session.personal.email || '').trim().toLowerCase();
     const normalizedMobile = String(session.phone || '').trim();
@@ -1184,6 +1570,7 @@ export const getDriverOnboardingSession = async ({ registrationId, phone }) => {
     referralCode: session.referralCode,
     vehicle: session.vehicle,
     documents: session.documents,
+    roleDetails: session.roleDetails,
     completedAt: session.completedAt,
   };
 };

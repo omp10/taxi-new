@@ -62,11 +62,13 @@ import {
   getOwnerBusBookings,
   getMyWallet,
   getOnboardingSession,
+  getOnboardingSignupOptions,
   getServiceLocations,
   loginDriver,
   startDriverLoginOtpRequest,
   startPoolingOnboardingRequest,
   saveOnboardingDocuments,
+  saveOnboardingRoleDetails,
   saveOnboardingRole,
   saveOnboardingPersonal,
   saveOnboardingReferral,
@@ -513,6 +515,8 @@ driverRouter.get(
 driverRouter.post("/onboarding/send-otp", asyncHandler(startOnboarding));
 driverRouter.post("/onboarding/verify-otp", asyncHandler(verifyOnboardingOtp));
 driverRouter.patch("/onboarding/role", asyncHandler(saveOnboardingRole));
+driverRouter.get("/onboarding/signup-options", asyncHandler(getOnboardingSignupOptions));
+driverRouter.patch("/onboarding/role-details", asyncHandler(saveOnboardingRoleDetails));
 driverRouter.patch(
   "/onboarding/personal",
   asyncHandler(saveOnboardingPersonal),
