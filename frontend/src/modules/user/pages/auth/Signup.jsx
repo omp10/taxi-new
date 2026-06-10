@@ -1,8 +1,8 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import * as Motion from 'framer-motion';
 import AuthLayout from '../../components/AuthLayout';
-import { User, Mail, Camera, Smartphone, ImagePlus, LifeBuoy, FileText, ShieldCheck } from 'lucide-react';
+import { User, Mail, Camera, Smartphone, LifeBuoy, Gift, Trash2 } from 'lucide-react';
 import { clearLocalUserSession, userAuthService } from '../../services/authService';
 import { useSettings } from '../../../../shared/context/SettingsContext';
 import { uploadService } from '../../../../shared/services/uploadService';
@@ -45,25 +45,15 @@ const Signup = () => {
     email: '',
     gender: 'prefer-not-to-say',
     profileImage: '',
-    governmentIdProof: {
-      type: 'other',
-      imageUrl: '',
-      backImageUrl: '',
-      fileName: '',
-      backFileName: '',
-      uploadedAt: null,
-      backUploadedAt: null,
-    },
     referralCode: String(location.state?.referralCode || referralCodeFromQuery || preservedReferralCode || '').trim().toUpperCase(),
   });
   const [loading, setLoading] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
-  const [idUploading, setIdUploading] = useState(false);
-  const [idError, setIdError] = useState('');
   const [error, setError] = useState('');
   const [otpSending, setOtpSending] = useState(false);
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const appName = settings.general?.app_name || 'App';
   const isValidPhone = /^\d{10}$/.test(formData.phone);
   const hasVerifiedSignupContext = Boolean(location.state?.otpVerified) || Boolean(preservedPhone);
@@ -94,37 +84,6 @@ const Signup = () => {
   const avatarPreviewUrl = useMemo(() => {
     return formData.profileImage || '';
   }, [formData.profileImage]);
-
-  const idPreviewUrl = useMemo(() => {
-    return formData.governmentIdProof?.imageUrl || '';
-  }, [formData.governmentIdProof?.imageUrl]);
-
-  const idBackPreviewUrl = useMemo(() => {
-    return formData.governmentIdProof?.backImageUrl || '';
-  }, [formData.governmentIdProof?.backImageUrl]);
-
-  const governmentIdUploadItems = useMemo(
-    () => [
-      {
-        side: 'front',
-        label: 'Front Image',
-        preview: idPreviewUrl,
-        fileName: formData.governmentIdProof?.fileName || '',
-      },
-      {
-        side: 'back',
-        label: 'Back Image',
-        preview: idBackPreviewUrl,
-        fileName: formData.governmentIdProof?.backFileName || '',
-      },
-    ],
-    [
-      formData.governmentIdProof?.backFileName,
-      formData.governmentIdProof?.fileName,
-      idBackPreviewUrl,
-      idPreviewUrl,
-    ],
-  );
 
   const readFileAsDataUrl = (file) =>
     new Promise((resolve, reject) => {
@@ -190,64 +149,6 @@ const Signup = () => {
     }
   };
 
-  const handleGovernmentIdChange = async (e, side = 'front') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIdError('');
-    setIdUploading(true);
-
-    try {
-      const dataUrl = await imageFileToUploadDataUrl(file, { maxSize: 1500, quality: 0.86 });
-      const uploadPayload = await uploadService.uploadImage(dataUrl, 'user-government-id');
-      const imageUrl = extractUploadUrl(uploadPayload);
-
-      if (!imageUrl) {
-        throw new Error('ID proof upload failed');
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        governmentIdProof: {
-          ...prev.governmentIdProof,
-          ...(side === 'back'
-            ? {
-                backImageUrl: imageUrl,
-                backFileName: file.name || `${prev.governmentIdProof.type}-proof-back`,
-                backUploadedAt: new Date().toISOString(),
-              }
-            : {
-                imageUrl,
-                fileName: file.name || `${prev.governmentIdProof.type}-proof-front`,
-                uploadedAt: new Date().toISOString(),
-              }),
-        },
-      }));
-    } catch (err) {
-      setIdError(err?.message || 'ID proof upload failed');
-      setFormData((prev) => ({
-        ...prev,
-        governmentIdProof: {
-          ...prev.governmentIdProof,
-          ...(side === 'back'
-            ? {
-                backImageUrl: '',
-                backFileName: '',
-                backUploadedAt: null,
-              }
-            : {
-                imageUrl: '',
-                fileName: '',
-                uploadedAt: null,
-              }),
-        },
-      }));
-    } finally {
-      setIdUploading(false);
-      e.target.value = '';
-    }
-  };
-
   const handleStartSignup = async (e) => {
     e.preventDefault();
     if (!isValidPhone) return;
@@ -289,7 +190,6 @@ const Signup = () => {
         email: formData.email,
         gender: formData.gender,
         profileImage: overrides.profileImage ?? formData.profileImage,
-        governmentIdProof: formData.governmentIdProof,
         referralCode: formData.referralCode,
       });
       const payload = response?.data || {};
@@ -319,9 +219,6 @@ const Signup = () => {
     }
   };
 
-  const handleGenderChange = (gender) => {
-    setFormData({ ...formData, gender });
-  };
 
 
 
@@ -403,81 +300,80 @@ const Signup = () => {
         </form>
       ) : (
       <form onSubmit={handleSignup} className="space-y-6 sm:space-y-8">
-        {/* Avatar Placeholder */}
+        {/* Avatar Section */}
         <div className="flex flex-col items-center">
-            <div className="relative group active:scale-95 transition-all">
-                <div className="w-24 h-24 rounded-full bg-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden shadow-sm">
-                    {avatarPreviewUrl ? (
-                      <img src={avatarPreviewUrl} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <User size={40} className="text-slate-400" />
-                    )}
-                </div>
-                <div className="absolute bottom-1 right-1 w-8 h-8 bg-black rounded-full border-2 border-white flex items-center justify-center text-white shadow-md">
-                    <Camera size={14} />
-                </div>
-            </div>
-            <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-900 flex items-center gap-1">
+          <div 
+            onClick={() => !photoUploading && fileInputRef.current?.click()}
+            className={`relative group w-24 h-24 rounded-full bg-slate-50 border-2 ${
+              photoUploading ? 'border-slate-200 cursor-not-allowed' : 'border-slate-200 hover:border-slate-950 cursor-pointer'
+            } flex items-center justify-center overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md active:scale-95`}
+          >
+            {avatarPreviewUrl ? (
+              <img src={avatarPreviewUrl} alt="Profile" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            ) : (
+              <User size={40} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+            )}
+            
+            {/* Hover Overlay */}
+            {!photoUploading && (
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity duration-300">
+                <Camera size={18} className="drop-shadow" />
+                <span className="text-[9px] font-bold uppercase tracking-wider mt-1 drop-shadow">Upload</span>
+              </div>
+            )}
+
+            {/* Upload Spinner overlay */}
+            {photoUploading && (
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-white">
+                <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+              </div>
+            )}
+          </div>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            disabled={photoUploading}
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+
+          <div className="mt-3 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-900">
               Profile Photo <span className="text-slate-400">(Optional)</span>
             </p>
-            <p className="mt-2 text-xs font-medium text-slate-500">Upload a clear photo of yourself if you want to complete your profile now.</p>
-            <div className="mt-4 grid w-full max-w-[280px] grid-cols-2 gap-2">
-              <label className={`relative flex h-11 items-center justify-center gap-2 rounded-2xl border text-[11px] font-bold uppercase tracking-wider transition-all ${
-                photoUploading
-                  ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                  : 'cursor-pointer border-slate-200 bg-white text-slate-700 active:scale-[0.99]'
-              }`}>
-                <ImagePlus size={14} />
-                Gallery
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={photoUploading}
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                  aria-label="Upload profile photo from gallery"
-                  onChange={handlePhotoChange}
-                />
-              </label>
-              <label className={`relative flex h-11 items-center justify-center gap-2 rounded-2xl border text-[11px] font-bold uppercase tracking-wider transition-all ${
-                photoUploading
-                  ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                  : 'cursor-pointer border-slate-900 bg-slate-950 text-white active:scale-[0.99]'
-              }`}>
-                <Camera size={14} />
-                Camera
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="user"
-                  disabled={photoUploading}
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                  aria-label="Capture profile photo"
-                  onChange={handlePhotoChange}
-                />
-              </label>
-            </div>
-            {photoUploading && <p className="text-[11px] font-bold text-slate-500 mt-2">Uploading...</p>}
-            {photoError && <p className="text-[11px] font-bold text-red-500 mt-2">{photoError}</p>}
+            {avatarPreviewUrl && (
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, profileImage: '' }))}
+                className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+              >
+                <Trash2 size={12} />
+                Remove photo
+              </button>
+            )}
+            {photoError && <p className="text-[11px] font-bold text-red-500 mt-1.5">{photoError}</p>}
+          </div>
         </div>
 
         <div className="space-y-4 sm:space-y-5">
           <div className="space-y-2">
             <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-600">Mobile Number *</label>
-            <div className={fieldShellClassName}>
-              <Smartphone size={18} className="text-slate-500" />
-              <span className="text-[16px] font-bold text-slate-700">+91</span>
+            <div className={`${fieldShellClassName} bg-slate-50 border-slate-200/60`}>
+              <Smartphone size={18} className="text-slate-400" />
+              <span className="text-[16px] font-bold text-slate-400">+91</span>
               <input
                 type="tel"
-                maxLength={10}
-                placeholder="Enter 10-digit number"
-                className={`${fieldInputClassName} text-slate-500`}
                 value={formData.phone}
                 readOnly
                 aria-readonly="true"
-                required
+                className={`${fieldInputClassName} text-slate-400 cursor-not-allowed`}
               />
+              <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                Verified
+              </span>
             </div>
-            <p className="ml-1 text-xs font-medium text-slate-500">Verified number. You can&apos;t edit it here.</p>
           </div>
 
           <div className="space-y-2">
@@ -512,7 +408,7 @@ const Signup = () => {
           <div className="space-y-2">
             <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-600">Referral Code (Optional)</label>
             <div className={fieldShellClassName}>
-              <User size={18} className="text-slate-500" />
+              <Gift size={18} className="text-slate-500" />
               <input
                 type="text"
                 placeholder="Enter referral code"
@@ -524,103 +420,7 @@ const Signup = () => {
                 }))}
               />
             </div>
-            <p className="ml-1 text-xs font-medium text-slate-500">If someone shared a referral link, the code should already be filled in.</p>
-          </div>
-
-          <div className="space-y-3">
-            <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-600">Government ID Proof (Optional)</label>
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              <p className="mb-3 text-xs font-bold text-slate-700">You can upload front and back photos of your government ID proof now or skip them.</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {governmentIdUploadItems.map((item) => (
-                  <div key={item.side} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-3">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{item.label}</p>
-                      <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                        Optional
-                      </span>
-                    </div>
-                    <div className="h-32 w-full overflow-hidden rounded-xl bg-white border border-dashed border-slate-300 flex items-center justify-center">
-                      {item.preview ? (
-                        <img src={item.preview} alt={`Government ID ${item.side}`} className="h-full w-full object-cover" />
-                      ) : (
-                        <FileText size={34} className="text-slate-400" />
-                      )}
-                    </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <label className={`relative flex h-11 items-center justify-center gap-2 rounded-xl border text-[11px] font-bold uppercase tracking-wider transition-all ${
-                        idUploading
-                          ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                          : 'cursor-pointer border-slate-200 bg-white text-slate-700 active:scale-[0.99]'
-                      }`}>
-                        <ImagePlus size={14} />
-                        Gallery
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={idUploading}
-                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                          aria-label={`Upload government ID ${item.side} from gallery`}
-                          onChange={(event) => handleGovernmentIdChange(event, item.side)}
-                        />
-                      </label>
-                      <label className={`relative flex h-11 items-center justify-center gap-2 rounded-xl border text-[11px] font-bold uppercase tracking-wider transition-all ${
-                        idUploading
-                          ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                          : 'cursor-pointer border-slate-900 bg-slate-950 text-white active:scale-[0.99]'
-                      }`}>
-                        <Camera size={14} />
-                        Camera
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          disabled={idUploading}
-                          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                          aria-label={`Capture government ID ${item.side} photo`}
-                          onChange={(event) => handleGovernmentIdChange(event, item.side)}
-                        />
-                      </label>
-                    </div>
-                    {item.preview && (
-                      <>
-                        <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-emerald-600">
-                          <ShieldCheck size={14} />
-                          {item.label} uploaded
-                        </div>
-                        {item.fileName && (
-                          <p className="mt-1 truncate text-[11px] font-medium text-slate-500">
-                            {item.fileName}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {idUploading && <p className="mt-3 text-[11px] font-bold text-slate-500">Uploading ID proof...</p>}
-              {idError && <p className="mt-3 text-[11px] font-bold text-red-500">{idError}</p>}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-             <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-600">Gender</label>
-             <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-                {['Male', 'Female', 'Other'].map((g) => (
-                    <button
-                        key={g}
-                        type="button"
-                        onClick={() => handleGenderChange(g.toLowerCase())}
-                        className={`w-full py-3 rounded-xl text-[13px] font-bold border-2 transition-all ${
-                            formData.gender === g.toLowerCase() 
-                            ? 'border-black bg-black text-white shadow-sm' 
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
-                        }`}
-                    >
-                        {g}
-                    </button>
-                ))}
-             </div>
+            <p className="ml-1 text-[11px] font-medium text-slate-400">If someone shared a referral link, the code should already be filled in.</p>
           </div>
 
           {error && (
@@ -628,31 +428,14 @@ const Signup = () => {
           )}
         </div>
 
-        {/* Missing Fields Checklist */}
-        {!formData.name.trim() && (
-          <div className="rounded-2xl bg-amber-50/50 border border-amber-100 p-4 space-y-2 transition-all duration-300">
-            <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span>Remaining Steps to Complete</span>
-            </h4>
-            <ul className="space-y-2">
-              <li className="flex items-center gap-2.5 text-xs font-semibold">
-                <span className={`w-2 h-2 rounded-full ${formData.name.trim() ? 'bg-emerald-500' : 'bg-amber-400 animate-pulse'}`} />
-                <span className={formData.name.trim() ? 'text-slate-400 line-through font-normal' : 'text-slate-700'}>
-                  Enter Full Name
-                </span>
-              </li>
-            </ul>
-          </div>
-        )}
-
         <div className="space-y-3">
           <Motion.motion.button 
             whileTap={{ scale: 0.98 }}
             type="submit"
-            disabled={!formData.name.trim() || !isValidPhone || loading || photoUploading || idUploading}
+            disabled={!formData.name.trim() || !isValidPhone || loading || photoUploading}
             className={`w-full py-4 rounded-xl text-lg font-bold shadow-xl transition-all flex items-center justify-center gap-3 mt-4 ${
-              formData.name.trim() && isValidPhone && !loading && !photoUploading && !idUploading
-              ? 'bg-black text-white shadow-black/10' 
+              formData.name.trim() && isValidPhone && !loading && !photoUploading
+              ? 'bg-black text-white shadow-black/10 hover:bg-slate-900 cursor-pointer' 
               : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
             }`}
           >
@@ -666,7 +449,7 @@ const Signup = () => {
           <button
             type="button"
             onClick={() => navigate('/taxi/user/support')}
-            className="w-full py-3 text-sm font-bold text-slate-500 transition-colors hover:text-slate-900 flex items-center justify-center gap-2"
+            className="w-full py-3 text-sm font-bold text-slate-500 transition-colors hover:text-slate-900 flex items-center justify-center gap-2 cursor-pointer"
           >
             <LifeBuoy size={16} />
             Need Help?
