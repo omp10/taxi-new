@@ -27,6 +27,10 @@ const ignoredRoutes = new Set([
     '/taxi/driver/status',
 ]);
 
+const isIgnoredRoute = (pathname = '') =>
+    ignoredRoutes.has(pathname) ||
+    pathname.startsWith('/taxi/driver/role-signup/bus-builder');
+
 const DEFAULT_MAP_COORDS = [75.8577, 22.7196];
 
 const unwrapApiPayload = (response) => response?.data?.data || response?.data || response;
@@ -150,7 +154,7 @@ const DriverRideRequestListener = () => {
     const [acceptingRideId, setAcceptingRideId] = useState('');
     const acceptingRideIdRef = useRef('');
     const requestRef = useRef(null);
-    const activeOnRoute = !ignoredRoutes.has(location.pathname);
+    const activeOnRoute = !isIgnoredRoute(location.pathname);
 
     useEffect(() => {
         const unlock = () => unlockRideRequestAlertSound();

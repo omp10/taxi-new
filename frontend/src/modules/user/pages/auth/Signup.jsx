@@ -15,6 +15,7 @@ const fieldInputClassName =
 
 const PENDING_SIGNUP_PHONE_KEY = 'pendingUserSignupPhone';
 const PENDING_SIGNUP_REFERRAL_CODE_KEY = 'pendingUserSignupReferralCode';
+const PENDING_SIGNUP_EMPLOYEE_CODE_KEY = 'pendingUserSignupEmployeeCode';
 const syncPushTokens = () => {
   window.__flushNativeFcmToken?.().catch?.(() => {});
   window.__registerBrowserFcmToken?.({ interactive: true }).catch?.(() => {});
@@ -34,9 +35,13 @@ const Signup = () => {
   const location = useLocation();
   const { settings } = useSettings();
   const referralCodeFromQuery = new URLSearchParams(location.search).get('ref') || '';
+  const employeeCodeFromQuery = new URLSearchParams(location.search).get('emp') || '';
   const preservedPhone = typeof window !== 'undefined' ? sessionStorage.getItem(PENDING_SIGNUP_PHONE_KEY) || '' : '';
   const preservedReferralCode = typeof window !== 'undefined'
     ? sessionStorage.getItem(PENDING_SIGNUP_REFERRAL_CODE_KEY) || ''
+    : '';
+  const preservedEmployeeCode = typeof window !== 'undefined'
+    ? sessionStorage.getItem(PENDING_SIGNUP_EMPLOYEE_CODE_KEY) || ''
     : '';
   const initialPhone = String(location.state?.phone || preservedPhone || '').replace(/\D/g, '').slice(-10);
   const [formData, setFormData] = useState({
@@ -46,6 +51,7 @@ const Signup = () => {
     gender: 'prefer-not-to-say',
     profileImage: '',
     referralCode: String(location.state?.referralCode || referralCodeFromQuery || preservedReferralCode || '').trim().toUpperCase(),
+    employeeCode: String(location.state?.employeeCode || employeeCodeFromQuery || preservedEmployeeCode || '').trim().toUpperCase(),
   });
   const [loading, setLoading] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -74,6 +80,16 @@ const Signup = () => {
       sessionStorage.removeItem(PENDING_SIGNUP_REFERRAL_CODE_KEY);
     }
   }, [formData.referralCode]);
+
+  useEffect(() => {
+    const normalizedEmployeeCode = String(formData.employeeCode || '').trim().toUpperCase();
+
+    if (normalizedEmployeeCode) {
+      sessionStorage.setItem(PENDING_SIGNUP_EMPLOYEE_CODE_KEY, normalizedEmployeeCode);
+    } else {
+      sessionStorage.removeItem(PENDING_SIGNUP_EMPLOYEE_CODE_KEY);
+    }
+  }, [formData.employeeCode]);
 
   useEffect(() => {
     if (location.state?.otpVerified) {
@@ -164,6 +180,7 @@ const Signup = () => {
         state: {
           phone: formData.phone,
           referralCode: formData.referralCode,
+          employeeCode: formData.employeeCode,
         },
       });
     } catch (err) {
@@ -191,6 +208,7 @@ const Signup = () => {
         gender: formData.gender,
         profileImage: overrides.profileImage ?? formData.profileImage,
         referralCode: formData.referralCode,
+        employeeCode: formData.employeeCode,
       });
       const payload = response?.data || {};
 
@@ -202,6 +220,7 @@ const Signup = () => {
       syncPushTokens();
       sessionStorage.removeItem(PENDING_SIGNUP_PHONE_KEY);
       sessionStorage.removeItem(PENDING_SIGNUP_REFERRAL_CODE_KEY);
+      sessionStorage.removeItem(PENDING_SIGNUP_EMPLOYEE_CODE_KEY);
       navigate('/taxi/user', { replace: true });
     } catch (err) {
       const message = err?.message || 'Signup failed. Please try again.';
@@ -421,6 +440,24 @@ const Signup = () => {
               />
             </div>
             <p className="ml-1 text-[11px] font-medium text-slate-400">If someone shared a referral link, the code should already be filled in.</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-600">Employee Code (Optional)</label>
+            <div className={fieldShellClassName}>
+              <User size={18} className="text-slate-500" />
+              <input
+                type="text"
+                placeholder="Enter employee code"
+                className={fieldInputClassName}
+                value={formData.employeeCode}
+                onChange={(e) => setFormData((current) => ({
+                  ...current,
+                  employeeCode: e.target.value.trim().toUpperCase(),
+                }))}
+              />
+            </div>
+            <p className="ml-1 text-[11px] font-medium text-slate-400">Use this only if an internal employee shared their joining code.</p>
           </div>
 
           {error && (

@@ -6,6 +6,7 @@ export const ADMIN_PERMISSIONS = [
   'chat.view',
   'promotions.view',
   'users.view',
+  'employees.view',
   'wallet.view',
   'drivers.view',
   'referrals.view',

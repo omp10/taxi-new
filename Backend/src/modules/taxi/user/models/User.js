@@ -169,6 +169,18 @@ const userSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    acquiredByEmployeeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'TaxiEmployee',
+      default: null,
+      index: true,
+    },
+    acquiredByEmployeeCode: {
+      type: String,
+      default: '',
+      trim: true,
+      uppercase: true,
+    },
     referralCount: {
       type: Number,
       default: 0,
@@ -260,6 +272,7 @@ userSchema.index({ phone: 1 }, { unique: true });
 userSchema.index({ deletedAt: 1, createdAt: -1 });
 userSchema.index({ name: 1 });
 userSchema.index({ email: 1 });
+userSchema.index({ acquiredByEmployeeCode: 1 });
 userSchema.index({ 'addresses.location': '2dsphere' });
 userSchema.index({ 'deletionRequest.status': 1, deletedAt: 1 });
 

@@ -215,6 +215,9 @@ const AdminDriverAudit = lazy(() => import('./modules/admin/pages/drivers/Driver
 const AdminPaymentMethods = lazy(() => import('./modules/admin/pages/drivers/PaymentMethods'));
 const AdminDriverCreate = lazy(() => import('./modules/admin/pages/drivers/CreateDriver'));
 const AdminDriverEdit = lazy(() => import('./modules/admin/pages/drivers/EditDriver'));
+const AdminEmployeeList = lazy(() => import('./modules/admin/pages/employees/EmployeeList'));
+const AdminEmployeeCreate = lazy(() => import('./modules/admin/pages/employees/EmployeeCreate'));
+const AdminEmployeeDetails = lazy(() => import('./modules/admin/pages/employees/EmployeeDetails'));
 const AdminReferralDashboard = lazy(() => import('./modules/admin/pages/referrals/ReferralDashboard'));
 const AdminUserReferralSettings = lazy(() => import('./modules/admin/pages/referrals/UserReferralSettings'));
 const AdminDriverReferralSettings = lazy(() => import('./modules/admin/pages/referrals/DriverReferralSettings'));
@@ -1240,6 +1243,19 @@ function App() {
                 <Route
                   path="drivers/audit/:id"
                   element={<AdminDriverAudit />}
+                />
+                <Route path="employees" element={<AdminEmployeeList />} />
+                <Route
+                  path="employees/create"
+                  element={<AdminEmployeeCreate />}
+                />
+                <Route
+                  path="employees/edit/:id"
+                  element={<AdminEmployeeCreate />}
+                />
+                <Route
+                  path="employees/:id"
+                  element={<AdminEmployeeDetails />}
                 />
                 <Route
                   path="referrals/dashboard"

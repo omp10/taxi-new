@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Gift, ChevronRight, Tag, Sparkles } from 'lucide-react';
+import { ArrowLeft, Gift, ChevronRight, Tag, Sparkles, UserRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -18,6 +18,7 @@ const StepReferral = () => {
     const phone = String(session.phone || '').replace(/\D/g, '').slice(-10);
     const registrationId = String(session.registrationId || '').trim();
     const [referral, setReferral] = useState(session.referralCode || '');
+    const [employeeCode, setEmployeeCode] = useState(session.employeeCode || '');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -25,8 +26,9 @@ const StepReferral = () => {
         saveDriverRegistrationSession({
             ...session,
             referralCode: referral,
+            employeeCode,
         });
-    }, [referral]);
+    }, [employeeCode, referral]);
 
     useEffect(() => {
         if (!phone || !registrationId) {
@@ -43,11 +45,13 @@ const StepReferral = () => {
                 registrationId: session.registrationId,
                 phone: session.phone,
                 referralCode: skip ? '' : referral,
+                employeeCode: skip ? '' : employeeCode,
             });
 
             saveDriverRegistrationSession({
                 ...session,
                 referralCode: skip ? '' : referral,
+                employeeCode: skip ? '' : employeeCode,
                 referralSession: response?.data?.session || null,
             });
 
@@ -105,7 +109,7 @@ const StepReferral = () => {
 
                 <section className="space-y-5 rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
                     <div className="space-y-1 px-1">
-                        <h2 className="text-lg font-black tracking-tight text-slate-900">Referral Details</h2>
+                        <h2 className="text-lg font-black tracking-tight text-slate-900">Referral & Employee Details</h2>
                         <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest opacity-60">Optional Bonus</p>
                     </div>
 
@@ -121,6 +125,23 @@ const StepReferral = () => {
                                         value={referral}
                                         onChange={(e) => setReferral(e.target.value.toUpperCase())}
                                         placeholder="ZETO-BONUS-9080"
+                                        className="w-full border-none bg-transparent p-0 text-lg font-black text-slate-900 focus:outline-none focus:ring-0 placeholder:text-slate-200 tracking-wider uppercase"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="group rounded-[1.8rem] border-2 transition-all p-4 border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white focus-within:shadow-xl focus-within:shadow-slate-900/5">
+                            <div className="flex items-center gap-4">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm group-focus-within:bg-slate-900 group-focus-within:text-white transition-all">
+                                    <UserRound size={20} strokeWidth={2.5} />
+                                </div>
+                                <div className="min-w-0 flex-1 space-y-0.5 overflow-hidden">
+                                    <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 opacity-70">Employee Code</label>
+                                    <input
+                                        value={employeeCode}
+                                        onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
+                                        placeholder="EMP-TEAM-01"
                                         className="w-full border-none bg-transparent p-0 text-lg font-black text-slate-900 focus:outline-none focus:ring-0 placeholder:text-slate-200 tracking-wider uppercase"
                                     />
                                 </div>
@@ -160,9 +181,9 @@ const StepReferral = () => {
                             whileHover={{ scale: 1.02, y: -2 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => handleNext(false)}
-                            disabled={loading || !referral}
+                            disabled={loading || (!referral && !employeeCode)}
                             className={`group flex h-16 w-full items-center justify-center gap-3 rounded-[1.8rem] text-[15px] font-black tracking-tight transition-all relative overflow-hidden ${
-                                referral
+                                (referral || employeeCode)
                                     ? 'bg-slate-900 text-white shadow-[0_20px_40px_rgba(0,0,0,0.2)] active:bg-black'
                                     : 'pointer-events-none bg-slate-200 text-slate-400 shadow-none'
                             }`}

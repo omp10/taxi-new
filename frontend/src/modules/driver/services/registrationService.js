@@ -244,6 +244,10 @@ export const buildDriverOnboardingSessionSnapshot = (payload = {}, fallbackSessi
       payload?.referralCode !== undefined
         ? payload.referralCode
         : (fallbackSession.referralCode || ""),
+    employeeCode:
+      payload?.employeeCode !== undefined
+        ? payload.employeeCode
+        : (fallbackSession.employeeCode || ""),
     registerFor: vehicle.registerFor || fallbackSession.registerFor || "",
     serviceCategories: Array.isArray(vehicle.serviceCategories)
       ? vehicle.serviceCategories

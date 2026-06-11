@@ -53,6 +53,10 @@ const driverRegistrationSessionSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    employeeCode: {
+      type: String,
+      default: '',
+    },
     vehicle: {
       registerFor: { type: String, default: 'taxi' },
       serviceCategories: { type: [String], default: [] },

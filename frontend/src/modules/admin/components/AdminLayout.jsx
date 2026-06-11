@@ -954,6 +954,14 @@ const AdminLayout = () => {
               { label: 'Referral Translation', path: '/admin/referrals/translation', permission: 'referrals.view' },
             ],
           },
+          {
+            icon: UserCog,
+            label: 'Employee Management',
+            subItems: [
+              { label: 'Employee List', path: '/admin/employees', permission: 'employees.view' },
+              { label: 'Add Employee', path: '/admin/employees/create', permission: 'employees.view' },
+            ],
+          },
           { icon: Briefcase, label: 'Owner Management', path: '/admin/owners/dashboard', permission: 'owners.view' },
           {
             icon: FileText,

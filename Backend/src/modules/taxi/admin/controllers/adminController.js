@@ -359,6 +359,9 @@ export const deleteAdminAccount = asyncHandler(async (req, res) => {
 export const getUsers = asyncHandler(async (req, res) =>
   ok(res, await adminService.listUsers(req.query)),
 );
+export const getEmployees = asyncHandler(async (req, res) =>
+  ok(res, await adminService.listEmployees(req.query, req.auth?.admin)),
+);
 export const bulkImportUsers = asyncHandler(async (req, res) =>
   ok(res, await adminService.bulkImportUsers(req.body)),
 );
@@ -373,6 +376,15 @@ export const updateUser = asyncHandler(async (req, res) =>
 );
 export const getUser = asyncHandler(async (req, res) =>
   ok(res, await adminService.getUserById(req.params.id)),
+);
+export const createEmployee = asyncHandler(async (req, res) =>
+  ok(res, await adminService.createEmployee(req.body, req.auth?.admin)),
+);
+export const updateEmployee = asyncHandler(async (req, res) =>
+  ok(res, await adminService.updateEmployee(req.params.id, req.body, req.auth?.admin)),
+);
+export const getEmployee = asyncHandler(async (req, res) =>
+  ok(res, await adminService.getEmployeeById(req.params.id, req.auth?.admin)),
 );
 export const deleteUser = asyncHandler(async (req, res) => {
   await adminService.deleteUser(req.params.id);

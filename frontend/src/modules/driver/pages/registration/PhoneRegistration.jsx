@@ -34,6 +34,12 @@ const PhoneRegistration = () => {
     storedSession.referralCode ||
     '',
   ).trim().toUpperCase();
+  const sharedEmployeeCode = String(
+    searchParams.get('emp') ||
+    searchParams.get('employee') ||
+    storedSession.employeeCode ||
+    '',
+  ).trim().toUpperCase();
 
   const [phone, setPhone] = useState(() => String(location.state?.phone || storedSession.phone || '').replace(/\D/g, '').slice(-10));
   const [agreed, setAgreed] = useState(true);
@@ -83,6 +89,7 @@ const PhoneRegistration = () => {
         poolingOnboarding: false,
         entryPath,
         referralCode: sharedReferralCode,
+        employeeCode: sharedEmployeeCode,
         status: sessionData.status || '',
       });
 

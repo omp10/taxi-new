@@ -24,6 +24,16 @@ export const adminService = {
     }
     return api.get(`/admin/users?${params.toString()}`);
   },
+  getEmployees: (page = 1, limit = 50, search = '') => {
+    const params = new URLSearchParams({ page, limit });
+    if (String(search || '').trim()) {
+      params.set('search', String(search).trim());
+    }
+    return api.get(`/admin/employees?${params.toString()}`);
+  },
+  getEmployee: (id) => api.get(`/admin/employees/${id}`),
+  createEmployee: (data) => api.post('/admin/employees', data),
+  updateEmployee: (id, data) => api.patch(`/admin/employees/${id}`, data),
   
   bulkImportUsers: (payload) => api.post('/admin/users/bulk-import', payload),
 

@@ -35,6 +35,10 @@ import { buildRentalTrackingSnapshot, updateUserRentalTracking } from '../../ser
 import { listDriverServiceLocations } from '../../driver/services/serviceLocationService.js';
 import { listServiceStores, listSetPrices, listZones } from '../../admin/services/adminService.js';
 import {
+  findActiveEmployeeByCode,
+  normalizeEmployeeCode,
+} from '../../admin/services/employeeAttributionService.js';
+import {
   getUserSubscriptionSummary,
   listCustomerSubscriptionPlans,
   purchaseUserSubscription,
@@ -1466,6 +1470,7 @@ const buildReactivatedUserPayload = async ({
   profileImage,
   governmentIdProof,
   referrer,
+  employee,
 }) => ({
   name,
   phone,
@@ -1477,6 +1482,8 @@ const buildReactivatedUserPayload = async ({
   password: await hashPassword(String(req.body.password || '').trim() || crypto.randomBytes(24).toString('hex')),
   isVerified: true,
   referredBy: referrer?._id || null,
+  acquiredByEmployeeId: employee?._id || null,
+  acquiredByEmployeeCode: employee?.employeeCode || '',
   deletedAt: null,
   deletion_reason: '',
   active: true,
@@ -1611,6 +1618,7 @@ export const registerUser = async (req, res) => {
   const profileImage = toCleanString(req.body.profileImage);
   const governmentIdProof = normalizeGovernmentIdProof(req.body.governmentIdProof || {}, { required: false });
   const referralCode = normalizeReferralCode(req.body.referralCode);
+  const employeeCode = normalizeEmployeeCode(req.body.employeeCode);
 
   validateName(name);
   validatePhone(phone);
@@ -1619,9 +1627,14 @@ export const registerUser = async (req, res) => {
   const existingUser = await User.findOne({ phone });
 
   const referrer = referralCode ? await findUserByReferralCode(referralCode) : null;
+  const employee = employeeCode ? await findActiveEmployeeByCode(employeeCode) : null;
 
   if (referralCode && !referrer) {
     throw new ApiError(400, 'Invalid referral code');
+  }
+
+  if (employeeCode && !employee) {
+    throw new ApiError(400, 'Invalid employee code');
   }
 
   if (existingUser && !canRestoreUserForSignup(existingUser)) {
@@ -1638,6 +1651,7 @@ export const registerUser = async (req, res) => {
     profileImage,
     governmentIdProof,
     referrer,
+    employee,
   });
 
   const user = existingUser
@@ -1724,6 +1738,7 @@ export const signupUser = async (req, res) => {
   const profileImage = toCleanString(req.body.profileImage);
   const governmentIdProof = normalizeGovernmentIdProof(req.body.governmentIdProof || {}, { required: false });
   const referralCode = normalizeReferralCode(req.body.referralCode);
+  const employeeCode = normalizeEmployeeCode(req.body.employeeCode);
 
   validateName(name);
   validatePhone(phone);
@@ -1734,9 +1749,14 @@ export const signupUser = async (req, res) => {
   const existingUser = await User.findOne({ phone });
 
   const referrer = referralCode ? await findUserByReferralCode(referralCode) : null;
+  const employee = employeeCode ? await findActiveEmployeeByCode(employeeCode) : null;
 
   if (referralCode && !referrer) {
     throw new ApiError(400, 'Invalid referral code');
+  }
+
+  if (employeeCode && !employee) {
+    throw new ApiError(400, 'Invalid employee code');
   }
 
   if (existingUser && !canRestoreUserForSignup(existingUser)) {
@@ -1753,6 +1773,7 @@ export const signupUser = async (req, res) => {
     profileImage,
     governmentIdProof,
     referrer,
+    employee,
   });
 
   const user = existingUser

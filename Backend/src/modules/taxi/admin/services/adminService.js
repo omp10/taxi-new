@@ -11,6 +11,7 @@ import { AdminAppSetting } from '../models/AdminAppSetting.js';
 import { createDefaultBusinessSettings } from '../data/defaultBusinessSettings.js';
 import { createDefaultAppSettings } from '../data/defaultAppSettings.js';
 import { Airport } from '../models/Airport.js';
+import { Employee } from '../models/Employee.js';
 import { BusService } from '../models/BusService.js';
 import { DriverNeededDocument } from '../models/DriverNeededDocument.js';
 import { GoodsType } from '../models/GoodsType.js';
@@ -1482,6 +1483,36 @@ const computeRentalCommissionBreakdown = (snapshot = {}, grossAmount = 0) => {
   };
 };
 
+const normalizeEmployeePhone = (value = '') => {
+  const digits = String(value || '').replace(/\D/g, '').trim();
+  return digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+};
+
+const normalizeEmployeeCode = (value = '') =>
+  String(value || '')
+    .trim()
+    .toUpperCase();
+
+const serializeEmployee = (employee, stats = {}) => {
+  const totalUsers = Number(stats.totalUsers || 0);
+  const totalDrivers = Number(stats.totalDrivers || 0);
+
+  return {
+    _id: employee._id,
+    id: employee._id,
+    name: employee.name || '',
+    phone: employee.phone || '',
+    employeeCode: employee.employeeCode || '',
+    active: employee.active !== false,
+    notes: employee.notes || '',
+    totalUsersAcquired: totalUsers,
+    totalDriversAcquired: totalDrivers,
+    totalAcquired: totalUsers + totalDrivers,
+    createdAt: employee.createdAt || null,
+    updatedAt: employee.updatedAt || null,
+  };
+};
+
 const normalizeDeliveryServiceTax = (value, fallback = 0) =>
   Math.max(0, Number(value ?? fallback ?? 0));
 
@@ -2426,6 +2457,8 @@ const serializeDriver = (driver) => ({
   email: driver.email || '',
   driver_code: driver.referralCode || (driver.phone ? `DRV${String(driver.phone).slice(-4)}${String(driver._id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : ''),
   referralCode: driver.referralCode || '',
+  acquiredByEmployeeId: driver.acquiredByEmployeeId || null,
+  acquiredByEmployeeCode: driver.acquiredByEmployeeCode || '',
   owner_id: driver.owner_id || null,
   service_location_id: driver.service_location_id || null,
   zoneId: driver.zoneId?._id || driver.zoneId || null,
@@ -2467,6 +2500,8 @@ const DRIVER_LIST_SELECT = [
   'phone',
   'email',
   'referralCode',
+  'acquiredByEmployeeId',
+  'acquiredByEmployeeCode',
   'owner_id',
   'service_location_id',
   'zoneId',
@@ -2498,6 +2533,8 @@ const serializeDriverListItem = (driver) => ({
   email: driver.email || '',
   driver_code: driver.referralCode || (driver.phone ? `DRV${String(driver.phone).slice(-4)}${String(driver._id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : ''),
   referralCode: driver.referralCode || '',
+  acquiredByEmployeeId: driver.acquiredByEmployeeId || null,
+  acquiredByEmployeeCode: driver.acquiredByEmployeeCode || '',
   owner_id: driver.owner_id || null,
   service_location_id: driver.service_location_id || null,
   city: driver.city || '',
@@ -2550,6 +2587,8 @@ const serializeUser = (user) => ({
   },
   mobile: user.phone || user.mobile || '',
   phone: user.phone || user.mobile || '',
+  acquiredByEmployeeId: user.acquiredByEmployeeId || null,
+  acquiredByEmployeeCode: user.acquiredByEmployeeCode || '',
   wallet_balance: Number(user.wallet_balance || 0),
   active: user.active !== false && user.isActive !== false && !user.deletedAt,
   deletedAt: user.deletedAt || null,
@@ -2568,6 +2607,8 @@ const USER_LIST_SELECT = [
   'governmentIdProof',
   'phone',
   'mobile',
+  'acquiredByEmployeeId',
+  'acquiredByEmployeeCode',
   'wallet_balance',
   'active',
   'isActive',
@@ -2593,6 +2634,8 @@ const serializeUserListItem = (user) => ({
   },
   mobile: user.phone || user.mobile || '',
   phone: user.phone || user.mobile || '',
+  acquiredByEmployeeId: user.acquiredByEmployeeId || null,
+  acquiredByEmployeeCode: user.acquiredByEmployeeCode || '',
   wallet_balance: Number(user.wallet_balance || 0),
   active:
     (user.active ?? user.isActive) !== false &&
@@ -5722,6 +5765,240 @@ const toAdminIntercityTripRow = (ride) => {
     routeLabel: [fromCity, toCity].filter(Boolean).join(' -> '),
     tripType: intercity.tripType || '',
     travelDate: intercity.travelDate || '',
+  };
+};
+
+export const listEmployees = async ({ page = 1, limit = 50, search = '' } = {}, currentAdmin = null) => {
+  if (currentAdmin) {
+    assertAdminPermission(currentAdmin, 'employees.view', 'employees');
+  }
+
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.min(100, Math.max(1, Number(limit) || 50));
+  const start = (safePage - 1) * safeLimit;
+  const normalizedSearch = String(search || '').trim();
+  const query = {};
+
+  if (normalizedSearch) {
+    const escapedSearch = normalizedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const digits = normalizedSearch.replace(/\D/g, '');
+    const regex = new RegExp(escapedSearch, 'i');
+    query.$or = [{ name: regex }, { employeeCode: regex }];
+
+    if (digits) {
+      query.$or.push({ phone: new RegExp(`^${digits}`) });
+    } else {
+      query.$or.push({ phone: regex });
+    }
+  }
+
+  const [employees, total] = await Promise.all([
+    Employee.find(query)
+      .sort({ createdAt: -1 })
+      .skip(start)
+      .limit(safeLimit)
+      .lean(),
+    Employee.countDocuments(query),
+  ]);
+
+  const employeeIds = employees.map((employee) => employee._id);
+  const [userCounts, driverCounts] = await Promise.all([
+    employeeIds.length
+      ? User.aggregate([
+          { $match: { acquiredByEmployeeId: { $in: employeeIds } } },
+          { $group: { _id: '$acquiredByEmployeeId', count: { $sum: 1 } } },
+        ])
+      : [],
+    employeeIds.length
+      ? Driver.aggregate([
+          { $match: { acquiredByEmployeeId: { $in: employeeIds } } },
+          { $group: { _id: '$acquiredByEmployeeId', count: { $sum: 1 } } },
+        ])
+      : [],
+  ]);
+
+  const userCountMap = new Map(userCounts.map((item) => [String(item._id), Number(item.count || 0)]));
+  const driverCountMap = new Map(driverCounts.map((item) => [String(item._id), Number(item.count || 0)]));
+
+  return {
+    results: employees.map((employee) =>
+      serializeEmployee(employee, {
+        totalUsers: userCountMap.get(String(employee._id)) || 0,
+        totalDrivers: driverCountMap.get(String(employee._id)) || 0,
+      })),
+    paginator: {
+      current_page: safePage,
+      per_page: safeLimit,
+      total,
+      last_page: Math.max(1, Math.ceil(total / safeLimit)),
+    },
+  };
+};
+
+export const createEmployee = async (payload = {}, currentAdmin = null) => {
+  if (currentAdmin) {
+    assertAdminPermission(currentAdmin, 'employees.view', 'employees');
+  }
+
+  const name = String(payload.name || '').trim();
+  const phone = normalizeEmployeePhone(payload.phone);
+  const employeeCode = normalizeEmployeeCode(payload.employeeCode);
+  const active = payload.active === undefined ? true : normalizeBoolean(payload.active);
+  const notes = String(payload.notes || '').trim();
+
+  if (!name || name.length < 2 || name.length > 80) {
+    throw new ApiError(400, 'Employee name must be between 2 and 80 characters');
+  }
+
+  if (!/^\d{10}$/.test(phone)) {
+    throw new ApiError(400, 'Employee phone must be a valid 10-digit number');
+  }
+
+  if (!/^[A-Z0-9-]{3,40}$/.test(employeeCode)) {
+    throw new ApiError(400, 'Employee code must be 3 to 40 characters using letters, numbers, or hyphens');
+  }
+
+  const existingPhone = await Employee.findOne({ phone }).select('_id').lean();
+  if (existingPhone) {
+    throw new ApiError(409, 'Employee phone is already in use');
+  }
+
+  const existingCode = await Employee.findOne({ employeeCode }).select('_id').lean();
+  if (existingCode) {
+    throw new ApiError(409, 'Employee code is already in use');
+  }
+
+  const employee = await Employee.create({
+    name,
+    phone,
+    employeeCode,
+    active,
+    notes,
+  });
+
+  return serializeEmployee(employee.toObject());
+};
+
+export const updateEmployee = async (id, payload = {}, currentAdmin = null) => {
+  if (currentAdmin) {
+    assertAdminPermission(currentAdmin, 'employees.view', 'employees');
+  }
+
+  const employee = await Employee.findById(id);
+  if (!employee) {
+    throw new ApiError(404, 'Employee not found');
+  }
+
+  if (payload.name !== undefined) {
+    const name = String(payload.name || '').trim();
+    if (!name || name.length < 2 || name.length > 80) {
+      throw new ApiError(400, 'Employee name must be between 2 and 80 characters');
+    }
+    employee.name = name;
+  }
+
+  if (payload.phone !== undefined) {
+    const phone = normalizeEmployeePhone(payload.phone);
+    if (!/^\d{10}$/.test(phone)) {
+      throw new ApiError(400, 'Employee phone must be a valid 10-digit number');
+    }
+    const conflict = await Employee.findOne({ phone, _id: { $ne: employee._id } }).select('_id').lean();
+    if (conflict) {
+      throw new ApiError(409, 'Employee phone is already in use');
+    }
+    employee.phone = phone;
+  }
+
+  let employeeCodeChanged = false;
+
+  if (payload.employeeCode !== undefined) {
+    const employeeCode = normalizeEmployeeCode(payload.employeeCode);
+    if (!/^[A-Z0-9-]{3,40}$/.test(employeeCode)) {
+      throw new ApiError(400, 'Employee code must be 3 to 40 characters using letters, numbers, or hyphens');
+    }
+    const conflict = await Employee.findOne({ employeeCode, _id: { $ne: employee._id } }).select('_id').lean();
+    if (conflict) {
+      throw new ApiError(409, 'Employee code is already in use');
+    }
+    employeeCodeChanged = employee.employeeCode !== employeeCode;
+    employee.employeeCode = employeeCode;
+  }
+
+  if (payload.active !== undefined) {
+    employee.active = normalizeBoolean(payload.active);
+  }
+
+  if (payload.notes !== undefined) {
+    employee.notes = String(payload.notes || '').trim();
+  }
+
+  await employee.save();
+
+  if (employeeCodeChanged) {
+    await Promise.all([
+      User.updateMany(
+        { acquiredByEmployeeId: employee._id },
+        { $set: { acquiredByEmployeeCode: employee.employeeCode } },
+      ),
+      Driver.updateMany(
+        { acquiredByEmployeeId: employee._id },
+        { $set: { acquiredByEmployeeCode: employee.employeeCode } },
+      ),
+    ]);
+  }
+
+  return serializeEmployee(employee.toObject());
+};
+
+export const getEmployeeById = async (id, currentAdmin = null) => {
+  if (currentAdmin) {
+    assertAdminPermission(currentAdmin, 'employees.view', 'employees');
+  }
+
+  const employee = await Employee.findById(id).lean();
+  if (!employee) {
+    throw new ApiError(404, 'Employee not found');
+  }
+
+  const [users, drivers, totalUsers, totalDrivers] = await Promise.all([
+    User.find({ acquiredByEmployeeId: employee._id })
+      .select('_id name phone email gender createdAt active isActive deletedAt acquiredByEmployeeCode')
+      .sort({ createdAt: -1 })
+      .lean(),
+    Driver.find({ acquiredByEmployeeId: employee._id })
+      .select('_id name phone email vehicleType registerFor status approve createdAt acquiredByEmployeeCode')
+      .sort({ createdAt: -1 })
+      .lean(),
+    User.countDocuments({ acquiredByEmployeeId: employee._id }),
+    Driver.countDocuments({ acquiredByEmployeeId: employee._id }),
+  ]);
+
+  return {
+    employee: serializeEmployee(employee, { totalUsers, totalDrivers }),
+    users: users.map((user) => ({
+      _id: user._id,
+      id: user._id,
+      name: user.name || '',
+      phone: user.phone || '',
+      email: user.email || '',
+      gender: user.gender || '',
+      active: (user.active ?? user.isActive) !== false && !user.deletedAt,
+      employeeCode: user.acquiredByEmployeeCode || '',
+      createdAt: user.createdAt || null,
+    })),
+    drivers: drivers.map((driver) => ({
+      _id: driver._id,
+      id: driver._id,
+      name: driver.name || '',
+      phone: driver.phone || '',
+      email: driver.email || '',
+      vehicleType: driver.vehicleType || '',
+      registerFor: driver.registerFor || '',
+      status: driver.status || '',
+      approve: Boolean(driver.approve),
+      employeeCode: driver.acquiredByEmployeeCode || '',
+      createdAt: driver.createdAt || null,
+    })),
   };
 };
 

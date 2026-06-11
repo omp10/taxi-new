@@ -17,6 +17,7 @@ export const ADMIN_PERMISSION_GROUPS = [
       { key: 'ongoing.view', label: 'Ongoing Requests' },
       { key: 'drivers.view', label: 'Drivers' },
       { key: 'users.view', label: 'Customers' },
+      { key: 'employees.view', label: 'Employees' },
       { key: 'wallet.view', label: 'Wallet' },
       { key: 'owners.view', label: 'Owners' },
       { key: 'support.view', label: 'Support' },

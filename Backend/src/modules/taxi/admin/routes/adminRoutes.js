@@ -11,6 +11,7 @@ import {
   createAdminBusBooking,
   createBusService,
   createAppModule,
+  createEmployee,
   createGoodsType,
   createDriver,
   createDriverNeededDocument,
@@ -79,6 +80,8 @@ import {
   getCountries,
   getDashboardData,
   getDeliveries,
+  getEmployee,
+  getEmployees,
   getDriver,
   getDriverNeededDocument,
   getDriverNeededDocuments,
@@ -179,6 +182,7 @@ import {
   updateAdminAccount,
   updateBusService,
   updateDriver,
+  updateEmployee,
   updateDriverNeededDocument,
   updateDriverPassword,
   updateFirebaseSettings,
@@ -253,6 +257,8 @@ adminRouter.patch('/admin/admin-management/admins/:id', updateAdminAccount);
 adminRouter.delete('/admin/admin-management/admins/:id', deleteAdminAccount);
 
 adminRouter.get('/admin/users', getUsers);
+adminRouter.get('/admin/employees', getEmployees);
+adminRouter.post('/admin/employees', createEmployee);
 adminRouter.post('/admin/users/bulk-import', bulkImportUsers);
 adminRouter.post('/admin/users', createUser);
 adminRouter.get('/admin/users/deleted', getDeletedUsers);
@@ -262,6 +268,8 @@ adminRouter.get('/admin/users/delete-requests', getUserDeletionRequests);
 adminRouter.patch('/admin/users/delete-requests/:id/approve', approveUserDeletionRequest);
 adminRouter.patch('/admin/users/delete-requests/:id/reject', rejectUserDeletionRequest);
 adminRouter.get('/admin/users/:id', getUser);
+adminRouter.get('/admin/employees/:id', getEmployee);
+adminRouter.patch('/admin/employees/:id', updateEmployee);
 adminRouter.patch('/admin/users/:id', updateUser);
 adminRouter.delete('/admin/users/:id', deleteUser);
 adminRouter.get('/admin/users/:id/subscriptions', getUserSubscriptions);
