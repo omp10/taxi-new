@@ -2619,7 +2619,7 @@ const USER_LIST_SELECT = [
   'updatedAt',
 ].join(' ');
 
-const serializeUserListItem = (user) => ({
+const serializeUserListItem = (user, employee = null) => ({
   _id: user._id,
   id: user._id,
   name: user.name || '',
@@ -2636,6 +2636,7 @@ const serializeUserListItem = (user) => ({
   phone: user.phone || user.mobile || '',
   acquiredByEmployeeId: user.acquiredByEmployeeId || null,
   acquiredByEmployeeCode: user.acquiredByEmployeeCode || '',
+  acquiredByEmployeeName: employee?.name || '',
   wallet_balance: Number(user.wallet_balance || 0),
   active:
     (user.active ?? user.isActive) !== false &&
@@ -3428,12 +3429,20 @@ export const resetPassword = async ({ email, otp, password }) => {
   return { success: true, message: 'Password reset successful' };
 };
 
-export const listUsers = async ({ page = 1, limit = 50, search = '' }) => {
+export const listUsers = async ({
+  page = 1,
+  limit = 50,
+  search = '',
+  employeeId = '',
+  referralSource = 'all',
+}) => {
   const safePage = Math.max(1, Number(page) || 1);
   const safeLimit = Math.min(100, Math.max(1, Number(limit) || 50));
   const start = (safePage - 1) * safeLimit;
   const query = { deletedAt: null };
   const normalizedSearch = String(search || '').trim();
+  const normalizedEmployeeId = String(employeeId || '').trim();
+  const normalizedReferralSource = String(referralSource || 'all').trim().toLowerCase();
 
   if (normalizedSearch) {
     const escapedSearch = normalizedSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -3448,6 +3457,18 @@ export const listUsers = async ({ page = 1, limit = 50, search = '' }) => {
     }
   }
 
+  if (normalizedEmployeeId) {
+    query.acquiredByEmployeeId = normalizedEmployeeId;
+  }
+
+  if (normalizedReferralSource === 'employee') {
+    query.acquiredByEmployeeId = normalizedEmployeeId
+      ? normalizedEmployeeId
+      : { $ne: null };
+  } else if (normalizedReferralSource === 'organic') {
+    query.acquiredByEmployeeId = null;
+  }
+
   const [users, total] = await Promise.all([
     User.find(query)
       .select(USER_LIST_SELECT)
@@ -3458,8 +3479,31 @@ export const listUsers = async ({ page = 1, limit = 50, search = '' }) => {
     User.countDocuments(query),
   ]);
 
+  const employeeIds = [
+    ...new Set(
+      users
+        .map((user) => String(user.acquiredByEmployeeId || '').trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  const employees = employeeIds.length
+    ? await Employee.find({ _id: { $in: employeeIds } })
+        .select('_id name employeeCode')
+        .lean()
+    : [];
+
+  const employeeMap = new Map(
+    employees.map((employee) => [String(employee._id), employee]),
+  );
+
   return {
-    results: users.map(serializeUserListItem),
+    results: users.map((user) =>
+      serializeUserListItem(
+        user,
+        employeeMap.get(String(user.acquiredByEmployeeId || '')) || null,
+      ),
+    ),
     paginator: {
       current_page: safePage,
       per_page: safeLimit,

@@ -28,6 +28,9 @@ const GENDER_LABELS = {
 const UserList = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [referralSource, setReferralSource] = useState('all');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [employeeOptions, setEmployeeOptions] = useState([]);
   const [activeMenu, setActiveMenu] = useState(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [isLoading, setIsLoading] = useState(true);
@@ -43,7 +46,13 @@ const UserList = () => {
   const latestRequestId = useRef(0);
   const hasLoadedUsersRef = useRef(false);
 
-  const fetchUsers = useCallback(async ({ nextPage = page, nextLimit = itemsPerPage, nextSearch = searchTerm } = {}) => {
+  const fetchUsers = useCallback(async ({
+    nextPage = page,
+    nextLimit = itemsPerPage,
+    nextSearch = searchTerm,
+    nextReferralSource = referralSource,
+    nextEmployeeId = selectedEmployeeId,
+  } = {}) => {
     const requestId = latestRequestId.current + 1;
     latestRequestId.current = requestId;
     const showInitialLoader = !hasLoadedUsersRef.current;
@@ -52,7 +61,10 @@ const UserList = () => {
       setIsLoading(showInitialLoader);
       setIsRefreshing(!showInitialLoader);
       setError(null);
-      const resData = await adminService.getUsers(nextPage, nextLimit, String(nextSearch || '').trim());
+      const resData = await adminService.getUsers(nextPage, nextLimit, String(nextSearch || '').trim(), {
+        referralSource: nextReferralSource,
+        employeeId: nextEmployeeId,
+      });
       if (requestId !== latestRequestId.current) return;
 
       if (resData.success) {
@@ -64,6 +76,9 @@ const UserList = () => {
           phone: u.mobile || 'N/A',
           profileImage: u.profileImage || '',
           governmentIdProof: u.governmentIdProof || null,
+          acquiredByEmployeeId: u.acquiredByEmployeeId || '',
+          acquiredByEmployeeCode: u.acquiredByEmployeeCode || '',
+          acquiredByEmployeeName: u.acquiredByEmployeeName || '',
           status: u.active ? 'Active' : 'Suspended',
         }));
         setUsers(mapped);
@@ -81,16 +96,53 @@ const UserList = () => {
         setIsRefreshing(false);
       }
     }
-  }, [itemsPerPage, page, searchTerm]);
+  }, [itemsPerPage, page, referralSource, searchTerm, selectedEmployeeId]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadEmployees = async () => {
+      try {
+        const resData = await adminService.getEmployees(1, 100, '');
+        if (!mounted || !resData?.success) return;
+
+        setEmployeeOptions(
+          Array.isArray(resData.data?.results)
+            ? resData.data.results.map((employee) => ({
+                id: employee._id,
+                name: employee.name || 'Unnamed employee',
+                code: employee.employeeCode || '',
+              }))
+            : [],
+        );
+      } catch (err) {
+        if (mounted) {
+          setEmployeeOptions([]);
+        }
+      }
+    };
+
+    loadEmployees();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     const trimmedSearch = String(searchTerm || '').trim();
     const timeoutId = window.setTimeout(() => {
-      fetchUsers({ nextPage: page, nextLimit: itemsPerPage, nextSearch: trimmedSearch });
+      fetchUsers({
+        nextPage: page,
+        nextLimit: itemsPerPage,
+        nextSearch: trimmedSearch,
+        nextReferralSource: referralSource,
+        nextEmployeeId: selectedEmployeeId,
+      });
     }, trimmedSearch ? 350 : 0);
 
     return () => window.clearTimeout(timeoutId);
-  }, [fetchUsers, page, itemsPerPage, searchTerm]);
+  }, [fetchUsers, page, itemsPerPage, referralSource, searchTerm, selectedEmployeeId]);
 
   useEffect(() => {
     const closeMenu = () => setActiveMenu(null);
@@ -224,35 +276,77 @@ const UserList = () => {
       </div>
 
       {/* Search */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search by name, mobile, or email..." 
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(1);
-            }}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-          />
+      <div className="mb-6 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full max-w-sm">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Search by name, mobile, or email..." 
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
+              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>Show</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value) || 10);
+                setPage(1);
+              }}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+            >
+              {[10, 25, 50].map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
+            <span>entries</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <span>Show</span>
-          <select
-            value={itemsPerPage}
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value) || 10);
-              setPage(1);
-            }}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
-          >
-            {[10, 25, 50].map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
-          <span>entries</span>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Referral source</label>
+            <select
+              value={referralSource}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                setReferralSource(nextValue);
+                if (nextValue !== 'employee') {
+                  setSelectedEmployeeId('');
+                }
+                setPage(1);
+              }}
+              className="min-w-[220px] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+            >
+              <option value="all">All users</option>
+              <option value="employee">Employee referred only</option>
+              <option value="organic">No employee referral</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Employee</label>
+            <select
+              value={selectedEmployeeId}
+              onChange={(e) => {
+                setSelectedEmployeeId(e.target.value);
+                setReferralSource('employee');
+                setPage(1);
+              }}
+              className="min-w-[260px] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+            >
+              <option value="">All employees</option>
+              {employeeOptions.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.name}{employee.code ? ` (${employee.code})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -279,6 +373,7 @@ const UserList = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Mobile</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Email</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">ID Proof</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-900">Employee Referral</th>
                 <th className="px-4 py-3 text-center text-xs font-semibold text-gray-900">Status</th>
                 <th className="px-4 py-3 text-right text-xs font-semibold text-gray-900">Action</th>
               </tr>
@@ -323,6 +418,18 @@ const UserList = () => {
                       </a>
                     ) : (
                       <span className="text-xs font-medium text-rose-500">Missing</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {user.acquiredByEmployeeName ? (
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">{user.acquiredByEmployeeName}</span>
+                        <span className="text-xs text-gray-500">
+                          {user.acquiredByEmployeeCode || 'Employee referral'}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs font-medium text-gray-500">Not employee referred</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">

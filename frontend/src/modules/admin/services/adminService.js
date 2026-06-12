@@ -17,10 +17,16 @@ export const adminService = {
   /**
    * User Management
    */
-  getUsers: (page = 1, limit = 50, search = '') => {
+  getUsers: (page = 1, limit = 50, search = '', filters = {}) => {
     const params = new URLSearchParams({ page, limit });
     if (String(search || '').trim()) {
       params.set('search', String(search).trim());
+    }
+    if (String(filters.employeeId || '').trim()) {
+      params.set('employeeId', String(filters.employeeId).trim());
+    }
+    if (String(filters.referralSource || '').trim()) {
+      params.set('referralSource', String(filters.referralSource).trim());
     }
     return api.get(`/admin/users?${params.toString()}`);
   },
