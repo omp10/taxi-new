@@ -853,6 +853,7 @@ const serializeBusSearchResult = ({ busService, schedule, availableSeats, travel
   availableSeats: Math.max(0, Number(availableSeats || 0)),
   price: Number(busService.seatPrice || 0),
   variantPricing: busService.variantPricing || null,
+  serviceTaxPercentage: Math.max(0, Number(busService.serviceTaxPercentage || 0)),
   fareCurrency: busService.fareCurrency || 'INR',
   rating: Number(busService.rating || 0),
   ratingCount: Number(busService.ratingCount || 0),
@@ -3375,12 +3376,16 @@ export const createBusBookingOrder = async (req, res) => {
     throw new ApiError(400, `Seat ${invalidSeat} is not available for booking`);
   }
 
-  const amount = Math.round(
+  const baseAmount = Math.round(
     seatIds.reduce((sum, seatId) => sum + resolveBusSeatPrice(busService, seatCellMap.get(seatId)), 0) * 100,
   ) / 100;
-  if (amount <= 0) {
+  if (baseAmount <= 0) {
     throw new ApiError(400, 'Bus fare is not configured');
   }
+
+  const serviceTaxPercentage = Math.max(0, Number(busService.serviceTaxPercentage || 0));
+  const serviceTaxAmount = Math.round(((baseAmount * serviceTaxPercentage) / 100) * 100) / 100;
+  const amount = Math.round((baseAmount + serviceTaxAmount) * 100) / 100;
 
   const { keyId, keySecret } = await resolveRazorpayCredentials();
   const amountPaise = Math.round(amount * 100);
@@ -3433,6 +3438,10 @@ export const createBusBookingOrder = async (req, res) => {
       registrationNumber: busService.registrationNumber || '',
       driverName: busService.driverName || '',
       driverPhone: busService.driverPhone || '',
+      serviceTaxPercentage,
+      baseAmount,
+      serviceTaxAmount,
+      totalAmount: amount,
     },
     payment: {
       provider: 'razorpay',

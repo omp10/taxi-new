@@ -19,6 +19,13 @@ const infoBanner = {
 };
 
 const durationSuffix = { Hourly: '/hr', 'Half-Day': '/6hr', Daily: '/day' };
+const toNavigationSafeData = (value) => {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return null;
+  }
+};
 
 const gradientPairs = [
   ['#FFF7ED', '#FFFFFF'],
@@ -199,14 +206,20 @@ const BikeRentalHome = () => {
       vehicle,
       duration: selectedDuration,
     };
+    const safePayload = toNavigationSafeData(payload);
+
+    if (!safePayload) {
+      setErrorMessage('Could not open vehicle details right now.');
+      return;
+    }
 
     try {
-      window.sessionStorage.setItem(RENTAL_SELECTED_VEHICLE_STORAGE_KEY, JSON.stringify(payload));
+      window.sessionStorage.setItem(RENTAL_SELECTED_VEHICLE_STORAGE_KEY, JSON.stringify(safePayload));
     } catch {
       // Ignore storage failures and continue with navigation state.
     }
 
-    navigate('/rental/vehicle', { state: payload });
+    navigate('/rental/vehicle', { state: safePayload });
   };
 
   useEffect(() => {

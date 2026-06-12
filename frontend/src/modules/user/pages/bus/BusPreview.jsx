@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -17,6 +17,12 @@ import {
 import { buildBusRouteState } from './busNavigationState';
 
 const getRoutePrefix = (pathname = '') => (pathname.startsWith('/taxi/user') ? '/taxi/user' : '');
+
+const getDisplayRoute = (bus, fallbackFromCity = '', fallbackToCity = '') => ({
+  fromCity: bus?.route?.originCity || bus?.fromCity || fallbackFromCity,
+  toCity: bus?.route?.destinationCity || bus?.toCity || fallbackToCity,
+  routeName: bus?.route?.routeName || bus?.routeName || '',
+});
 
 const formatTravelDate = (dateStr) => {
   if (!dateStr) return '';
@@ -69,6 +75,11 @@ const BusPreview = () => {
     ...(Array.isArray(bus?.galleryImages) ? bus.galleryImages : []),
   ].filter(Boolean).filter((image, index, list) => list.indexOf(image) === index);
   const routeStops = Array.isArray(bus?.route?.stops) ? bus.route.stops : [];
+  const displayRoute = getDisplayRoute(bus, fromCity, toCity);
+
+  useEffect(() => {
+    setActiveImage(bus?.coverImage || bus?.image || bus?.galleryImages?.[0] || '');
+  }, [bus?.coverImage, bus?.galleryImages, bus?.image]);
 
   return (
     <div className="min-h-screen max-w-lg mx-auto bg-[linear-gradient(180deg,#fff7ed_0%,#ffffff_18%,#f8fafc_100%)] font-sans pb-28">
@@ -84,7 +95,7 @@ const BusPreview = () => {
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-black text-slate-900">{bus.operator || 'Bus Details'}</h1>
             <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
-              {fromCity} to {toCity} • {formatTravelDate(date)}
+              {displayRoute.fromCity} to {displayRoute.toCity} • {formatTravelDate(date)}
             </p>
           </div>
         </div>
@@ -113,7 +124,7 @@ const BusPreview = () => {
                 <div className="min-w-0">
                   <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/70">{bus.busName || 'Coach Service'}</p>
                   <h2 className="mt-1 truncate text-[22px] font-black">{bus.operator}</h2>
-                  <p className="mt-1 text-sm font-semibold text-white/75">{bus.type} • {bus.routeName || 'Direct route'}</p>
+                  <p className="mt-1 text-sm font-semibold text-white/75">{bus.type} • {displayRoute.routeName || 'Direct route'}</p>
                 </div>
                 <div className="rounded-2xl bg-white/12 px-4 py-3 text-right backdrop-blur-sm">
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/70">Starts at</p>
@@ -164,7 +175,7 @@ const BusPreview = () => {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Journey Summary</p>
-              <h3 className="mt-1 text-lg font-black text-slate-900">{fromCity} to {toCity}</h3>
+              <h3 className="mt-1 text-lg font-black text-slate-900">{displayRoute.fromCity} to {displayRoute.toCity}</h3>
             </div>
             <div className="rounded-full bg-orange-50 px-3 py-2 text-[11px] font-black text-orange-600">
               {formatDurationBrief(bus.duration)}

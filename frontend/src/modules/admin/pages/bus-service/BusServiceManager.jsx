@@ -772,7 +772,22 @@ const BusServiceManager = ({
   };
 
   const updateDraft = (field, value) => {
-    setDraft((current) => ({ ...current, [field]: value }));
+    setDraft((current) => {
+      if (field === 'seatPrice') {
+        return {
+          ...current,
+          seatPrice: value,
+          variantPricing: {
+            seat: value,
+            window: value,
+            aisle: value,
+            sleeper: value,
+          },
+        };
+      }
+
+      return { ...current, [field]: value };
+    });
   };
 
   const updateRouteField = (field, value) => {

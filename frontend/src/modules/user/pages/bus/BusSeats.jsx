@@ -7,6 +7,11 @@ import { buildBusRouteState, toPlainData } from './busNavigationState';
 
 const getRoutePrefix = (pathname = '') => (pathname.startsWith('/taxi/user') ? '/taxi/user' : '');
 
+const getDisplayRoute = (bus, fallbackFromCity = '', fallbackToCity = '') => ({
+  fromCity: bus?.route?.originCity || bus?.fromCity || fallbackFromCity,
+  toCity: bus?.route?.destinationCity || bus?.toCity || fallbackToCity,
+});
+
 const seatLegend = [
   { key: 'available', label: 'Available' },
   { key: 'selected', label: 'Selected' },
@@ -119,6 +124,7 @@ const BusSeats = () => {
   const [error, setError] = useState('');
   const [seatLayout, setSeatLayout] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const displayRoute = getDisplayRoute(seatLayout?.bus || bus, fromCity, toCity);
 
   useEffect(() => {
     if (!bus?.busServiceId || !bus?.scheduleId || !date) {
@@ -181,7 +187,7 @@ const BusSeats = () => {
           <div className="flex-1">
             <h1 className="text-lg font-bold text-slate-900 truncate">Select Seats</h1>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-              {bus?.operator} • {fromCity} to {toCity}
+              {bus?.operator} • {displayRoute.fromCity} to {displayRoute.toCity}
             </p>
           </div>
         </div>
