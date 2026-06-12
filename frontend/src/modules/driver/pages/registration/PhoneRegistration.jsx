@@ -78,6 +78,8 @@ const PhoneRegistration = () => {
       const payload = response?.data?.data || response?.data || response;
       const sessionData = payload?.session || {};
       const loginMode = Boolean(payload?.loginMode || sessionData?.loginMode);
+      const existingAccount = Boolean(payload?.existingAccount || sessionData?.existingAccount);
+      const detectedRole = String(payload?.detectedRole || sessionData?.role || '').trim().toLowerCase();
       const nextState = saveDriverRegistrationSession({
         phone,
         role: sessionData.role || (isOwnerPortal ? 'owner' : ''),
@@ -86,6 +88,8 @@ const PhoneRegistration = () => {
         registrationId: sessionData.registrationId || '',
         debugOtp: sessionData.debugOtp || '',
         loginMode,
+        existingAccount,
+        detectedRole,
         poolingOnboarding: false,
         entryPath,
         referralCode: sharedReferralCode,
@@ -210,6 +214,10 @@ const PhoneRegistration = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            <p className="text-center text-xs font-medium leading-5 text-slate-400">
+              Existing numbers continue through login OTP. New numbers start a fresh registration automatically.
+            </p>
           </motion.div>
 
           <div className="text-center">

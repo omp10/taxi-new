@@ -31,6 +31,16 @@ const normalizeDriverRole = (role) => {
     return 'driver';
 };
 
+const formatRoleLabel = (role) => {
+    const normalized = normalizeDriverRole(role);
+    if (normalized === 'owner') return 'owner';
+    if (normalized === 'bus_driver') return 'bus driver';
+    if (normalized === 'pooling_driver') return 'pooling driver';
+    if (normalized === 'service_center') return 'service center';
+    if (normalized === 'service_center_staff') return 'service center staff';
+    return 'driver';
+};
+
 const isDriverApproved = (driver) => {
     if (!driver) return false;
     const approval = String(driver?.approve ?? '').toLowerCase();
@@ -84,6 +94,8 @@ const OTPVerification = () => {
     const registrationId = session.registrationId || '';
     const isLoginFlow = Boolean(session.loginMode);
     const isPoolingOnboardingFlow = Boolean(session.poolingOnboarding);
+    const existingAccount = Boolean(session.existingAccount);
+    const detectedRole = formatRoleLabel(session.detectedRole || role);
     const entryPath = String(session.entryPath || (isLoginFlow ? `${routePrefix}/login` : `${routePrefix}/reg-phone`));
     const sessionResumeKey = JSON.stringify({
         registrationId,
@@ -377,6 +389,17 @@ const OTPVerification = () => {
                     </header>
 
                     <section className="bg-white rounded-[40px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.06)] border border-slate-50 space-y-10">
+                        {isLoginFlow && existingAccount && (
+                            <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-center">
+                                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-amber-600">
+                                    Existing {detectedRole} account found
+                                </p>
+                                <p className="mt-1 text-sm font-medium text-amber-900">
+                                    This number is already registered, so we are continuing with login instead of a new signup.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="flex justify-between gap-3">
                             {otp.map((digit, index) => (
                                 <input
