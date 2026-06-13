@@ -12,21 +12,21 @@ import {
 const ROLE_OPTIONS = [
   {
     id: 'driver',
-    label: 'Driver',
+    label: 'Taxi Driver/ Parcel ',
     description: 'Drive rides and deliveries with your own vehicle.',
     Icon: UserRound,
     color: 'text-amber-500',
   },
   {
     id: 'owner',
-    label: 'Owner',
+    label: 'Vehicle Owner',
     description: 'Manage a fleet, vehicles, and attached drivers.',
     Icon: Briefcase,
     color: 'text-emerald-500',
   },
   {
     id: 'pooling_driver',
-    label: 'Pooling Driver',
+    label: 'Pooling Cab Driver',
     description: 'Offer scheduled shared seats in your vehicle.',
     Icon: CarFront,
     color: 'text-cyan-500',
@@ -40,14 +40,14 @@ const ROLE_OPTIONS = [
   },
   {
     id: 'service_center',
-    label: 'Service Center',
+    label: 'Service Center-Rental Vehicle',
     description: 'For rental inspection centers and store-level service accounts.',
     Icon: Building2,
     color: 'text-violet-500',
   },
   {
     id: 'service_center_staff',
-    label: 'Service Staff',
+    label: 'Service Center Staff',
     description: 'For staff numbers already assigned under a service center.',
     Icon: UserRound,
     color: 'text-rose-500',
