@@ -66,6 +66,7 @@ const buildRentalBookingPayload = ({
         label: state.selectedPackage.label || '',
         durationHours: Number(state.selectedPackage.durationHours || 0),
         price: Number(state.selectedPackage.price || 0),
+        extraHourPrice: Number(state.selectedPackage.extraHourPrice || 0),
       }
     : null,
   serviceLocation: state.serviceLocation
