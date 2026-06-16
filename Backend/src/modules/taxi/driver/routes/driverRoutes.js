@@ -58,6 +58,7 @@ import {
   saveDriverFcmToken,
   getOwnerFleetDrivers,
   getOwnerFleetDashboard,
+  getOwnerFleetZones,
   getOwnerBusBookingCalendar,
   getOwnerBusBookings,
   getMyWallet,
@@ -367,6 +368,11 @@ driverRouter.get(
   "/fleet/drivers",
   authenticate(["driver", "owner"]),
   asyncHandler(getOwnerFleetDrivers),
+);
+driverRouter.get(
+  "/fleet/zones",
+  authenticate(["driver", "owner"]),
+  asyncHandler(getOwnerFleetZones),
 );
 driverRouter.post(
   "/fleet/drivers",

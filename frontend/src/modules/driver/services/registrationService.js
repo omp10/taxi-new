@@ -543,6 +543,9 @@ export const updateOwnerFleetDriver = (driverId, payload) =>
 export const getOwnerFleetVehicles = () =>
   api.get("/drivers/fleet/vehicles", withDriverAuth());
 
+export const getOwnerFleetZones = () =>
+  api.get("/drivers/fleet/zones", withDriverAuth());
+
 export const getOwnerBusServices = () =>
   api.get("/drivers/fleet/bus-services", withDriverAuth());
 

@@ -1229,7 +1229,7 @@ const DriverHome = () => {
         if (walletAlertState.isBlocked) {
             setStatusMessage(
                 walletAlertState.belowMinimumBalance
-                    ? 'Wallet balance must be above Rs 0 to go online.'
+                    ? `Keep your wallet at or above Rs ${Math.max(0, walletAlertState.minimumBalanceForOrders)} to go online.`
                     : 'Cash limit exceeded. Please top up your wallet to go online.',
             );
             return;
@@ -1384,7 +1384,7 @@ const DriverHome = () => {
         if (walletAlertState.isBlocked) {
             setStatusMessage(
                 walletAlertState.belowMinimumBalance
-                    ? 'Wallet balance must be above Rs 0 to go online.'
+                    ? `Keep your wallet at or above Rs ${Math.max(0, walletAlertState.minimumBalanceForOrders)} to go online.`
                     : 'Cash limit exceeded. Please top up your wallet to go online.',
             );
             return;

@@ -27,6 +27,7 @@ import { CustomerBiometricProfile } from "../../admin/models/CustomerBiometricPr
 import { AdminBusinessSetting } from "../../admin/models/AdminBusinessSetting.js";
 import { Notification } from "../../admin/promotions/models/Notification.js";
 import { FleetVehicle } from "../../admin/models/FleetVehicle.js";
+import { Zone } from "../models/Zone.js";
 import { uploadDataUrlToCloudinary } from "../../../../utils/cloudinaryUpload.js";
 import {
   comparePassword,
@@ -2770,7 +2771,9 @@ export const goOnline = async (req, res) => {
     throw new ApiError(400, "A selfie is required before going online today");
   }
 
-  await ensureDriverWalletCanAcceptRide(existingDriver);
+  if (!existingDriver.owner_id) {
+    await ensureDriverWalletCanAcceptRide(existingDriver);
+  }
   await clearDriverActiveRideIfStale(existingDriver);
   const trackingBeforeOnline = mergeOnlineSessionIntoTracking(
     existingDriver.incentiveTracking || {},
@@ -2794,6 +2797,7 @@ export const goOnline = async (req, res) => {
     {
       isOnline: true,
       zoneId: zone?._id || null,
+      ...(existingDriver.owner_id ? { 'wallet.isBlocked': false } : {}),
       location: toPoint(coordinates, "location"),
       onlineSelfie: nextOnlineSelfie,
       incentiveTracking: {
@@ -2897,7 +2901,8 @@ export const getCurrentDriver = async (req, res) => {
     return;
   }
 
-  const driver = await Driver.findById(req.auth.sub);
+  const driver = await Driver.findById(req.auth.sub)
+    .populate("zoneId", "name service_location_id");
 
   if (!driver) {
     throw new ApiError(404, "Driver not found");
@@ -2945,7 +2950,16 @@ export const getCurrentDriver = async (req, res) => {
       isOnRide: driver.isOnRide,
       onlineSelfie: driver.onlineSelfie || {},
       location: driver.location,
-      zoneId: driver.zoneId,
+      zoneId: driver.zoneId?._id || driver.zoneId || null,
+      zone: driver.zoneId
+        ? {
+            id: String(driver.zoneId._id || driver.zoneId),
+            name: driver.zoneId.name || "",
+            service_location_id: driver.zoneId.service_location_id
+              ? String(driver.zoneId.service_location_id)
+              : "",
+          }
+        : null,
       routeBooking: serializeDriverRouteBooking(driver.routeBooking),
       documents: driver.documents || {},
       emergencyContacts: Array.isArray(driver.emergencyContacts)
@@ -7200,6 +7214,55 @@ export const getOwnerFleetVehicles = async (req, res) => {
   });
 };
 
+export const getOwnerFleetZones = async (req, res) => {
+  const owner = await resolveAuthenticatedOwner(req);
+
+  if (!owner?._id) {
+    throw new ApiError(
+      403,
+      "Fleet zone access is only available for owner accounts",
+    );
+  }
+
+  const baseZoneQuery = {
+    active: { $ne: false },
+    status: { $ne: "inactive" },
+  };
+  const ownerScopedZoneQuery = owner.service_location_id
+    ? { ...baseZoneQuery, service_location_id: owner.service_location_id }
+    : baseZoneQuery;
+
+  let zones = await Zone.find(ownerScopedZoneQuery)
+    .select("name service_location_id active status")
+    .sort({ name: 1, createdAt: -1 })
+    .lean();
+
+  // Some admin-created zones are global or were created without the owner's exact
+  // service location linkage. Fall back so owners can still assign a valid zone.
+  if (!zones.length && owner.service_location_id) {
+    zones = await Zone.find(baseZoneQuery)
+      .select("name service_location_id active status")
+      .sort({ name: 1, createdAt: -1 })
+      .lean();
+  }
+
+  res.json({
+    success: true,
+    data: {
+      results: zones.map((zone) => ({
+        id: String(zone._id),
+        _id: String(zone._id),
+        name: zone.name || "",
+        service_location_id: zone.service_location_id
+          ? String(zone.service_location_id)
+          : "",
+        active: zone.active !== false,
+        status: zone.status || "active",
+      })),
+    },
+  });
+};
+
 export const updateOwnerFleetVehicle = async (req, res) => {
   const owner = await resolveAuthenticatedOwner(req);
 
@@ -7516,8 +7579,9 @@ export const getOwnerFleetDrivers = async (req, res) => {
       "assignedFleetVehicleId",
       "vehicle_type_id car_brand car_model license_plate_number car_color status",
     )
+    .populate("zoneId", "name service_location_id")
     .sort({ createdAt: -1 })
-    .select("name phone email city salary approve status isOnline isOnRide createdAt assignedFleetVehicleId")
+    .select("name phone email city salary approve status isOnline isOnRide createdAt assignedFleetVehicleId zoneId")
     .lean();
 
   res.json({
@@ -7543,6 +7607,15 @@ export const getOwnerFleetDrivers = async (req, res) => {
               number: driver.assignedFleetVehicleId.license_plate_number || "",
               color: driver.assignedFleetVehicleId.car_color || "",
               status: driver.assignedFleetVehicleId.status || "pending",
+            }
+          : null,
+        zone: driver.zoneId
+          ? {
+              zoneId: String(driver.zoneId._id || ""),
+              name: driver.zoneId.name || "",
+              service_location_id: driver.zoneId.service_location_id
+                ? String(driver.zoneId.service_location_id)
+                : "",
             }
           : null,
         approve: driver.approve,
@@ -8626,6 +8699,12 @@ export const updateOwnerFleetDriver = async (req, res) => {
       req.body?.vehicleId ??
       "",
   ).trim();
+  const requestedZoneId = String(
+    req.body?.zoneId ??
+      req.body?.zone_id ??
+      req.body?.assignedZoneId ??
+      "",
+  ).trim();
 
   if (!name) {
     throw new ApiError(400, "name is required");
@@ -8648,6 +8727,7 @@ export const updateOwnerFleetDriver = async (req, res) => {
   }
 
   let assignedVehicle = null;
+  let assignedZone = null;
   if (requestedAssignedVehicleId) {
     if (!mongoose.isValidObjectId(requestedAssignedVehicleId)) {
       throw new ApiError(400, "A valid assigned vehicle id is required");
@@ -8682,12 +8762,44 @@ export const updateOwnerFleetDriver = async (req, res) => {
     }
   }
 
+  if (requestedZoneId) {
+    if (!mongoose.isValidObjectId(requestedZoneId)) {
+      throw new ApiError(400, "A valid zone id is required");
+    }
+
+    const baseAssignedZoneQuery = {
+      _id: requestedZoneId,
+      active: { $ne: false },
+      status: { $ne: "inactive" },
+    };
+
+    assignedZone = await Zone.findOne({
+      ...baseAssignedZoneQuery,
+      ...(owner.service_location_id
+        ? { service_location_id: owner.service_location_id }
+        : {}),
+    })
+      .select("_id name service_location_id")
+      .lean();
+
+    if (!assignedZone && owner.service_location_id) {
+      assignedZone = await Zone.findOne(baseAssignedZoneQuery)
+        .select("_id name service_location_id")
+        .lean();
+    }
+
+    if (!assignedZone) {
+      throw new ApiError(404, "Assigned zone not found for this owner");
+    }
+  }
+
   driver.name = name;
   driver.phone = phone;
   driver.email = email;
   driver.city = city || driver.city || "";
   driver.salary = salaryValue;
   driver.assignedFleetVehicleId = assignedVehicle?._id || null;
+  driver.zoneId = assignedZone?._id || null;
 
   if (assignedVehicle) {
     driver.vehicleTypeId = assignedVehicle.vehicle_type_id?._id || null;
@@ -8727,6 +8839,15 @@ export const updateOwnerFleetDriver = async (req, res) => {
             number: assignedVehicle.license_plate_number || "",
             color: assignedVehicle.car_color || "",
             status: assignedVehicle.status || "pending",
+          }
+        : null,
+      zone: assignedZone
+        ? {
+            zoneId: String(assignedZone._id),
+            name: assignedZone.name || "",
+            service_location_id: assignedZone.service_location_id
+              ? String(assignedZone.service_location_id)
+              : "",
           }
         : null,
       approve: driver.approve,

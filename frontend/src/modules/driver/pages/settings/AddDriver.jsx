@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, UserPlus, CheckCircle2, ChevronRight, Upload, X, ShieldCheck, Mail, Phone, MapPin, IndianRupee } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { createOwnerFleetDriver, getOwnerFleetDrivers, getOwnerFleetVehicles, updateOwnerFleetDriver } from '../../services/registrationService';
+import { createOwnerFleetDriver, getOwnerFleetDrivers, getOwnerFleetVehicles, getOwnerFleetZones, updateOwnerFleetDriver } from '../../services/registrationService';
 
 const AddDriver = () => {
     const navigate = useNavigate();
@@ -13,8 +13,10 @@ const AddDriver = () => {
     const [submitting, setSubmitting] = useState(false);
     const [loadingDriver, setLoadingDriver] = useState(false);
     const [loadingVehicles, setLoadingVehicles] = useState(false);
+    const [loadingZones, setLoadingZones] = useState(false);
     const [error, setError] = useState('');
     const [fleetVehicles, setFleetVehicles] = useState([]);
+    const [fleetZones, setFleetZones] = useState([]);
     const [step, setStep] = useState(1); // 1: Details, 2: Documents, 3: Success
     const [formData, setFormData] = useState({
         name: '',
@@ -23,6 +25,7 @@ const AddDriver = () => {
         address: '',
         salary: '',
         assignedFleetVehicleId: '',
+        zoneId: '',
         adhaarFile: null,
         licenseFile: null
     });
@@ -40,6 +43,7 @@ const AddDriver = () => {
                 address: stateDriver.address || '',
                 salary: stateDriver.salary ? String(stateDriver.salary) : '',
                 assignedFleetVehicleId: stateDriver.assignedVehicle?.vehicleId || '',
+                zoneId: stateDriver.zone?.zoneId || '',
             }));
             return;
         }
@@ -66,6 +70,7 @@ const AddDriver = () => {
                     address: match.city || '',
                     salary: match.salary ? String(match.salary) : '',
                     assignedFleetVehicleId: match.assignedVehicle?.vehicleId || '',
+                    zoneId: match.zone?.zoneId || '',
                 }));
             })
             .catch((err) => {
@@ -99,6 +104,31 @@ const AddDriver = () => {
             })
             .finally(() => {
                 if (active) setLoadingVehicles(false);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [isEditMode]);
+
+    useEffect(() => {
+        if (!isEditMode) return;
+
+        let active = true;
+        setLoadingZones(true);
+
+        getOwnerFleetZones()
+            .then((response) => {
+                if (!active) return;
+                const payload = response?.data?.data || response?.data || response;
+                setFleetZones(Array.isArray(payload?.results) ? payload.results : []);
+            })
+            .catch((err) => {
+                if (!active) return;
+                setError((current) => current || err?.message || 'Unable to load owner zones');
+            })
+            .finally(() => {
+                if (active) setLoadingZones(false);
             });
 
         return () => {
@@ -145,6 +175,7 @@ const AddDriver = () => {
                 city: formData.address,
                 salary: Number(formData.salary || 0),
                 assignedFleetVehicleId: formData.assignedFleetVehicleId || '',
+                zoneId: formData.zoneId || '',
             };
 
             if (isEditMode) {
@@ -280,6 +311,31 @@ const AddDriver = () => {
                                         </select>
                                         <p className="mt-2 text-[9px] font-bold uppercase tracking-widest text-slate-400">
                                             {loadingVehicles ? 'Loading fleet vehicles...' : 'Only this owner\'s unassigned vehicles are shown here.'}
+                                        </p>
+                                    </div>
+                                ) : null}
+
+                                {isEditMode ? (
+                                    <div className="bg-slate-50 p-3.5 rounded-2xl shadow-sm">
+                                        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Assigned Zone</label>
+                                        <select
+                                            value={formData.zoneId}
+                                            onChange={(e) => setFormData((p) => ({ ...p, zoneId: e.target.value }))}
+                                            disabled={loadingZones}
+                                            className="w-full bg-transparent border-none p-0 text-[13px] font-black text-slate-900 focus:outline-none focus:ring-0"
+                                        >
+                                            <option value="">No zone assigned</option>
+                                            {fleetZones.map((zone) => {
+                                                const optionId = String(zone.id || zone._id || '');
+                                                return (
+                                                    <option key={optionId} value={optionId}>
+                                                        {zone.name || 'Unnamed zone'}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                        <p className="mt-2 text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                                            {loadingZones ? 'Loading zones...' : 'Only zones under this owner service location are shown here.'}
                                         </p>
                                     </div>
                                 ) : null}

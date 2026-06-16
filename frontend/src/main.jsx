@@ -94,11 +94,13 @@ import './index.css'
 import { installLegacyBackendShim } from './shared/api/legacyBackendShim'
 import { installBrowserFcmRegistration } from './shared/push/browserFcmRegistration'
 import { installNativeFcmBridge } from './shared/push/nativeFcmBridge'
+import { installHistoryStateSanitizer } from './shared/utils/historyState'
 import App from './App.jsx'
 
 installLegacyBackendShim()
 installBrowserFcmRegistration()
 installNativeFcmBridge()
+installHistoryStateSanitizer()
 
 createRoot(document.getElementById('root')).render(
   <App />,
