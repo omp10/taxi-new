@@ -301,6 +301,23 @@ export const findPreferredDriverPortalAccountByPhone = async (phone) => {
   return null;
 };
 
+export const findAllDriverPortalAccountsByPhone = async (phone) => {
+  const phoneCandidates = buildPhoneCandidates(phone);
+
+  if (!phoneCandidates.length) {
+    return [];
+  }
+
+  const results = await Promise.all(
+    LOGIN_ROLE_PRIORITY.map(async (role) => {
+      const account = await buildDriverPortalExistenceQuery(role, phoneCandidates);
+      return account ? { role, id: account._id } : null;
+    }),
+  );
+
+  return results.filter(Boolean);
+};
+
 export const startDriverLoginOtp = async ({ phone, role = 'driver' }) => {
   const normalizedPhone = normalizePhone(phone);
   const normalizedRole = normalizeRole(role);
@@ -388,15 +405,18 @@ export const startDriverLoginOtp = async ({ phone, role = 'driver' }) => {
     console.log(`[loginOtpService] OTP for ${normalizedPhone} = ${debugOtp} (${smsDispatch.mode})`);
   }
 
+  const allRoles = await findAllDriverPortalAccountsByPhone(normalizedPhone);
+  const rolesList = allRoles.map((item) => item.role);
+
   return {
     message: smsDispatch.mode === 'live' ? 'OTP sent successfully' : 'OTP generated successfully',
     session: publicSessionPayload(session, debugOtp),
+    availableRoles: rolesList,
   };
 };
 
-export const verifyDriverLoginOtp = async ({ phone, otp }) => {
+export const verifyDriverLoginOtp = async ({ phone, otp, role }) => {
   const session = await getSession(phone);
-  const normalizedRole = normalizeRole(session.accountRole);
 
   if (!otp || String(otp).trim().length !== 4) {
     throw new ApiError(400, 'A valid 4-digit OTP is required');
@@ -410,18 +430,45 @@ export const verifyDriverLoginOtp = async ({ phone, otp }) => {
     throw new ApiError(401, 'Invalid OTP');
   }
 
-  const account =
-    normalizedRole === 'owner'
-      ? await Owner.findById(session.driverId)
-      : normalizedRole === 'service_center'
-        ? await ServiceStore.findById(session.driverId)
-      : normalizedRole === 'service_center_staff'
-        ? await ServiceCenterStaff.findById(session.driverId)
-      : normalizedRole === 'bus_driver'
-        ? await BusDriver.findById(session.driverId)
-      : normalizedRole === 'pooling_driver'
-        ? await PoolingVehicle.findById(session.driverId)
-        : await Driver.findById(session.driverId);
+  // If no role is requested, check if there are multiple roles
+  if (!role) {
+    const allRoles = await findAllDriverPortalAccountsByPhone(phone);
+    const rolesList = allRoles.map((item) => item.role);
+
+    if (rolesList.length > 1) {
+      session.verifiedAt = new Date();
+      await session.save();
+
+      return {
+        message: 'OTP verified successfully. Multiple roles detected.',
+        needsRoleSelection: true,
+        availableRoles: rolesList,
+      };
+    }
+  }
+
+  const normalizedRole = role ? normalizeRole(role) : normalizeRole(session.accountRole);
+  let account = null;
+
+  if (role) {
+    const match = await findDriverPortalAccountByPhone({ phone, role: normalizedRole });
+    if (match) {
+      account = match.account;
+    }
+  } else {
+    account =
+      normalizedRole === 'owner'
+        ? await Owner.findById(session.driverId)
+        : normalizedRole === 'service_center'
+          ? await ServiceStore.findById(session.driverId)
+        : normalizedRole === 'service_center_staff'
+          ? await ServiceCenterStaff.findById(session.driverId)
+        : normalizedRole === 'bus_driver'
+          ? await BusDriver.findById(session.driverId)
+        : normalizedRole === 'pooling_driver'
+          ? await PoolingVehicle.findById(session.driverId)
+          : await Driver.findById(session.driverId);
+  }
 
   if (!account) {
     throw new ApiError(

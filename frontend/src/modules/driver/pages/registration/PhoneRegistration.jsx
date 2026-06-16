@@ -80,6 +80,7 @@ const PhoneRegistration = () => {
       const loginMode = Boolean(payload?.loginMode || sessionData?.loginMode);
       const existingAccount = Boolean(payload?.existingAccount || sessionData?.existingAccount);
       const detectedRole = String(payload?.detectedRole || sessionData?.role || '').trim().toLowerCase();
+      const availableRoles = payload?.availableRoles || sessionData?.availableRoles || [];
       const nextState = saveDriverRegistrationSession({
         phone,
         role: sessionData.role || (isOwnerPortal ? 'owner' : ''),
@@ -95,6 +96,7 @@ const PhoneRegistration = () => {
         referralCode: sharedReferralCode,
         employeeCode: sharedEmployeeCode,
         status: sessionData.status || '',
+        availableRoles,
       });
 
       navigate(`${routePrefix}/otp-verify`, { state: nextState });

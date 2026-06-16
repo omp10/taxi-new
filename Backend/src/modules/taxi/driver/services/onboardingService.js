@@ -612,6 +612,7 @@ export const startDriverOnboarding = async ({ phone, role }) => {
         role: preferredExistingAccount?.role || normalizedRole,
         loginMode: true,
         existingAccount: true,
+        availableRoles: loginResult.availableRoles || [],
       },
     };
   }
