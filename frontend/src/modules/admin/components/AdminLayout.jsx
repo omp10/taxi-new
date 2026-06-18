@@ -983,6 +983,14 @@ const AdminLayout = () => {
               { label: 'Support Tickets', path: '/admin/support/tickets', permission: 'support.view' },
             ],
           },
+          {
+            icon: Briefcase,
+            label: 'Careers Management',
+            subItems: [
+              { label: 'Job Positions', path: '/admin/careers/jobs', permission: 'support.view' },
+              { label: 'Applications', path: '/admin/careers/applications', permission: 'support.view' },
+            ],
+          },
         ],
       },
       {

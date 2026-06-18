@@ -53,6 +53,7 @@ const FaqPage = lazy(() => import('./modules/shared/pages/FaqPage'));
 const ServicesPage = lazy(() => import('./modules/shared/pages/ServicesPage'));
 const BlogPage = lazy(() => import('./modules/shared/pages/BlogPage'));
 const LinksPage = lazy(() => import('./modules/shared/pages/LinksPage'));
+const CareersPage = lazy(() => import('./modules/shared/pages/CareersPage'));
 const PhonePeStatusPage = lazy(() => import('./modules/shared/pages/PhonePeStatusPage'));
 const RazorpayStatusPage = lazy(() => import('./modules/shared/pages/RazorpayStatusPage'));
 const RazorpayLaunchPage = lazy(() => import('./modules/shared/pages/RazorpayLaunchPage'));
@@ -314,6 +315,8 @@ const AdminDispatcherAddons = lazy(() => import('./modules/admin/pages/settings/
 const AdminCountryManagement = lazy(() => import('./modules/admin/pages/masters/CountryManagement'));
 const AdminSupportTicketTitle = lazy(() => import('./modules/admin/pages/support/TicketTitle'));
 const AdminSupportTickets = lazy(() => import('./modules/admin/pages/support/SupportTickets'));
+const AdminJobPositions = lazy(() => import('./modules/admin/pages/careers/JobPositions'));
+const AdminCareerApplications = lazy(() => import('./modules/admin/pages/careers/CareerApplications'));
 
 
 // Reports Module
@@ -672,6 +675,7 @@ function App() {
               <Route path="/faq" element={<FaqPage />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/blog" element={<BlogPage />} />
+              <Route path="/careers" element={<CareersPage />} />
               <Route path="/links" element={<LinksPage />} />
               <Route path="/terms" element={<LegalPage />} />
               <Route path="/terms-and-conditions" element={<LegalPage />} />
@@ -1582,6 +1586,14 @@ function App() {
                 <Route
                   path="support/tickets"
                   element={<AdminSupportTickets />}
+                />
+                <Route
+                  path="careers/jobs"
+                  element={<AdminJobPositions />}
+                />
+                <Route
+                  path="careers/applications"
+                  element={<AdminCareerApplications />}
                 />
                 <Route path="*" element={<AdminSectionPlaceholder />} />
 
