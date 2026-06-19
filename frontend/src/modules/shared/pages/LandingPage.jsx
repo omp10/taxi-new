@@ -50,26 +50,26 @@ function LandingPage() {
   const serviceNames = React.useMemo(() => {
     const activeModules = Array.isArray(modules)
       ? modules
-          .filter((module) => module?.active)
-          .slice()
-          .sort((a, b) => {
-            const orderA = Number(a?.order_by);
-            const orderB = Number(b?.order_by);
-            const hasOrderA = Number.isFinite(orderA);
-            const hasOrderB = Number.isFinite(orderB);
+        .filter((module) => module?.active)
+        .slice()
+        .sort((a, b) => {
+          const orderA = Number(a?.order_by);
+          const orderB = Number(b?.order_by);
+          const hasOrderA = Number.isFinite(orderA);
+          const hasOrderB = Number.isFinite(orderB);
 
-            if (hasOrderA && hasOrderB && orderA !== orderB) {
-              return orderA - orderB;
-            }
+          if (hasOrderA && hasOrderB && orderA !== orderB) {
+            return orderA - orderB;
+          }
 
-            if (hasOrderA !== hasOrderB) {
-              return hasOrderA ? -1 : 1;
-            }
+          if (hasOrderA !== hasOrderB) {
+            return hasOrderA ? -1 : 1;
+          }
 
-            return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { sensitivity: 'base' });
-          })
-          .map((module) => String(module?.name || '').trim())
-          .filter(Boolean)
+          return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { sensitivity: 'base' });
+        })
+        .map((module) => String(module?.name || '').trim())
+        .filter(Boolean)
       : [];
 
     if (activeModules.length > 0) {
@@ -487,6 +487,7 @@ function LandingPage() {
               <li><Link to="/cancellation">Cancellation Policy</Link></li>
               <li><Link to="/contact">Contact Us</Link></li>
               <li><Link to="/about">About Us</Link></li>
+              <li><Link to="/careers">Careers</Link></li>
             </ul>
           </div>
           <div className="footer-col-3">
