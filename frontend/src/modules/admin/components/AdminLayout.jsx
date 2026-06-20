@@ -933,6 +933,7 @@ const AdminLayout = () => {
               { label: 'Driver Needed Documents', path: '/admin/drivers/documents', permission: 'drivers.view' },
               { label: 'Driver Bulk Upload', path: '/admin/drivers/bulk-upload', permission: 'drivers.view' },
               { label: 'Payment Methods', path: '/admin/drivers/payment-methods', permission: 'wallet.view' },
+              { label: 'Driver Wallet Managment', path: '/admin/settings/app/wallet', permission: 'settings.view' },
             ],
           },
           {
