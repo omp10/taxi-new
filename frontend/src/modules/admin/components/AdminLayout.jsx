@@ -845,7 +845,7 @@ const AdminLayout = () => {
               { label: 'App Modules', path: '/admin/pricing/app-modules', permission: 'settings.view' },
               { label: 'Vehicle Type', path: '/admin/pricing/vehicle-type', permission: 'vehicle_types.view' },
               { label: 'Set Price', path: '/admin/pricing/set-price', permission: 'set_prices.view' },
-              { label: 'Goods Types', path: '/admin/pricing/goods-types', permission: 'goods_types.view' },
+              //{ label: 'Goods Types', path: '/admin/pricing/goods-types', permission: 'goods_types.view' },
             ],
           },
           {
@@ -891,7 +891,6 @@ const AdminLayout = () => {
             subItems: [
               { label: 'Heat Map', path: '/admin/geo/heatmap', permission: 'geofencing.view' },
               { label: "God's Eye", path: '/admin/geo/gods-eye', permission: 'geofencing.view' },
-              { label: 'Peak Zone', path: '/admin/geo/peak-zone', permission: 'geofencing.view' },
             ],
           },
           { icon: ShieldAlert, label: 'SOS', path: '/admin/safety', permission: 'dashboard.view' },
