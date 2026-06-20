@@ -17,7 +17,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
 import simplify from 'simplify-js';
 import toast from 'react-hot-toast';
-import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../admin/utils/googleMaps';
+import { HAS_VALID_GOOGLE_MAPS_KEY, useBaseGoogleMapsLoader } from '../../admin/utils/googleMaps';
 import { getCurrentDriver } from '../services/registrationService';
 import {
   getBusDriverLiveTrip,
@@ -414,7 +414,7 @@ const BusDriverLiveRoute = () => {
   const [tripActionPending, setTripActionPending] = useState(false);
   const [locationPermissionError, setLocationPermissionError] = useState('');
   const [isFollowingBus, setIsFollowingBus] = useState(true);
-  const mapState = useAppGoogleMapsLoader();
+  const mapState = useBaseGoogleMapsLoader();
   const isMapReady =
     mapState.isLoaded &&
     HAS_VALID_GOOGLE_MAPS_KEY &&

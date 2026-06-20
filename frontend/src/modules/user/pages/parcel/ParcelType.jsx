@@ -10,7 +10,7 @@ import {
   Megaphone
 } from 'lucide-react';
 import api from '../../../../shared/api/axiosInstance';
-import { useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
+import { useBaseGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { getSavedLocation, getSavedLocationCoords, saveLocation } from '../../services/locationStore';
 
 import trucksImg from '@/assets/images/delivery/trucks.png';
@@ -91,7 +91,7 @@ const ParcelType = () => {
   const [pickupCoords, setPickupCoords] = useState(() => routeState.pickupCoords || savedPickupCoords || null);
   const geolocationRequestedRef = useRef(false);
   const navigate = useNavigate();
-  const { isLoaded: isGoogleMapsLoaded } = useAppGoogleMapsLoader();
+  const { isLoaded: isGoogleMapsLoaded } = useBaseGoogleMapsLoader();
 
   useEffect(() => {
     const fetchVehicles = async () => {

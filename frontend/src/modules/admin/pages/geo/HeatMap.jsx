@@ -12,7 +12,7 @@ import {
   Navigation
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAppGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../utils/googleMaps';
+import { useBaseGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../utils/googleMaps';
 import { adminService } from '../../services/adminService';
 
 const INDIA_CENTER = { lat: 22.7196, lng: 75.8577 };
@@ -74,7 +74,7 @@ const HeatMap = () => {
   const [opacity, setOpacity] = useState(0.7);
   const [radius, setRadius] = useState(40);
 
-  const { isLoaded, loadError } = useAppGoogleMapsLoader();
+  const { isLoaded, loadError } = useBaseGoogleMapsLoader();
 
   const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors";
   const labelClass = "block text-xs font-semibold text-gray-500 mb-1.5";

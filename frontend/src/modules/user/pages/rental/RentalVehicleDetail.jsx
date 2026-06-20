@@ -24,7 +24,7 @@ import {
 import toast from 'react-hot-toast';
 import { useSettings } from '../../../../shared/context/SettingsContext';
 import { toHistorySafeState } from '../../../../shared/utils/historyState';
-import { HAS_VALID_GOOGLE_MAPS_KEY, INDIA_CENTER, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
+import { HAS_VALID_GOOGLE_MAPS_KEY, INDIA_CENTER, useBaseGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { userService } from '../../services/userService';
 
 const MAP_CONTAINER_STYLE = { width: '100%', height: '100%' };
@@ -475,7 +475,7 @@ const RentalVehicleDetail = () => {
   const [userCoordinates, setUserCoordinates] = useState(null);
   const [isLocatingUser, setIsLocatingUser] = useState(false);
   const mapRef = useRef(null);
-  const { isLoaded: isMapLoaded, loadError: mapLoadError } = useAppGoogleMapsLoader();
+  const { isLoaded: isMapLoaded, loadError: mapLoadError } = useBaseGoogleMapsLoader();
   const [quoteForm, setQuoteForm] = useState({
     contactName: String(storedUserInfo?.name || '').trim(),
     contactPhone: String(storedUserInfo?.phone || '').trim(),

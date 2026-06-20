@@ -20,7 +20,7 @@ import { adminService } from '../../services/adminService';
 import {
   HAS_VALID_GOOGLE_MAPS_KEY,
   INDIA_CENTER,
-  useAppGoogleMapsLoader,
+  useBaseGoogleMapsLoader,
 } from '../../utils/googleMaps';
 
 const mapContainerStyle = { width: '100%', height: '100%' };
@@ -92,7 +92,7 @@ const RentalTrackingDetail = () => {
   const seededItem = location.state?.item || null;
   const [item, setItem] = useState(seededItem);
   const [loading, setLoading] = useState(!seededItem);
-  const { isLoaded, loadError } = useAppGoogleMapsLoader();
+  const { isLoaded, loadError } = useBaseGoogleMapsLoader();
 
   useEffect(() => {
     let mounted = true;

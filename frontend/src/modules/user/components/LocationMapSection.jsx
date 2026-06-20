@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { LoaderCircle, Navigation } from 'lucide-react';
 import { GoogleMap } from '@react-google-maps/api';
-import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../admin/utils/googleMaps';
+import { HAS_VALID_GOOGLE_MAPS_KEY, useBaseGoogleMapsLoader } from '../../admin/utils/googleMaps';
 import { getSavedLocation, saveLocation } from '../services/locationStore';
 const DEFAULT_CENTER = { lat: 17.385, lon: 78.4867 };
 const DEFAULT_ZOOM = 16;
@@ -21,7 +21,7 @@ const LocationMapSection = () => {
   const [map, setMap] = useState(null);
   const isDraggingRef = useRef(false);
   const requestedLocationRef = useRef(false);
-  const { isLoaded, loadError } = useAppGoogleMapsLoader();
+  const { isLoaded, loadError } = useBaseGoogleMapsLoader();
 
   const persistCoords = (next) => {
     setCoords(next);

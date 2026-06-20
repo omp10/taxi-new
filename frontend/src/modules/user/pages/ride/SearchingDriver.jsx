@@ -7,7 +7,7 @@ import { socketService } from '../../../../shared/api/socket';
 import api from '../../../../shared/api/axiosInstance';
 import { getLocalUserToken, userAuthService } from '../../services/authService';
 import { getCurrentRide, isActiveCurrentRide, saveCurrentRide } from '../../services/currentRideService';
-import { useAppGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../../admin/utils/googleMaps';
+import { useBaseGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../../admin/utils/googleMaps';
 import { scheduleScheduledRideReminders } from '../../utils/upcomingRideReminderService';
 import { toHistorySafeState } from '../../../../shared/utils/historyState';
 
@@ -254,7 +254,7 @@ const SearchingDriver = () => {
     ));
   };
 
-  const { isLoaded } = useAppGoogleMapsLoader();
+  const { isLoaded } = useBaseGoogleMapsLoader();
 
   const pickupPos = useMemo(
     () => (

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, MessageCircle, AlertTriangle, Shield, Star, ChevronLeft, Share2, Clock3 } from 'lucide-react';
 import { GoogleMap, MarkerF, OverlayView, OverlayViewF, PolylineF } from '@react-google-maps/api';
-import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
+import { HAS_VALID_GOOGLE_MAPS_KEY, useBaseGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { socketService } from '../../../../shared/api/socket';
 import api from '../../../../shared/api/axiosInstance';
 import { BACKEND_ORIGIN } from '../../../../shared/api/runtimeConfig';
@@ -334,7 +334,7 @@ const RideTracking = () => {
   const location = useLocation();
   const storedRide = useMemo(() => getCurrentRide(), []);
   const state = useMemo(() => location.state || storedRide || {}, [location.state, storedRide]);
-  const { isLoaded, loadError } = useAppGoogleMapsLoader();
+  const { isLoaded, loadError } = useBaseGoogleMapsLoader();
   const routeHome = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '/';
   const routeComplete = location.pathname.startsWith('/taxi/user') ? '/taxi/user/ride/complete' : '/ride/complete';
   const routeChat = location.pathname.startsWith('/taxi/user') ? '/taxi/user/ride/chat' : '/ride/chat';

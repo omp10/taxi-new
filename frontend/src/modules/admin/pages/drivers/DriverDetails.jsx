@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
-import { DELHI_CENTER, HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../utils/googleMaps';
+import { DELHI_CENTER, HAS_VALID_GOOGLE_MAPS_KEY, useBaseGoogleMapsLoader } from '../../utils/googleMaps';
 import BikeIcon from '@/assets/icons/bike.png';
 import CarIcon from '@/assets/icons/car.png';
 import AutoIcon from '@/assets/icons/auto.png';
@@ -292,7 +292,7 @@ const DriverDetails = () => {
     return { lat: profile.location.lat, lng: profile.location.lng };
   }, [profile]);
   const shouldLoadMap = activeTab === 'Driver Profile';
-  const { isLoaded, loadError } = useAppGoogleMapsLoader();
+  const { isLoaded, loadError } = useBaseGoogleMapsLoader();
   const vehicleMapIconUrl = useMemo(
     () => getMapIconForVehicle(profile?.vehicleIconType || profile?.vehicle_image || profile?.vehicle?.type),
     [profile],

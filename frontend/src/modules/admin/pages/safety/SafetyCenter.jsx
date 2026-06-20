@@ -17,7 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import { socketService } from '../../../../shared/api/socket';
 import { adminService } from '../../services/adminService';
-import { HAS_VALID_GOOGLE_MAPS_KEY, INDIA_CENTER, useAppGoogleMapsLoader } from '../../utils/googleMaps';
+import { HAS_VALID_GOOGLE_MAPS_KEY, INDIA_CENTER, useBaseGoogleMapsLoader } from '../../utils/googleMaps';
 import SupportChatPanel from '../../../shared/components/SupportChatPanel';
 import { getChatSession } from '../../../shared/chat/chatIdentity';
 
@@ -101,7 +101,7 @@ const SOSCard = ({ alert, isActive, onClick }) => (
 );
 
 const SafetyCenter = () => {
-  const { isLoaded, loadError } = useAppGoogleMapsLoader();
+  const { isLoaded, loadError } = useBaseGoogleMapsLoader();
   const [alerts, setAlerts] = useState([]);
   const [selectedAlertId, setSelectedAlertId] = useState('');
   const [checklist, setChecklist] = useState({

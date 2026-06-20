@@ -28,6 +28,7 @@ const LOCATION_COORDS = {
 
 const getCoords = (title, fallback = [75.8577, 22.7196]) => LOCATION_COORDS[title] || fallback;
 const DEFAULT_COORDS = [75.8577, 22.7196];
+const MAP_REVERSE_GEOCODE_DEBOUNCE_MS = 500;
 const sanitizeLocationInput = (value) => String(value || '').replace(/^\s+/g, '').replace(/\s{2,}/g, ' ');
 
 const unwrapResults = (response) => {
@@ -188,6 +189,8 @@ const SelectLocation = () => {
   const [isSearchingLocations, setIsSearchingLocations] = useState(false);
   const mapInstanceRef = useRef(null);
   const lastCenterRef = useRef(INDIA_CENTER);
+  const reverseGeocodeTimerRef = useRef(null);
+  const lastReverseGeocodedCenterRef = useRef(null);
   const geocoderRef = useRef(null);
   const autocompleteServiceRef = useRef(null);
   const placesServiceRef = useRef(null);
@@ -581,6 +584,32 @@ const SelectLocation = () => {
     return INDIA_CENTER;
   };
 
+  const shouldSkipReverseGeocode = (nextCenter, threshold = 0.00015) => (
+    Math.abs(Number(nextCenter?.lat ?? 0) - Number(lastReverseGeocodedCenterRef.current?.lat ?? 0)) < threshold
+    && Math.abs(Number(nextCenter?.lng ?? 0) - Number(lastReverseGeocodedCenterRef.current?.lng ?? 0)) < threshold
+  );
+
+  const reverseGeocodeMapCenter = (nextCenter, fallbackLabel = '') => {
+    const geocoder = getGeocoder();
+    if (!geocoder) {
+      setPickedAddress(fallbackLabel || `${nextCenter.lat.toFixed(5)}, ${nextCenter.lng.toFixed(5)}`);
+      return;
+    }
+
+    setIsGeocoding(true);
+    geocoder.geocode({ location: nextCenter }, (results, status) => {
+      setIsGeocoding(false);
+      lastReverseGeocodedCenterRef.current = nextCenter;
+
+      if (status === 'OK' && results?.[0]?.formatted_address) {
+        setPickedAddress(results[0].formatted_address);
+        return;
+      }
+
+      setPickedAddress(fallbackLabel || `${nextCenter.lat.toFixed(5)}, ${nextCenter.lng.toFixed(5)}`);
+    });
+  };
+
   const showMapToast = () => {
     const startCoord = getMapStartCoord();
     const seedAddress = activeInput === 'drop' ? drop : pickup;
@@ -609,18 +638,17 @@ const SelectLocation = () => {
     }
 
     const startCoord = getMapStartCoord();
-    const geocoder = new window.google.maps.Geocoder();
-
-    setIsGeocoding(true);
-    geocoder.geocode({ location: startCoord }, (results, status) => {
-      setIsGeocoding(false);
-      if (status === 'OK' && results?.[0]?.formatted_address) {
-        setPickedAddress(results[0].formatted_address);
-        return;
-      }
-      setPickedAddress(`${startCoord.lat.toFixed(5)}, ${startCoord.lng.toFixed(5)}`);
-    });
+    reverseGeocodeMapCenter(
+      startCoord,
+      `${startCoord.lat.toFixed(5)}, ${startCoord.lng.toFixed(5)}`,
+    );
   }, [showMapPicker, activeInput, pickupCoords, dropCoords]);
+
+  useEffect(() => () => {
+    if (reverseGeocodeTimerRef.current) {
+      window.clearTimeout(reverseGeocodeTimerRef.current);
+    }
+  }, []);
 
   const handleMapIdle = () => {
     if (!mapInstanceRef.current || !window.google) return;
@@ -637,18 +665,22 @@ const SelectLocation = () => {
     
     lastCenterRef.current = { lat, lng };
     setIsDragging(false);
+    const nextCenter = { lat, lng };
 
-    // Reverse Geocode
-    setIsGeocoding(true);
-    const geocoder = new window.google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      setIsGeocoding(false);
-      if (status === 'OK' && results[0]) {
-        setPickedAddress(results[0].formatted_address);
-      } else {
-        setPickedAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-      }
-    });
+    if (shouldSkipReverseGeocode(nextCenter)) {
+      return;
+    }
+
+    if (reverseGeocodeTimerRef.current) {
+      window.clearTimeout(reverseGeocodeTimerRef.current);
+    }
+
+    reverseGeocodeTimerRef.current = window.setTimeout(() => {
+      reverseGeocodeMapCenter(
+        nextCenter,
+        `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+      );
+    }, MAP_REVERSE_GEOCODE_DEBOUNCE_MS);
   };
 
   const handleUseCurrentLocation = () => {

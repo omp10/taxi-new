@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X, Banknote, CreditCard, ChevronDown, Clock3, LoaderCircle, Eye, TicketPercent, CheckCircle2 } from 'lucide-react';
 import { GoogleMap, MarkerF, OverlayView, PolylineF } from '@react-google-maps/api';
 import api from '../../../../shared/api/axiosInstance';
-import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admin/utils/googleMaps';
+import { HAS_VALID_GOOGLE_MAPS_KEY, useBaseGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { userService } from '../../services/userService';
 import { useSettings } from '../../../../shared/context/SettingsContext';
 import BikeIcon from '../../../../assets/icons/bike.png';
@@ -1166,7 +1166,7 @@ const SelectVehicle = () => {
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
   const pickupPosition = useMemo(() => toLatLng(pickupCoords), [pickupCoords]);
   const dropPosition = useMemo(() => toLatLng(dropCoords, null), [dropCoords]);
-  const { isLoaded: isMapLoaded, loadError: mapLoadError } = useAppGoogleMapsLoader();
+  const { isLoaded: isMapLoaded, loadError: mapLoadError } = useBaseGoogleMapsLoader();
   const minScheduledAt = useMemo(() => getMinScheduledDateTime(), []);
   const maxScheduledAt = useMemo(() => getMaxScheduledDateTime(), []);
 

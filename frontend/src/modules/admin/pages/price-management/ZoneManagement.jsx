@@ -29,7 +29,7 @@ import {
   Polygon,
   Autocomplete,
 } from "@react-google-maps/api";
-import { useAppGoogleMapsLoader } from "../../utils/googleMaps";
+import { useDrawingGoogleMapsLoader } from "../../utils/googleMaps";
 import { adminService } from "../../services/adminService";
 import {
   buildCountryBoundaryUrl,
@@ -73,7 +73,7 @@ const ZoneManagement = ({ mode: initialMode = "list" }) => {
   const [polygonCoords, setPolygonCoords] = useState([]);
   const [circleCenter, setCircleCenter] = useState(null);
   const [circleRadiusMeters, setCircleRadiusMeters] = useState('');
-  const { isLoaded, loadError } = useAppGoogleMapsLoader();
+  const { isLoaded, loadError } = useDrawingGoogleMapsLoader();
 
   // Form State
   const [formData, setFormData] = useState({

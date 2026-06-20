@@ -7,7 +7,7 @@ import api from '../../../../shared/api/axiosInstance';
 import { socketService } from '../../../../shared/api/socket';
 import { getLocalUserToken, userAuthService } from '../../services/authService';
 import { getCurrentRide, isActiveCurrentRide, saveCurrentRide } from '../../services/currentRideService';
-import { useAppGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../../admin/utils/googleMaps';
+import { useBaseGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../../admin/utils/googleMaps';
 import LuxuryIcon from '@/assets/icons/Luxury.png';
 import PremiumIcon from '@/assets/icons/Premium.png';
 import SuvIcon from '@/assets/icons/SUV.png';
@@ -359,7 +359,7 @@ const ParcelSearchingDriver = () => {
     routeState.selectedGoodsType?.goods_type_for ||
     '',
   ).trim();
-  const { isLoaded } = useAppGoogleMapsLoader();
+  const { isLoaded } = useBaseGoogleMapsLoader();
   const resolvedPickupCoords = useMemo(
     () => readCoordinatePair(routeState.pickupCoords, routeState.pickupLocation, routeState.pickup),
     [routeState.pickup, routeState.pickupCoords, routeState.pickupLocation],

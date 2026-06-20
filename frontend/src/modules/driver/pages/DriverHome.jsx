@@ -49,7 +49,7 @@ import PremiumIcon from '../../../assets/icons/Premium.png';
 import SuvIcon from '../../../assets/icons/SUV.png';
 
 import { socketService } from '../../../shared/api/socket';
-import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../admin/utils/googleMaps';
+import { HAS_VALID_GOOGLE_MAPS_KEY, useBaseGoogleMapsLoader } from '../../admin/utils/googleMaps';
 import { cancelDriverScheduledRide, getCurrentDriver, getDriverDocumentTemplates, getDriverNotifications, getDriverScheduledRides, getLocalDriverToken } from '../services/registrationService';
 import { addLocalDriverNotification, getUnreadDriverNotificationCount, getVisibleDriverNotifications } from '../utils/notificationState';
 import { getScheduledRideCountdown } from '../utils/scheduledRideTime';
@@ -705,7 +705,7 @@ const DriverHome = () => {
         return null;
     }, [walletAlertState]);
 
-    const { isLoaded } = useAppGoogleMapsLoader();
+    const { isLoaded } = useBaseGoogleMapsLoader();
 
     useEffect(() => {
         if (typeof window === 'undefined') {

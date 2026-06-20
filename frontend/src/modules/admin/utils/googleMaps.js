@@ -10,7 +10,8 @@ export const HAS_VALID_GOOGLE_MAPS_KEY =
 export const INDIA_CENTER = { lat: 22.7196, lng: 75.8577 };
 export const DELHI_CENTER = { lat: 28.6139, lng: 77.209 };
 export const GOOGLE_MAPS_LOADER_ID = 'appzeto-google-maps';
-export const GOOGLE_MAPS_LIBRARIES = ['drawing', 'places'];
+export const GOOGLE_MAPS_PLACES_LIBRARIES = ['places'];
+export const GOOGLE_MAPS_DRAWING_LIBRARIES = ['drawing', 'places'];
 
 export const getLatLng = (source, fallback = INDIA_CENTER) => {
   const lat = Number(source?.lat ?? source?.latitude);
@@ -23,10 +24,20 @@ export const getLatLng = (source, fallback = INDIA_CENTER) => {
   return fallback;
 };
 
-export const useAppGoogleMapsLoader = () =>
+const useGoogleMapsLoader = (libraries = []) =>
   useJsApiLoader({
     id: GOOGLE_MAPS_LOADER_ID,
     googleMapsApiKey: HAS_VALID_GOOGLE_MAPS_KEY ? GOOGLE_MAPS_API_KEY : '',
-    libraries: GOOGLE_MAPS_LIBRARIES,
-    version: '3.64'
+    libraries,
+    version: '3.64',
   });
+
+export const useBaseGoogleMapsLoader = () => useGoogleMapsLoader();
+
+export const usePlacesGoogleMapsLoader = () =>
+  useGoogleMapsLoader(GOOGLE_MAPS_PLACES_LIBRARIES);
+
+export const useDrawingGoogleMapsLoader = () =>
+  useGoogleMapsLoader(GOOGLE_MAPS_DRAWING_LIBRARIES);
+
+export const useAppGoogleMapsLoader = usePlacesGoogleMapsLoader;

@@ -22,7 +22,7 @@ import {
   Info
 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
-import { DELHI_CENTER, useAppGoogleMapsLoader } from '../../utils/googleMaps';
+import { DELHI_CENTER, useDrawingGoogleMapsLoader } from '../../utils/googleMaps';
 
 const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors";
 const labelClass = "block text-xs font-semibold text-gray-500 mb-1.5";
@@ -71,7 +71,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
     status: '',
   });
   const mapRef = useRef(null);
-  const { isLoaded, loadError } = useAppGoogleMapsLoader();
+  const { isLoaded, loadError } = useDrawingGoogleMapsLoader();
 
   useEffect(() => {
     setView(initialMode);
