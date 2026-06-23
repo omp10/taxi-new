@@ -80,8 +80,14 @@ import {
     topUpMyWallet,
     createDriverWalletTopupOrder,
     createDriverPhonePeWalletTopupOrder,
-    verifyDriverWalletTopup,
-    verifyDriverPhonePeWalletTopup,
+  verifyDriverWalletTopup,
+  verifyDriverPhonePeWalletTopup,
+  verifyCurrentDriverBankDetails,
+  verifyCurrentDriverUpiDetails,
+  verifyCurrentDriverLicenseDocument,
+  verifyCurrentDriverGstinDocument,
+  verifyCurrentDriverPanDocument,
+  verifyCurrentDriverRcDocument,
 
   updateCurrentDriver,
   updateDriverVehicle,
@@ -151,6 +157,16 @@ driverRouter.patch(
   "/me",
   authenticate(["driver", "owner"]),
   asyncHandler(updateCurrentDriver),
+);
+driverRouter.post(
+  "/me/bank-details/verify",
+  authenticate(["driver"]),
+  asyncHandler(verifyCurrentDriverBankDetails),
+);
+driverRouter.post(
+  "/me/upi/verify",
+  authenticate(["driver"]),
+  asyncHandler(verifyCurrentDriverUpiDetails),
 );
 driverRouter.get(
   "/bus/seats",
@@ -226,6 +242,26 @@ driverRouter.patch(
   "/documents/:documentKey",
   authenticate(["driver", "owner"], { allowPending: true }),
   asyncHandler(updateCurrentDriverDocument),
+);
+driverRouter.post(
+  "/documents/:documentKey/verify-license",
+  authenticate(["driver"], { allowPending: true }),
+  asyncHandler(verifyCurrentDriverLicenseDocument),
+);
+driverRouter.post(
+  "/documents/:documentKey/verify-pan",
+  authenticate(["driver"], { allowPending: true }),
+  asyncHandler(verifyCurrentDriverPanDocument),
+);
+driverRouter.post(
+  "/documents/:documentKey/verify-gst",
+  authenticate(["driver"], { allowPending: true }),
+  asyncHandler(verifyCurrentDriverGstinDocument),
+);
+driverRouter.post(
+  "/documents/:documentKey/verify-rc",
+  authenticate(["driver"], { allowPending: true }),
+  asyncHandler(verifyCurrentDriverRcDocument),
 );
 driverRouter.get(
   "/notifications",

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Landmark, QrCode, Save, Upload } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Landmark, Loader2, QrCode, Save, ShieldCheck, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentDriver, updateDriverProfile } from '../services/registrationService';
+import { getCurrentDriver, updateDriverProfile, verifyDriverBankDetails, verifyDriverUpiDetails } from '../services/registrationService';
 import { uploadService } from '../../../shared/services/uploadService';
 
 const unwrapDriver = (response) => response?.data?.data || response?.data || response || null;
@@ -13,6 +13,22 @@ const normalizeBankDetails = (bankDetails = {}) => ({
   accountNumber: String(bankDetails?.accountNumber || '').trim(),
   ifsc: String(bankDetails?.ifsc || '').trim().toUpperCase(),
   branchName: String(bankDetails?.branchName || '').trim(),
+  verificationStatus: String(bankDetails?.verificationStatus || '').trim(),
+  verificationMode: String(bankDetails?.verificationMode || '').trim(),
+  verificationMessage: String(bankDetails?.verificationMessage || '').trim(),
+  verificationReferenceId: String(bankDetails?.verificationReferenceId || '').trim(),
+  verifiedBankName: String(bankDetails?.verifiedBankName || '').trim(),
+  verifiedBranchName: String(bankDetails?.verifiedBranchName || '').trim(),
+  verifiedAccountHolderName: String(bankDetails?.verifiedAccountHolderName || '').trim(),
+  verifiedAt: bankDetails?.verifiedAt || null,
+  upiVerificationStatus: String(bankDetails?.upiVerificationStatus || '').trim(),
+  upiVerificationMode: String(bankDetails?.upiVerificationMode || '').trim(),
+  upiVerificationMessage: String(bankDetails?.upiVerificationMessage || '').trim(),
+  upiVerificationReferenceId: String(bankDetails?.upiVerificationReferenceId || '').trim(),
+  upiVerifiedName: String(bankDetails?.upiVerifiedName || '').trim(),
+  upiAccountIfsc: String(bankDetails?.upiAccountIfsc || '').trim(),
+  upiAccountType: String(bankDetails?.upiAccountType || '').trim(),
+  upiVerifiedAt: bankDetails?.upiVerifiedAt || null,
   updatedAt: bankDetails?.updatedAt || null,
 });
 
@@ -41,6 +57,8 @@ const DriverBankDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyingUpi, setVerifyingUpi] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -146,6 +164,72 @@ const DriverBankDetailsPage = () => {
     }
   };
 
+  const handleVerify = async () => {
+    if (saving || uploading || verifying) return;
+
+    setVerifying(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await updateDriverProfile({
+        bankDetails: {
+          accountHolderName: bankForm.accountHolderName,
+          upiId: bankForm.upiId,
+          qrCodeImage: bankForm.qrCodeImage,
+          accountNumber: bankForm.accountNumber,
+          ifsc: bankForm.ifsc,
+          branchName: bankForm.branchName,
+        },
+      });
+
+      const response = await verifyDriverBankDetails('penny_less');
+      const payload = unwrapDriver(response);
+      const nextBankDetails = normalizeBankDetails(payload?.bankDetails || {});
+
+      setDriver((current) => ({ ...(current || {}), bankDetails: nextBankDetails }));
+      setBankForm(nextBankDetails);
+      setSuccess(payload?.verification?.msg || 'Bank account verified successfully.');
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || 'Unable to verify bank details');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleVerifyUpi = async () => {
+    if (saving || uploading || verifyingUpi) return;
+
+    setVerifyingUpi(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await updateDriverProfile({
+        bankDetails: {
+          accountHolderName: bankForm.accountHolderName,
+          upiId: bankForm.upiId,
+          qrCodeImage: bankForm.qrCodeImage,
+          accountNumber: bankForm.accountNumber,
+          ifsc: bankForm.ifsc,
+          branchName: bankForm.branchName,
+        },
+      });
+
+      const response = await verifyDriverUpiDetails('advance');
+      const payload = unwrapDriver(response);
+      const nextBankDetails = normalizeBankDetails(payload?.bankDetails || {});
+
+      setDriver((current) => ({ ...(current || {}), bankDetails: nextBankDetails }));
+      setBankForm(nextBankDetails);
+      setSuccess(payload?.verification?.msg || 'UPI verified successfully.');
+    } catch (err) {
+      setError(err?.response?.data?.message || err?.message || 'Unable to verify UPI details');
+    } finally {
+      setVerifyingUpi(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f8fafc] px-4 pb-10 pt-4 font-sans text-slate-950 sm:px-6">
       <div className="mx-auto max-w-3xl space-y-6">
@@ -198,6 +282,36 @@ const DriverBankDetailsPage = () => {
                   onChange={(value) => handleFieldChange('upiId', value)}
                 />
               </div>
+
+              {driver?.bankDetails?.upiVerificationStatus ? (
+                <div className={`rounded-[24px] border px-4 py-3 ${
+                  driver.bankDetails.upiVerificationStatus === 'verified'
+                    ? 'border-emerald-200 bg-emerald-50'
+                    : 'border-amber-200 bg-amber-50'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <div className={driver.bankDetails.upiVerificationStatus === 'verified' ? 'text-emerald-600' : 'text-amber-600'}>
+                      {driver.bankDetails.upiVerificationStatus === 'verified' ? <CheckCircle2 size={18} /> : <ShieldCheck size={18} />}
+                    </div>
+                    <div>
+                      <p className={`text-sm font-black ${
+                        driver.bankDetails.upiVerificationStatus === 'verified' ? 'text-emerald-800' : 'text-amber-800'
+                      }`}>
+                        {driver.bankDetails.upiVerificationStatus === 'verified' ? 'UPI verified' : 'UPI verification attempted'}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-slate-600">
+                        {driver.bankDetails.upiVerificationMessage || 'UPI verification response received from provider.'}
+                      </p>
+                      {(driver.bankDetails.upiVerifiedName || driver.bankDetails.upiAccountIfsc) ? (
+                        <p className="mt-1 text-xs font-semibold text-slate-500">
+                          {driver.bankDetails.upiVerifiedName || bankForm.upiId}
+                          {driver.bankDetails.upiAccountIfsc ? ` • ${driver.bankDetails.upiAccountIfsc}` : ''}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
               <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -256,6 +370,36 @@ const DriverBankDetailsPage = () => {
                 onChange={(value) => handleFieldChange('branchName', value)}
               />
 
+              {driver?.bankDetails?.verificationStatus ? (
+                <div className={`rounded-[24px] border px-4 py-3 ${
+                  driver.bankDetails.verificationStatus === 'verified'
+                    ? 'border-emerald-200 bg-emerald-50'
+                    : 'border-amber-200 bg-amber-50'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <div className={driver.bankDetails.verificationStatus === 'verified' ? 'text-emerald-600' : 'text-amber-600'}>
+                      {driver.bankDetails.verificationStatus === 'verified' ? <CheckCircle2 size={18} /> : <ShieldCheck size={18} />}
+                    </div>
+                    <div>
+                      <p className={`text-sm font-black ${
+                        driver.bankDetails.verificationStatus === 'verified' ? 'text-emerald-800' : 'text-amber-800'
+                      }`}>
+                        {driver.bankDetails.verificationStatus === 'verified' ? 'Bank account verified' : 'Verification attempted'}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-slate-600">
+                        {driver.bankDetails.verificationMessage || 'Verification response received from provider.'}
+                      </p>
+                      {(driver.bankDetails.verifiedAccountHolderName || driver.bankDetails.verifiedBankName) ? (
+                        <p className="mt-1 text-xs font-semibold text-slate-500">
+                          {driver.bankDetails.verifiedAccountHolderName || 'Account holder'}
+                          {driver.bankDetails.verifiedBankName ? ` • ${driver.bankDetails.verifiedBankName}` : ''}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               {driver?.bankDetails?.updatedAt ? (
                 <p className="text-xs font-medium text-slate-400">
                   Last updated: {new Date(driver.bankDetails.updatedAt).toLocaleString('en-IN')}
@@ -269,7 +413,7 @@ const DriverBankDetailsPage = () => {
                 <p className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{success}</p>
               ) : null}
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-4">
                 <button
                   type="button"
                   onClick={() => navigate(`${routePrefix}/profile`)}
@@ -279,8 +423,34 @@ const DriverBankDetailsPage = () => {
                 </button>
                 <button
                   type="button"
+                  onClick={handleVerify}
+                  disabled={saving || uploading || verifying}
+                  className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 text-[13px] font-bold text-emerald-700 disabled:opacity-60"
+                >
+                  {verifying ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <ShieldCheck size={15} />
+                  )}
+                  Verify
+                </button>
+                <button
+                  type="button"
+                  onClick={handleVerifyUpi}
+                  disabled={saving || uploading || verifyingUpi}
+                  className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 text-[13px] font-bold text-sky-700 disabled:opacity-60"
+                >
+                  {verifyingUpi ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <ShieldCheck size={15} />
+                  )}
+                  Verify UPI
+                </button>
+                <button
+                  type="button"
                   onClick={handleSave}
-                  disabled={saving || uploading}
+                  disabled={saving || uploading || verifying || verifyingUpi}
                   className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 text-[13px] font-bold text-white disabled:opacity-60"
                 >
                   {saving ? (

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Briefcase, MapPin, Calendar, Clock, User, Mail, Phone, Award, Send, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Briefcase, MapPin, Calendar, User, Mail, Phone, Award, Send, CheckCircle, Share2, Copy, Globe2, Network, MessageCircle } from 'lucide-react';
 import api from '../../../shared/api/axiosInstance';
 import toast from 'react-hot-toast';
 
@@ -20,6 +20,7 @@ const CareersPage = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [activeShareMenu, setActiveShareMenu] = useState(null);
 
   useEffect(() => {
     fetchJobs();
@@ -32,8 +33,14 @@ const CareersPage = () => {
       // The custom response interceptor flattens the response
       const results = res?.results || res?.data?.results || [];
       setJobs(results);
-      if (results.length > 0 && window.innerWidth >= 768) {
-        setSelectedJob(results[0]);
+      if (results.length > 0) {
+        const jobIdFromUrl = new URLSearchParams(window.location.search).get('job');
+        const matchedJob = results.find((job) => job.id === jobIdFromUrl);
+        const defaultJob = matchedJob || (window.innerWidth >= 768 ? results[0] : null);
+        setSelectedJob(defaultJob);
+        if (defaultJob) {
+          syncSelectedJobToUrl(defaultJob);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch careers:', error);
@@ -47,6 +54,98 @@ const CareersPage = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const buildShareUrl = (job) => {
+    if (typeof window === 'undefined') return '';
+    const shareUrl = new URL('/careers', window.location.origin);
+    shareUrl.searchParams.set('job', job.id);
+    return shareUrl.toString();
+  };
+
+  const buildShareText = (job) => (
+    `Check out this opening at Rydon24: ${job.title} (${job.department}) in ${job.location}.`
+  );
+
+  const syncSelectedJobToUrl = (job) => {
+    if (typeof window === 'undefined') return;
+    const nextUrl = new URL(window.location.href);
+    if (job?.id) {
+      nextUrl.searchParams.set('job', job.id);
+    } else {
+      nextUrl.searchParams.delete('job');
+    }
+    window.history.replaceState({}, '', nextUrl.toString());
+  };
+
+  const openShareTarget = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const copyShareLink = async (job) => {
+    try {
+      await navigator.clipboard.writeText(buildShareUrl(job));
+      toast.success('Job link copied.');
+      setActiveShareMenu(null);
+    } catch (error) {
+      console.error('Copy failed:', error);
+      toast.error('Could not copy the link.');
+    }
+  };
+
+  const shareVia = async (job, channel) => {
+    const shareUrl = buildShareUrl(job);
+    const shareText = buildShareText(job);
+    const encodedText = encodeURIComponent(shareText);
+    const encodedUrl = encodeURIComponent(shareUrl);
+
+    if (channel === 'native' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${job.title} at Rydon24`,
+          text: shareText,
+          url: shareUrl
+        });
+      } catch (error) {
+        if (error?.name !== 'AbortError') {
+          console.error('Native share failed:', error);
+        }
+      }
+      setActiveShareMenu(null);
+      return;
+    }
+
+    const shareTargets = {
+      whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      email: `mailto:?subject=${encodeURIComponent(`${job.title} at Rydon24`)}&body=${encodedText}%0A%0A${encodedUrl}`
+    };
+
+    if (channel === 'copy') {
+      await copyShareLink(job);
+      return;
+    }
+
+    if (shareTargets[channel]) {
+      openShareTarget(shareTargets[channel]);
+      setActiveShareMenu(null);
+    }
+  };
+
+  const handleSelectJob = (job) => {
+    setSelectedJob(job);
+    setShowForm(false);
+    setSuccess(false);
+    setActiveShareMenu(null);
+    syncSelectedJobToUrl(job);
+  };
+
+  const shareOptions = [
+    { key: 'whatsapp', label: 'WhatsApp', icon: MessageCircle },
+    { key: 'facebook', label: 'Facebook', icon: Globe2 },
+    { key: 'linkedin', label: 'LinkedIn', icon: Network },
+    { key: 'copy', label: 'Copy link', icon: Copy }
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -93,6 +192,8 @@ const CareersPage = () => {
                 if (selectedJob && window.innerWidth < 768) {
                   setSelectedJob(null);
                   setShowForm(false);
+                  setActiveShareMenu(null);
+                  syncSelectedJobToUrl(null);
                 } else {
                   navigate(-1);
                 }
@@ -155,11 +256,7 @@ const CareersPage = () => {
                 {jobs.map((job) => (
                   <div
                     key={job.id}
-                    onClick={() => {
-                      setSelectedJob(job);
-                      setShowForm(false);
-                      setSuccess(false);
-                    }}
+                    onClick={() => handleSelectJob(job)}
                     className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer bg-white ${
                       selectedJob?.id === job.id
                         ? 'border-[#FFB300] ring-2 ring-[#FFB300]/25 shadow-md scale-[1.01]'
@@ -185,6 +282,52 @@ const CareersPage = () => {
                         {new Date(job.createdAt).toLocaleDateString()}
                       </span>
                     </div>
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                        Share this opening
+                      </span>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setActiveShareMenu((current) => (current === job.id ? null : job.id));
+                          }}
+                          className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-600 transition-colors hover:border-[#FFB300] hover:text-slate-900"
+                        >
+                          <Share2 size={14} />
+                          <span>Share</span>
+                        </button>
+                        {activeShareMenu === job.id ? (
+                          <div
+                            className="absolute right-0 top-full z-10 mt-2 w-44 rounded-2xl border border-gray-100 bg-white p-2 shadow-xl"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            {navigator.share ? (
+                              <button
+                                type="button"
+                                onClick={() => shareVia(job, 'native')}
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                              >
+                                <Share2 size={16} className="text-[#FFB300]" />
+                                <span>More options</span>
+                              </button>
+                            ) : null}
+                            {shareOptions.map(({ key, label, icon: Icon }) => (
+                              <button
+                                key={key}
+                                type="button"
+                                onClick={() => shareVia(job, key)}
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                              >
+                                <Icon size={16} className="text-[#FFB300]" />
+                                <span>{label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -200,6 +343,8 @@ const CareersPage = () => {
                       onClick={() => {
                         setSelectedJob(null);
                         setShowForm(false);
+                        setActiveShareMenu(null);
+                        syncSelectedJobToUrl(null);
                       }}
                       className="md:hidden flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold text-xs uppercase tracking-wider mb-6 transition-colors cursor-pointer"
                     >
@@ -223,6 +368,24 @@ const CareersPage = () => {
                             <MapPin size={14} className="text-[#FFB300]" />
                             <span>Location: {selectedJob.location}</span>
                           </p>
+                        </div>
+                        <div className="mb-5 flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => shareVia(selectedJob, navigator.share ? 'native' : 'whatsapp')}
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-600 transition-colors hover:border-[#FFB300] hover:text-slate-900"
+                          >
+                            <Share2 size={14} />
+                            <span>Share Opening</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => copyShareLink(selectedJob)}
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-xs font-bold uppercase tracking-wider text-gray-600 transition-colors hover:border-[#FFB300] hover:text-slate-900"
+                          >
+                            <Copy size={14} />
+                            <span>Copy Link</span>
+                          </button>
                         </div>
                         <div className="text-sm text-gray-600 leading-relaxed space-y-4 whitespace-pre-line max-h-[60vh] md:max-h-[calc(100vh-24rem)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                           {selectedJob.description}

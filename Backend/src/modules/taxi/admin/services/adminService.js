@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
+import { randomBytes } from 'node:crypto';
 import { ApiError } from '../../../../utils/ApiError.js';
+import { env } from '../../../../config/env.js';
 import { createDefaultAdminState } from '../data/defaultAdminState.js';
 import { Admin } from '../models/Admin.js';
 import { User } from '../../user/models/User.js';
@@ -94,6 +96,128 @@ const deepMerge = (target, source) => {
     }
   }
   return result;
+};
+
+const trimTrailingSlash = (value = '') => String(value || '').replace(/\/+$/, '');
+
+const normalizeIpAddressList = (value) => {
+  const source = Array.isArray(value)
+    ? value
+    : String(value || '')
+        .split(/\r?\n|,/)
+        .map((entry) => entry.trim());
+
+  return Array.from(
+    new Set(
+      source
+        .map((entry) => String(entry || '').trim())
+        .filter(Boolean),
+    ),
+  );
+};
+
+const buildRechargeApiCallbackUrl = () => {
+  const baseOrigin =
+    trimTrailingSlash(env.publicBackendUrl) ||
+    `http://localhost:${env.port}`;
+
+  return `${baseOrigin}/api/v1/common/recharge-api/callback`;
+};
+
+const normalizeRechargeApiSettings = (settings = {}) => {
+  const merged = {
+    enabled: '0',
+    provider_name: 'RechargeKit Verify',
+    base_url: 'https://verify.rechargkit.biz',
+    auth_header_name: 'Authorization',
+    auth_header_prefix: 'Bearer',
+    api_token: '',
+    token_generated_at: null,
+    callback_mode: 'auto',
+    callback_url: '',
+    callback_secret: '',
+    allowed_ip_addresses: [],
+    notes: '',
+    endpoints: {
+      bank_verify_penny_less: '/validation/verifyBankRequest',
+      bank_verify_penny_drop: '/validation/penny-drop',
+      bank_verify_v3: '/validation/v3/pennyDropVerify',
+      card_bin: '/validation/cardValidate',
+      upi_basic: '/validation/upiBasic',
+      pan_verify: '/validation/verifyPANRequest',
+      dl_request: '/validation/driverLicenseRequest',
+      dl_verify: '/validation/verifyLicenseRequest',
+      gstin_verify: '/validation/verifyGSTIN',
+      rc_verify: '/validation/rcAdvanceVerify',
+      upi_advance: '/validation/upiAdvanceVerify',
+    },
+    ...settings,
+  };
+
+  return {
+    ...merged,
+    enabled: String(merged.enabled) === '1' ? '1' : '0',
+    provider_name: String(merged.provider_name || 'RechargeKit Verify').trim() || 'RechargeKit Verify',
+    base_url: trimTrailingSlash(String(merged.base_url || 'https://verify.rechargkit.biz').trim()) || 'https://verify.rechargkit.biz',
+    auth_header_name: String(merged.auth_header_name || 'Authorization').trim() || 'Authorization',
+    auth_header_prefix: String(merged.auth_header_prefix || 'Bearer').trim(),
+    callback_mode: String(merged.callback_mode || 'auto').trim().toLowerCase() === 'manual' ? 'manual' : 'auto',
+    callback_url: String(merged.callback_url || '').trim(),
+    callback_secret: String(merged.callback_secret || '').trim(),
+    api_token: String(merged.api_token || '').trim(),
+    notes: String(merged.notes || '').trim(),
+    allowed_ip_addresses: normalizeIpAddressList(merged.allowed_ip_addresses),
+    token_generated_at: merged.token_generated_at || null,
+    endpoints: {
+      bank_verify_penny_less: String(merged?.endpoints?.bank_verify_penny_less || '/validation/verifyBankRequest').trim() || '/validation/verifyBankRequest',
+      bank_verify_penny_drop: String(merged?.endpoints?.bank_verify_penny_drop || '/validation/penny-drop').trim() || '/validation/penny-drop',
+      bank_verify_v3: String(merged?.endpoints?.bank_verify_v3 || '/validation/v3/pennyDropVerify').trim() || '/validation/v3/pennyDropVerify',
+      card_bin: String(merged?.endpoints?.card_bin || '/validation/cardValidate').trim() || '/validation/cardValidate',
+      upi_basic: String(merged?.endpoints?.upi_basic || '/validation/upiBasic').trim() || '/validation/upiBasic',
+      pan_verify: String(merged?.endpoints?.pan_verify || '/validation/verifyPANRequest').trim() || '/validation/verifyPANRequest',
+      dl_request: String(merged?.endpoints?.dl_request || '/validation/driverLicenseRequest').trim() || '/validation/driverLicenseRequest',
+      dl_verify: String(merged?.endpoints?.dl_verify || '/validation/verifyLicenseRequest').trim() || '/validation/verifyLicenseRequest',
+      gstin_verify: String(merged?.endpoints?.gstin_verify || '/validation/verifyGSTIN').trim() || '/validation/verifyGSTIN',
+      rc_verify: String(merged?.endpoints?.rc_verify || '/validation/rcAdvanceVerify').trim() || '/validation/rcAdvanceVerify',
+      upi_advance: String(merged?.endpoints?.upi_advance || '/validation/upiAdvanceVerify').trim() || '/validation/upiAdvanceVerify',
+    },
+  };
+};
+
+const buildRechargeApiResponse = (settings = {}) => {
+  const normalized = normalizeRechargeApiSettings(settings);
+  const resolvedCallbackUrl =
+    normalized.callback_mode === 'manual' && normalized.callback_url
+      ? normalized.callback_url
+      : buildRechargeApiCallbackUrl();
+
+  return {
+    settings: {
+      ...normalized,
+      resolved_callback_url: resolvedCallbackUrl,
+    },
+    metadata: {
+      callback_url: resolvedCallbackUrl,
+      callback_method: 'POST',
+      token_header: 'x-api-token',
+      provider_name: normalized.provider_name,
+      base_url: normalized.base_url,
+      auth_header_name: normalized.auth_header_name,
+      auth_header_prefix: normalized.auth_header_prefix,
+      doc_sections: [
+        'Setup API Token',
+        'Setup Callback URL',
+        'Setup IP Address',
+        'API Testing',
+        'API Documentation',
+      ],
+      sample_endpoints: {
+        callback: resolvedCallbackUrl,
+        healthcheck: `${trimTrailingSlash(env.publicBackendUrl) || `http://localhost:${env.port}`}/api/v1/common/recharge-api/callback`,
+      },
+      provider_endpoints: normalized.endpoints,
+    },
+  };
 };
 
 const buildPaginator = (items, page = 1, limit = 50) => {
@@ -2164,6 +2288,7 @@ const serializeDriverNeededDocument = (item) => ({
   has_expiry_date: Boolean(item.has_expiry_date),
   has_identify_number: Boolean(item.has_identify_number),
   identify_number_key: item.identify_number_key || '',
+  verification_type: item.verification_type || 'none',
   is_editable: Boolean(item.is_editable),
   is_required: Boolean(item.is_required),
   active: item.active !== false,
@@ -2182,6 +2307,57 @@ const LEGACY_DRIVER_DOCUMENT_SEED_SIGNATURES = [
   { slug: 'driving-license', key: 'drivingLicense', front_key: '', back_key: '' },
   { slug: 'vehicle-rc', key: 'vehicleRC', front_key: '', back_key: '' },
 ];
+
+const normalizeDriverDocumentVerificationType = (value) => {
+  const normalized = String(value || 'none').trim().toLowerCase();
+  if (['driving_license', 'pan', 'gstin', 'rc', 'none'].includes(normalized)) {
+    return normalized;
+  }
+  return 'none';
+};
+
+const getDriverDocumentPresetConfig = (verificationType = 'none') => {
+  switch (normalizeDriverDocumentVerificationType(verificationType)) {
+    case 'driving_license':
+      return {
+        name: 'Driving License',
+        image_type: 'image',
+        has_expiry_date: true,
+        has_identify_number: true,
+        identify_number_key: 'license_no',
+        key: 'drivingLicense',
+      };
+    case 'pan':
+      return {
+        name: 'PAN Card',
+        image_type: 'image',
+        has_expiry_date: false,
+        has_identify_number: true,
+        identify_number_key: 'pan_no',
+        key: 'panCard',
+      };
+    case 'gstin':
+      return {
+        name: 'GST Certificate',
+        image_type: 'image',
+        has_expiry_date: false,
+        has_identify_number: true,
+        identify_number_key: 'gstin',
+        key: 'gstCertificate',
+      };
+    case 'rc':
+      return {
+        name: 'Vehicle RC',
+        image_type: 'image',
+        has_expiry_date: false,
+        has_identify_number: true,
+        identify_number_key: 'rc_no',
+        key: 'vehicleRC',
+      };
+    default:
+      return null;
+  }
+};
 
 const cleanupLegacySeededDriverNeededDocuments = async () => {
   const items = await DriverNeededDocument.find().lean();
@@ -9701,7 +9877,12 @@ export const getRentalTrackingDashboard = async () => {
 
   const buildDriverNeededDocumentKeys = (payload = {}, existing = null) => {
     const imageType = String(payload.image_type || existing?.image_type || 'front_back').trim();
-    const baseKey = toDocumentKey(payload.name || existing?.name || 'document');
+    const verificationType = normalizeDriverDocumentVerificationType(
+      payload.verification_type || existing?.verification_type,
+    );
+    const preset = getDriverDocumentPresetConfig(verificationType);
+    const presetKey = String(preset?.key || '').trim();
+    const baseKey = presetKey || toDocumentKey(payload.name || existing?.name || 'document');
 
     if (imageType === 'front_back') {
       return {
@@ -9851,6 +10032,7 @@ export const listOwnerDocumentUploadFields = async ({ activeOnly = true } = {}) 
         has_expiry_date: false,
         has_identify_number: false,
         identify_number_key: '',
+        verification_type: 'none',
         is_editable: payload.is_editable !== undefined ? normalizeBoolean(payload.is_editable) : true,
         is_required: payload.is_required !== undefined ? normalizeBoolean(payload.is_required) : true,
         active: payload.active !== undefined ? normalizeBoolean(payload.active) : true,
@@ -9870,6 +10052,7 @@ export const listOwnerDocumentUploadFields = async ({ activeOnly = true } = {}) 
     }
 
     const keys = buildDriverNeededDocumentKeys(payload);
+    const verificationType = normalizeDriverDocumentVerificationType(payload.verification_type);
     const item = await DriverNeededDocument.create({
       template_type: 'document',
       name,
@@ -9881,6 +10064,7 @@ export const listOwnerDocumentUploadFields = async ({ activeOnly = true } = {}) 
       identify_number_key: normalizeBoolean(payload.has_identify_number)
         ? String(payload.identify_number_key || '').trim()
         : '',
+      verification_type: verificationType,
       is_editable: normalizeBoolean(payload.is_editable),
       is_required: normalizeBoolean(payload.is_required),
       active: payload.active !== undefined ? normalizeBoolean(payload.active) : true,
@@ -9965,6 +10149,9 @@ export const listOwnerDocumentUploadFields = async ({ activeOnly = true } = {}) 
       item.identify_number_key = item.has_identify_number
         ? String(payload.identify_number_key ?? item.identify_number_key ?? '').trim()
         : '';
+    }
+    if (payload.verification_type !== undefined) {
+      item.verification_type = normalizeDriverDocumentVerificationType(payload.verification_type);
     }
     if (payload.is_editable !== undefined) {
       item.is_editable = normalizeBoolean(payload.is_editable);
@@ -10405,6 +10592,71 @@ export const listOwnerDocumentUploadFields = async ({ activeOnly = true } = {}) 
     settings.markModified('mail');
     await settings.save();
     return { settings: settings.mail };
+  };
+
+  export const getRechargeApiSettings = async () => {
+    const settings = await ensureThirdPartySettings();
+    return buildRechargeApiResponse(settings.recharge_api || {});
+  };
+
+  export const updateRechargeApiSettings = async (payload) => {
+    const settings = await ensureThirdPartySettings();
+    settings.recharge_api = normalizeRechargeApiSettings(
+      deepMerge(settings.recharge_api || {}, payload || {}),
+    );
+    settings.markModified('recharge_api');
+    await settings.save();
+    return buildRechargeApiResponse(settings.recharge_api);
+  };
+
+  export const generateRechargeApiToken = async () => {
+    const settings = await ensureThirdPartySettings();
+    settings.recharge_api = normalizeRechargeApiSettings({
+      ...(settings.recharge_api || {}),
+      api_token: randomBytes(32).toString('base64url'),
+      token_generated_at: new Date().toISOString(),
+    });
+    settings.markModified('recharge_api');
+    await settings.save();
+    return buildRechargeApiResponse(settings.recharge_api);
+  };
+
+  export const runRechargeApiTest = async () => {
+    const settings = await ensureThirdPartySettings();
+    const payload = buildRechargeApiResponse(settings.recharge_api || {});
+    const apiToken = payload.settings?.api_token || '';
+    const endpointPath = payload.metadata?.provider_endpoints?.bank_verify_penny_less || '/validation/verifyBankRequest';
+    const requestUrl = `${payload.metadata?.base_url || ''}${endpointPath}`;
+    const sampleBody = {
+      bank_account: '330701XXXXXX',
+      ifsc_code: 'ICIC000XXXX',
+      benificiary_name: 'DEMO USER',
+      partner_request_id: `BANK${Date.now()}`,
+    };
+
+    return {
+      success: Boolean(apiToken),
+      message: apiToken
+        ? 'Recharge API configuration looks ready for a callback test.'
+        : 'Generate and save an API token before using this integration in production.',
+      request_preview: {
+        method: 'POST',
+        url: requestUrl,
+        headers: {
+          'Content-Type': 'application/json',
+          [payload.metadata?.auth_header_name || 'Authorization']:
+            `${payload.metadata?.auth_header_prefix ? `${payload.metadata.auth_header_prefix} ` : ''}${apiToken || '<generate-token-first>'}`,
+        },
+        body: sampleBody,
+      },
+      curl: [
+        'curl -X POST',
+        `  "${requestUrl}"`,
+        '  -H "Content-Type: application/json"',
+        `  -H "${payload.metadata?.auth_header_name || 'Authorization'}: ${payload.metadata?.auth_header_prefix ? `${payload.metadata.auth_header_prefix} ` : ''}${apiToken || '<generate-token-first>'}"`,
+        `  -d '${JSON.stringify(sampleBody)}'`,
+      ].join(' \\\n'),
+    };
   };
 
 

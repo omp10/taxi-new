@@ -107,6 +107,7 @@ import {
   getLanguages,
   getMailSettings,
   getMapSettings,
+  getRechargeApiSettings,
   getNearbyServiceLocations,
   getNotificationChannels,
   getOngoingRides,
@@ -193,6 +194,7 @@ import {
   updateLanguageStatus,
   updateMailSettings,
   updateMapSettings,
+  updateRechargeApiSettings,
   updateOwner,
   updateOwnerBooking,
   updateOwnerNeededDocument,
@@ -212,6 +214,8 @@ import {
   updateUser,
   updateVehicleType,
   updateZone,
+  generateRechargeApiToken,
+  runRechargeApiTest,
   createVehicleType,
   createFleetVehicle,
   cancelAdminBusBookingSeats,
@@ -488,6 +492,10 @@ adminRouter.get('/admin/integration-settings/map', getMapSettings);
 adminRouter.patch('/admin/integration-settings/map', updateMapSettings);
 adminRouter.get('/admin/integration-settings/mail', getMailSettings);
 adminRouter.patch('/admin/integration-settings/mail', updateMailSettings);
+adminRouter.get('/admin/integration-settings/recharge-api', getRechargeApiSettings);
+adminRouter.patch('/admin/integration-settings/recharge-api', updateRechargeApiSettings);
+adminRouter.post('/admin/integration-settings/recharge-api/generate-token', generateRechargeApiToken);
+adminRouter.post('/admin/integration-settings/recharge-api/test', runRechargeApiTest);
 
 adminRouter.patch('/admin/general-settings/:category', updateGeneralSettingsCategory);
 

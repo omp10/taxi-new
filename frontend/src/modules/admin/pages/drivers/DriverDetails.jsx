@@ -87,6 +87,41 @@ const getDocumentReason = (doc = {}) =>
     '',
   ).trim();
 
+const getDocumentProviderVerificationStatus = (doc = {}) => {
+  const explicit = String(doc?.verificationStatus ?? '').trim().toLowerCase();
+  if (explicit) {
+    return explicit;
+  }
+
+  if (doc?.verificationResponse || doc?.verificationReferenceId || doc?.verifiedAt) {
+    return 'verified';
+  }
+
+  return 'not_started';
+};
+
+const getDocumentProviderVerificationMessage = (doc = {}) =>
+  String(
+    doc?.verificationMessage ??
+    doc?.msg ??
+    doc?.providerMessage ??
+    '',
+  ).trim();
+
+const getProviderStatusTone = (status = '') => {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (['verified', 'success', 'approved', 'completed'].includes(normalized)) {
+    return 'bg-sky-100 text-sky-800';
+  }
+  if (['failed', 'invalid', 'rejected', 'declined'].includes(normalized)) {
+    return 'bg-rose-100 text-rose-800';
+  }
+  if (['pending', 'processing', 'queued'].includes(normalized)) {
+    return 'bg-amber-100 text-amber-800';
+  }
+  return 'bg-slate-100 text-slate-600';
+};
+
 const toTimestamp = (value) => {
   if (!value) return 0;
   const time = new Date(value).getTime();
@@ -213,6 +248,10 @@ const normalizeDocumentEntry = (doc = {}, fallbackKey = '') => {
     expiry_date: doc?.expiry_date ?? doc?.expiryDate ?? doc?.expiry ?? '',
     status: getDocumentReviewStatus(doc),
     comment: getDocumentReason(doc),
+    providerStatus: getDocumentProviderVerificationStatus(doc),
+    providerMessage: getDocumentProviderVerificationMessage(doc),
+    verificationReferenceId: String(doc?.verificationReferenceId ?? doc?.reference_id ?? '').trim(),
+    verifiedAt: doc?.verifiedAt ?? null,
     images,
     uploadedAt: doc?.uploadedAt ?? doc?.updatedAt ?? doc?.createdAt ?? null,
     reviewedAt: doc?.reviewedAt ?? null,
@@ -840,7 +879,8 @@ const DriverDetails = () => {
                       <th className="px-6 py-3">Document Name</th>
                       <th className="px-4 py-3">Identify Number</th>
                       <th className="px-4 py-3">Expiry Date</th>
-                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Admin Status</th>
+                      <th className="px-4 py-3">RechargeKit Status</th>
                       <th className="px-4 py-3">Comment</th>
                       <th className="px-4 py-3">Document</th>
                       <th className="px-4 py-3">Action</th>
@@ -849,7 +889,7 @@ const DriverDetails = () => {
                   <tbody className="divide-y divide-gray-100 text-sm text-gray-700">
                     {documents.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="px-6 py-12 text-center text-gray-400">No documents found.</td>
+                        <td colSpan="8" className="px-6 py-12 text-center text-gray-400">No documents found.</td>
                       </tr>
                     ) : (
                       documents.map((doc, idx) => (
@@ -875,10 +915,30 @@ const DriverDetails = () => {
                               </div>
                             ) : null}
                           </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getProviderStatusTone(doc.providerStatus)}`}>
+                              {doc.providerStatus === 'not_started' ? 'Not Verified' : doc.providerStatus}
+                            </span>
+                            {doc.verificationReferenceId ? (
+                              <div className="mt-1 text-[10px] text-sky-700">
+                                Ref: {doc.verificationReferenceId}
+                              </div>
+                            ) : null}
+                            {doc.verifiedAt ? (
+                              <div className="mt-1 text-[10px] text-gray-400">
+                                API checked: {formatDateTime(doc.verifiedAt)}
+                              </div>
+                            ) : null}
+                          </td>
                           <td className="px-4 py-3 max-w-[200px]">
                             <div className="text-xs text-gray-600 line-clamp-2" title={doc.comment}>
                               {doc.comment || '-'}
                             </div>
+                            {doc.providerMessage ? (
+                              <div className="mt-1 text-[11px] font-semibold text-sky-700">
+                                API: {doc.providerMessage}
+                              </div>
+                            ) : null}
                             {['rejected', 'declined'].includes(String(doc.status || '').toLowerCase()) && doc.comment ? (
                               <div className="mt-1 text-[11px] font-semibold text-rose-600">
                                 Rejection reason: {doc.comment}

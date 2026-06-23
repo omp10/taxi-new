@@ -16,6 +16,10 @@ import {
   getLocalDriverToken,
   getStoredDriverRole,
   persistDriverAuthSession,
+  verifyDriverGstinDocument,
+  verifyDriverLicenseDocument,
+  verifyDriverPanDocument,
+  verifyDriverRcDocument,
 } from "../../services/registrationService";
 
 const APPROVAL_POLL_MS = 2500;
@@ -70,9 +74,11 @@ const RegistrationStatus = () => {
   const [statusMessage, setStatusMessage] = useState(
     "Waiting for admin approval",
   );
+  const [providerVerificationState, setProviderVerificationState] = useState({});
   const timeoutRef = useRef(null);
   const requestInFlightRef = useRef(false);
   const mountedRef = useRef(false);
+  const verificationStartedRef = useRef({});
 
   const appName = settings.general?.app_name || "App";
   const appLogo = settings.general?.logo || settings.customization?.logo;
@@ -213,6 +219,14 @@ const getStatusColor = (status) => {
     return 'text-amber-500 bg-amber-50';
   };
 
+  const getProviderStatusColor = (status) => {
+    const s = String(status || '').toLowerCase();
+    if (['verified', 'success', 'approved', 'completed'].includes(s)) return 'text-sky-600 bg-sky-50';
+    if (['failed', 'invalid', 'rejected', 'declined'].includes(s)) return 'text-rose-500 bg-rose-50';
+    if (['pending', 'processing', 'queued', 'verifying'].includes(s)) return 'text-amber-500 bg-amber-50';
+    return 'text-slate-500 bg-slate-100';
+  };
+
   const getDocumentStatus = (doc = {}) =>
     String(
       doc?.status ||
@@ -231,6 +245,22 @@ const getStatusColor = (status) => {
       doc?.rejection_reason ||
       '',
     ).trim();
+
+  const getDocumentProviderStatus = (doc = {}) => {
+    const explicit = String(doc?.verificationStatus || '').trim().toLowerCase();
+    if (explicit) {
+      return explicit;
+    }
+
+    if (doc?.verificationResponse || doc?.verificationReferenceId || doc?.verifiedAt) {
+      return 'verified';
+    }
+
+    return 'not_started';
+  };
+
+  const getDocumentProviderMessage = (doc = {}) =>
+    String(doc?.verificationMessage || '').trim();
 
   const getDocumentImage = (doc = {}) =>
     String(
@@ -257,7 +287,17 @@ const getStatusColor = (status) => {
   };
 
   const getDocumentDetails = () => {
-    if (!driver || !documentTemplates.length) return [];
+    const submittedDocumentSummary = Array.isArray(location.state?.submittedDocumentSummary)
+      ? location.state.submittedDocumentSummary.map((item) => ({
+          ...item,
+          providerStatus: item?.providerStatus || 'not_started',
+          providerMessage: item?.providerMessage || '',
+        }))
+      : [];
+
+    if (!driver || !documentTemplates.length) {
+      return submittedDocumentSummary;
+    }
     
     const docs = driver.documents || {};
     const flatFields = documentTemplates.flatMap(t => t.fields || []);
@@ -266,6 +306,7 @@ const getStatusColor = (status) => {
         const doc = docs[field.key];
         const status = getDocumentStatus(doc);
         const reason = getDocumentReason(doc);
+        const providerState = providerVerificationState[field.key] || {};
         
         return {
             label: field.label || field.name || field.key,
@@ -274,6 +315,8 @@ const getStatusColor = (status) => {
             key: field.key,
             previewUrl: getDocumentImage(doc),
             reverificationPending: status === 'pending' && getDocumentReviewTimestamp(doc),
+            providerStatus: providerState.status || getDocumentProviderStatus(doc),
+            providerMessage: providerState.message || getDocumentProviderMessage(doc),
         };
     });
   };
@@ -284,6 +327,130 @@ const getStatusColor = (status) => {
   );
   const rejectedDocs = docDetails.filter(d => d.status === 'rejected' || d.status === 'declined');
   const pendingReverificationDocs = docDetails.filter((doc) => doc.reverificationPending);
+
+  useEffect(() => {
+    if (!driver || !documentTemplates.length) {
+      return;
+    }
+
+    const runVerification = async () => {
+      const docs = driver.documents || {};
+      const tasks = [];
+
+      for (const template of documentTemplates) {
+        const verificationType = String(template?.verification_type || 'none').trim().toLowerCase();
+        if (!['driving_license', 'pan', 'gstin', 'rc'].includes(verificationType)) {
+          continue;
+        }
+
+        for (const field of Array.isArray(template.fields) ? template.fields : []) {
+          const key = String(field?.key || '').trim();
+          if (!key || verificationStartedRef.current[key]) {
+            continue;
+          }
+
+          const doc = docs[key];
+          if (!doc) {
+            continue;
+          }
+
+          const existingProviderStatus = getDocumentProviderStatus(doc);
+          if (['verified', 'failed'].includes(existingProviderStatus)) {
+            continue;
+          }
+
+          const identifyNumber = String(
+            doc?.identifyNumber ||
+            doc?.identify_number ||
+            doc?.documentNumber ||
+            doc?.document_number ||
+            '',
+          ).trim();
+          const birthDate = String(doc?.birthDate || doc?.birth_date || '').trim();
+
+          if (!identifyNumber) {
+            continue;
+          }
+
+          if (verificationType === 'driving_license' && !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+            continue;
+          }
+
+          verificationStartedRef.current[key] = true;
+          setProviderVerificationState((current) => ({
+            ...current,
+            [key]: {
+              status: 'verifying',
+              message: 'RechargeKit verification in progress',
+            },
+          }));
+
+          let runner = null;
+          if (verificationType === 'pan') {
+            runner = () => verifyDriverPanDocument(key);
+          } else if (verificationType === 'gstin') {
+            runner = () => verifyDriverGstinDocument(key);
+          } else if (verificationType === 'rc') {
+            runner = () => verifyDriverRcDocument(key);
+          } else if (verificationType === 'driving_license') {
+            runner = () => verifyDriverLicenseDocument(key);
+          }
+
+          if (runner) {
+            tasks.push(
+              runner()
+                .then((response) => {
+                  const payload = response?.data?.data || response?.data || {};
+                  const updatedDocuments = payload?.documents || {};
+                  const updatedDocument = payload?.document || updatedDocuments?.[key] || {};
+                  const providerStatus = getDocumentProviderStatus(updatedDocument);
+                  const providerMessage = getDocumentProviderMessage(updatedDocument) || 'RechargeKit verification completed';
+
+                  setProviderVerificationState((current) => ({
+                    ...current,
+                    [key]: {
+                      status: providerStatus,
+                      message: providerMessage,
+                    },
+                  }));
+
+                  setDriver((current) => (
+                    current
+                      ? {
+                          ...current,
+                          documents: {
+                            ...(current.documents || {}),
+                            ...(updatedDocuments || {}),
+                            [key]: {
+                              ...(current.documents?.[key] || {}),
+                              ...(updatedDocuments?.[key] || updatedDocument || {}),
+                            },
+                          },
+                        }
+                      : current
+                  ));
+                })
+                .catch((error) => {
+                  setProviderVerificationState((current) => ({
+                    ...current,
+                    [key]: {
+                      status: 'failed',
+                      message: error?.response?.data?.message || error?.message || 'RechargeKit verification failed',
+                    },
+                  }));
+                }),
+            );
+          }
+        }
+      }
+
+      if (tasks.length > 0) {
+        await Promise.allSettled(tasks);
+      }
+    };
+
+    runVerification().catch(() => {});
+  }, [driver, documentTemplates]);
 
   return (
     <div 
@@ -369,10 +536,23 @@ const getStatusColor = (status) => {
                     <div key={idx} className="bg-white rounded-[1.8rem] border border-slate-100 p-5 shadow-[0_8px_30px_rgba(0,0,0,0.03)] space-y-4">
                         <div className="flex items-center justify-between gap-3">
                             <span className="text-[15px] font-black tracking-tight text-slate-800 truncate">{doc.label}</span>
-                            <span className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${getStatusColor(doc.status)}`}>
-                                {doc.status}
-                            </span>
+                            <div className="flex flex-wrap justify-end gap-2">
+                                <span className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${getStatusColor(doc.status)}`}>
+                                    Admin: {doc.status}
+                                </span>
+                                <span className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${getProviderStatusColor(doc.providerStatus)}`}>
+                                    API: {doc.providerStatus === 'not_started' ? 'Not verified' : doc.providerStatus}
+                                </span>
+                            </div>
                         </div>
+                        {doc.providerMessage ? (
+                            <div className="p-4 bg-sky-50 border border-sky-100 rounded-2xl">
+                                <p className="text-[13px] font-bold text-sky-700 leading-relaxed">
+                                    <span className="opacity-60 uppercase text-[10px] block mb-1 tracking-widest">RechargeKit status:</span>
+                                    {doc.providerMessage}
+                                </p>
+                            </div>
+                        ) : null}
                         {doc.reason && (
                             <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl">
                                 <p className="text-[13px] font-bold text-rose-600 leading-relaxed">

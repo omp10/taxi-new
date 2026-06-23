@@ -9,3 +9,5 @@ commonRouter.get('/common/referrals/translation', commonController.getReferralTr
 commonRouter.get('/common/referrals/settings', commonController.getReferralSettingsContent);
 commonRouter.get('/common/payment-gateway', commonController.getPaymentGatewayConfig);
 commonRouter.post('/common/payment-gateway/phonepe/callback', commonController.acknowledgePhonePeCallback);
+commonRouter.get('/common/recharge-api/callback', commonController.acknowledgeRechargeApiCallback);
+commonRouter.post('/common/recharge-api/callback', commonController.acknowledgeRechargeApiCallback);

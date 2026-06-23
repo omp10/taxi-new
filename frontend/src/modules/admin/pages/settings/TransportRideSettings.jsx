@@ -3,24 +3,16 @@ import {
   ChevronRight, 
   Save, 
   Loader2,
-  ChevronUp,
-  Info
+  ChevronUp
 } from 'lucide-react';
 import api from '../../../../shared/api/axiosInstance';
 import toast from 'react-hot-toast';
 
-const InputField = ({ label, name, value, onChange, placeholder, type = "text", helpLink }) => (
+const InputField = ({ label, name, value, onChange, placeholder, type = "text" }) => (
   <div className="space-y-1.5 w-full">
-    <div className="flex items-center justify-between">
-       <label className="text-[13px] font-bold text-slate-700 block ml-0.5">
-         {label}
-       </label>
-       {helpLink && (
-         <button className="text-emerald-500 text-[11px] font-bold hover:underline flex items-center gap-1">
-            How It Works <Info size={12} />
-         </button>
-       )}
-    </div>
+    <label className="text-[13px] font-bold text-slate-700 block ml-0.5">
+      {label}
+    </label>
     <input
       type={type}
       name={name}
@@ -100,7 +92,7 @@ const TransportRideSettings = () => {
            <div className="mb-8 rounded-2xl border border-indigo-100 bg-indigo-50/70 px-5 py-4">
              <p className="text-sm font-semibold text-slate-700">Regular ride search behavior is controlled from this page.</p>
              <p className="mt-1 text-xs text-slate-500">
-               Search radius, driver response window, total regular ride search time, and dispatch mode all feed the live dispatch flow.
+               Only the settings below are currently wired into the live dispatch flow.
              </p>
            </div>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
@@ -119,22 +111,6 @@ const TransportRideSettings = () => {
                  </div>
 
                  <InputField 
-                    label="Maximum Waiting Time For User to Accept/Reject Bidding Ride in Seconds" 
-                    name="maximum_time_for_accept_reject_bidding_ride" 
-                    value={settings.maximum_time_for_accept_reject_bidding_ride} 
-                    onChange={handleChange} 
-                    type="number" 
-                 />
-
-                 <InputField 
-                    label="Maximum Time For Accept/Reject drivers for Bidding Ride In Seconds" 
-                    name="maximum_time_for_find_drivers_for_bitting_ride" 
-                    value={settings.maximum_time_for_find_drivers_for_bitting_ride} 
-                    onChange={handleChange} 
-                    type="number" 
-                 />
-
-                 <InputField 
                     label="Maximum Time For Find Drivers For Regular Ride" 
                     name="maximum_time_for_find_drivers_for_regular_ride" 
                     value={settings.maximum_time_for_find_drivers_for_regular_ride} 
@@ -149,14 +125,6 @@ const TransportRideSettings = () => {
                     onChange={handleChange} 
                     type="number" 
                  />
-
-                 <InputField 
-                    label="Bidding Ride Maximum Distance" 
-                    name="bidding_ride_maximum_distance" 
-                    value={settings.bidding_ride_maximum_distance} 
-                    onChange={handleChange} 
-                    type="number" 
-                 />
               </div>
 
               {/* Right Column */}
@@ -168,45 +136,6 @@ const TransportRideSettings = () => {
                     onChange={handleChange} 
                     type="number" 
                  />
-
-                 <InputField 
-                    label="User Can Schedule a Ride After X Minutes" 
-                    name="user_can_make_a_ride_after_x_miniutes" 
-                    value={settings.user_can_make_a_ride_after_x_miniutes} 
-                    onChange={handleChange} 
-                    type="number" 
-                 />
-
-                 <InputField 
-                    label="Minimum Time For Find drivers for Schedule Ride in Hours" 
-                    name="minimum_time_for_search_drivers_for_schedule_ride" 
-                    value={settings.minimum_time_for_search_drivers_for_schedule_ride} 
-                    onChange={handleChange} 
-                    type="number" 
-                    helpLink
-                 />
-
-                 <InputField 
-                    label="Enter the minimum time (in minutes) for the driver to automatically start the trip..." 
-                    name="minimum_time_for_starting_trip_drivers_for_schedule_ride" 
-                    value={settings.minimum_time_for_starting_trip_drivers_for_schedule_ride} 
-                    onChange={handleChange} 
-                    type="number" 
-                    helpLink
-                 />
-
-               <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl mt-12">
-                   <span className="text-[14px] font-bold text-slate-700">Can Round the Bill Values?</span>
-                   <button
-                     onClick={() => handleChange('can_round_the_bill_values', settings.can_round_the_bill_values === "1" ? "0" : "1")}
-                     className={`w-11 h-6 rounded-full relative transition-all duration-300 ${
-                       settings.can_round_the_bill_values === "1" ? 'bg-indigo-600' : 'bg-slate-300'
-                     }`}
-                   >
-                     <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${settings.can_round_the_bill_values === "1" ? 'right-1' : 'left-1'}`} />
-                   </button>
-                 </div>
-
               </div>
            </div>
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, CalendarDays, Camera, CheckCircle2, Eye, FileText, Loader2, RefreshCw, X } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, CalendarDays, Camera, CheckCircle2, Eye, FileText, Loader2, RefreshCw, ShieldCheck, X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getCurrentDriver, getDriverDocumentTemplates, updateDriverDocument } from '../../services/registrationService';
+import { getCurrentDriver, getDriverDocumentTemplates, updateDriverDocument, verifyDriverGstinDocument, verifyDriverLicenseDocument, verifyDriverPanDocument, verifyDriverRcDocument } from '../../services/registrationService';
 import { useImageUpload } from '../../../../shared/hooks/useImageUpload';
 import {
   flattenDriverDocumentFields,
@@ -44,6 +44,45 @@ const getDocumentExpiryValue = (document = {}) =>
   document?.expiry ||
   document?.expiresAt ||
   null;
+
+const getDocumentIdentifyValue = (document = {}) =>
+  String(
+    document?.identifyNumber ||
+    document?.identify_number ||
+    document?.documentNumber ||
+    document?.document_number ||
+    '',
+  ).trim();
+
+const getDocumentBirthDateValue = (document = {}) =>
+  String(document?.birthDate || document?.birth_date || '').trim();
+
+const getDocumentRequestNumberValue = (document = {}) =>
+  String(document?.requestNumber || document?.request_no || '').trim();
+
+const isDrivingLicenseDocument = (doc = {}) =>
+  String(doc?.verificationType || '').trim() === 'driving_license' ||
+  String(doc?.id || '').trim() === 'drivingLicense';
+
+const isPanDocument = (doc = {}) =>
+  String(doc?.verificationType || '').trim() === 'pan' ||
+  /\bpan\b/i.test(String(doc?.id || '')) ||
+  /\bpan\b/i.test(String(doc?.name || '')) ||
+  /\bpancard\b/i.test(String(doc?.id || '')) ||
+  /\bpancard\b/i.test(String(doc?.name || ''));
+
+const isGstDocument = (doc = {}) =>
+  String(doc?.verificationType || '').trim() === 'gstin' ||
+  /\bgst\b/i.test(String(doc?.id || '')) ||
+  /\bgstin\b/i.test(String(doc?.id || '')) ||
+  /\bgst\b/i.test(String(doc?.name || '')) ||
+  /\bgstin\b/i.test(String(doc?.name || ''));
+
+const isRcDocument = (doc = {}) =>
+  String(doc?.verificationType || '').trim() === 'rc' ||
+  /\brc\b/i.test(String(doc?.id || '')) ||
+  /\bvehicle rc\b/i.test(String(doc?.name || '')) ||
+  /\bregistration certificate\b/i.test(String(doc?.name || ''));
 
 const isDocumentExpired = (document = {}) => {
   const value = getDocumentExpiryValue(document);
@@ -95,6 +134,17 @@ const DriverDocuments = () => {
   const [error, setError] = useState('');
   const [uploadingDocumentKey, setUploadingDocumentKey] = useState('');
   const [expiryModal, setExpiryModal] = useState({ isOpen: false, docId: '', name: '', value: '', isSubmitting: false });
+  const [metaModal, setMetaModal] = useState({
+    isOpen: false,
+    mode: 'license',
+    docId: '',
+    name: '',
+    identifyNumber: '',
+    birthDate: '',
+    requestNumber: '',
+    isSubmitting: false,
+    isVerifying: false,
+  });
   const uploadingDocumentKeyRef = useRef('');
   const documentInputRefs = useRef({});
   const autoOpenedDocumentRef = useRef('');
@@ -173,6 +223,9 @@ const DriverDocuments = () => {
       const uploadedAt = doc?.uploadedAt || doc?.createdAt || doc?.updatedAt || '';
       const hasDoc = Boolean(previewUrl || doc);
       const expiryDate = getDocumentExpiryValue(doc);
+      const identifyNumber = getDocumentIdentifyValue(doc);
+      const birthDate = getDocumentBirthDateValue(doc);
+      const requestNumber = getDocumentRequestNumberValue(doc);
       const expired = isDocumentExpired(doc);
       const rejected = ['rejected', 'declined'].includes(getDocumentReviewStatus(doc));
       const verified = ['verified', 'approved'].includes(getDocumentReviewStatus(doc));
@@ -189,6 +242,7 @@ const DriverDocuments = () => {
         id: field.key,
         name: field.label,
         templateName: field.templateName,
+        verificationType: field.verificationType,
         hasExpiryDate: field.hasExpiryDate,
         rawDocument: doc,
         reviewStatus: getDocumentReviewStatus(doc),
@@ -209,6 +263,10 @@ const DriverDocuments = () => {
         fileName: doc?.fileName || field.label,
         uploadedAt,
         expiryDate,
+        identifyNumber,
+        birthDate,
+        requestNumber,
+        hasIdentifyNumber: field.hasIdentifyNumber,
         expired,
         rejected,
         reverificationPending,
@@ -248,6 +306,20 @@ const DriverDocuments = () => {
     setExpiryModal({ isOpen: false, docId: '', name: '', value: '', isSubmitting: false });
   };
 
+  const closeMetaModal = () => {
+    setMetaModal({
+      isOpen: false,
+      mode: 'license',
+      docId: '',
+      name: '',
+      identifyNumber: '',
+      birthDate: '',
+      requestNumber: '',
+      isSubmitting: false,
+      isVerifying: false,
+    });
+  };
+
   const handleExpirySave = async () => {
     if (!expiryModal.docId || !expiryModal.value) {
       return;
@@ -285,6 +357,78 @@ const DriverDocuments = () => {
     } catch (requestError) {
       setError(requestError?.message || 'Unable to update document expiry date');
       setExpiryModal((prev) => ({ ...prev, isSubmitting: false }));
+    }
+  };
+
+  const handleMetaSave = async ({ verify = false } = {}) => {
+    if (!metaModal.docId) {
+      return;
+    }
+
+    const currentDocument = driver?.documents?.[metaModal.docId] || {};
+    const identifyNumber = String(metaModal.identifyNumber || '').trim().toUpperCase();
+    const birthDate = String(metaModal.birthDate || '').trim();
+    const requestNumber = String(metaModal.requestNumber || '').trim();
+
+    try {
+      setMetaModal((prev) => ({
+        ...prev,
+        isSubmitting: !verify,
+        isVerifying: verify,
+      }));
+      setError('');
+
+      const saveResponse = await updateDriverDocument(metaModal.docId, {
+        ...currentDocument,
+        key: metaModal.docId,
+        identifyNumber,
+        identify_number: identifyNumber,
+        documentNumber: identifyNumber,
+        document_number: identifyNumber,
+        birthDate,
+        birth_date: birthDate,
+        requestNumber,
+        request_no: requestNumber,
+        uploaded: currentDocument?.uploaded ?? true,
+      });
+
+      let documents = saveResponse?.data?.documents || {
+        ...(driver?.documents || {}),
+        [metaModal.docId]: {
+          ...currentDocument,
+          key: metaModal.docId,
+          identifyNumber,
+          identify_number: identifyNumber,
+          documentNumber: identifyNumber,
+          document_number: identifyNumber,
+          birthDate,
+          birth_date: birthDate,
+          requestNumber,
+          request_no: requestNumber,
+        },
+      };
+
+      if (verify) {
+        const verifyResponse =
+          metaModal.mode === 'pan'
+            ? await verifyDriverPanDocument(metaModal.docId)
+            : metaModal.mode === 'gst'
+              ? await verifyDriverGstinDocument(metaModal.docId)
+              : metaModal.mode === 'rc'
+                ? await verifyDriverRcDocument(metaModal.docId)
+                : await verifyDriverLicenseDocument(metaModal.docId);
+        documents = verifyResponse?.data?.data?.documents || verifyResponse?.data?.documents || documents;
+      }
+
+      setDriver((prev) => ({ ...(prev || {}), documents }));
+      closeMetaModal();
+    } catch (requestError) {
+      setError(requestError?.response?.data?.message || requestError?.message || 'Unable to update document details');
+      setMetaModal((prev) => ({
+        ...prev,
+        isSubmitting: false,
+        isVerifying: false,
+      }));
     }
   };
 
@@ -385,6 +529,118 @@ const DriverDocuments = () => {
         ) : null}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {metaModal.isOpen ? (
+          <div className="fixed inset-0 z-[111] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white p-6 rounded-[1.8rem] shadow-2xl space-y-5 max-w-[360px] w-full">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h4 className="text-base font-black text-slate-900 uppercase tracking-tight">Document Details</h4>
+                  <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{metaModal.name}</p>
+                </div>
+                <button onClick={closeMetaModal} className="w-8 h-8 bg-slate-50 hover:bg-slate-100 rounded-full flex items-center justify-center text-slate-400 transition-colors">
+                  <X size={18} strokeWidth={2.5} />
+                </button>
+              </div>
+
+              <label className="block">
+                <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <BadgeCheck size={13} />
+                  {metaModal.mode === 'pan'
+                    ? 'PAN Number'
+                    : metaModal.mode === 'gst'
+                      ? 'GSTIN'
+                      : metaModal.mode === 'rc'
+                        ? 'RC Number'
+                        : 'License Number'}
+                </span>
+                <input
+                  type="text"
+                  value={metaModal.identifyNumber}
+                  onChange={(event) => setMetaModal((prev) => ({ ...prev, identifyNumber: event.target.value.toUpperCase() }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-colors focus:border-emerald-200 focus:bg-white"
+                  placeholder={
+                    metaModal.mode === 'pan'
+                      ? 'Enter PAN number'
+                      : metaModal.mode === 'gst'
+                        ? 'Enter GSTIN'
+                        : metaModal.mode === 'rc'
+                          ? 'Enter RC number'
+                          : 'Enter DL number'
+                  }
+                />
+              </label>
+
+              {metaModal.mode === 'license' ? (
+              <label className="block">
+                <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <CalendarDays size={13} />
+                  Birth Date
+                </span>
+                <input
+                  type="date"
+                  value={metaModal.birthDate}
+                  onChange={(event) => setMetaModal((prev) => ({ ...prev, birthDate: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-colors focus:border-emerald-200 focus:bg-white"
+                />
+              </label>
+              ) : null}
+
+              {metaModal.mode === 'license' ? (
+              <label className="block">
+                <span className="mb-2 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <BadgeCheck size={13} />
+                  Request No
+                </span>
+                <input
+                  type="text"
+                  value={metaModal.requestNumber}
+                  onChange={(event) => setMetaModal((prev) => ({ ...prev, requestNumber: event.target.value }))}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 outline-none transition-colors focus:border-emerald-200 focus:bg-white"
+                  placeholder="Optional override, otherwise generated automatically"
+                />
+              </label>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleMetaSave({ verify: false })}
+                  disabled={
+                    metaModal.isSubmitting ||
+                    metaModal.isVerifying ||
+                    !metaModal.identifyNumber ||
+                    (metaModal.mode === 'license' && !metaModal.birthDate)
+                  }
+                  className="h-11 rounded-xl bg-slate-100 text-[12px] font-black uppercase tracking-widest text-slate-700 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {metaModal.isSubmitting ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => handleMetaSave({ verify: true })}
+                  disabled={
+                    metaModal.isSubmitting ||
+                    metaModal.isVerifying ||
+                    !metaModal.identifyNumber ||
+                    (metaModal.mode === 'license' && !metaModal.birthDate)
+                  }
+                  className="h-11 rounded-xl bg-emerald-600 text-[12px] font-black uppercase tracking-widest text-white transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {metaModal.isVerifying
+                    ? 'Verifying...'
+                    : metaModal.mode === 'pan'
+                      ? 'Verify PAN'
+                      : metaModal.mode === 'gst'
+                        ? 'Verify GST'
+                        : metaModal.mode === 'rc'
+                          ? 'Verify RC'
+                          : 'Verify DL'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
       <main className="space-y-6">
         <div className="bg-white p-4.5 rounded-[1.8rem] border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.03)] flex items-center justify-between group active:scale-[0.99] transition-all">
           <div className="flex gap-4 items-center">
@@ -448,6 +704,16 @@ const DriverDocuments = () => {
                             {doc.expired ? 'Expired' : 'Exp'} {formatExpiryDate(doc.expiryDate)}
                           </span>
                         )}
+                        {doc.identifyNumber && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                            {doc.identifyNumber}
+                          </span>
+                        )}
+                        {doc.requestNumber && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                            Req {doc.requestNumber.slice(0, 8)}
+                          </span>
+                        )}
                       </div>
                       
                       {doc.reverificationPending && (
@@ -458,6 +724,11 @@ const DriverDocuments = () => {
                       {doc.reason && !doc.reverificationPending && (
                         <p className="text-[9px] font-bold text-rose-500 mt-1 leading-tight max-w-[180px] line-clamp-1">
                           {doc.reason}
+                        </p>
+                      )}
+                      {doc.rawDocument?.verificationMessage && doc.verified && (
+                        <p className="text-[9px] font-bold text-emerald-600 mt-1 leading-tight max-w-[180px] line-clamp-1">
+                          {doc.rawDocument.verificationMessage}
                         </p>
                       )}
                     </div>
@@ -479,6 +750,43 @@ const DriverDocuments = () => {
                     </span>
                     
                     <div className="flex items-center gap-1.5 ml-1">
+                      {isDrivingLicenseDocument(doc) || isPanDocument(doc) || isGstDocument(doc) || isRcDocument(doc) ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setMetaModal({
+                              isOpen: true,
+                              mode: isPanDocument(doc)
+                                ? 'pan'
+                                : isGstDocument(doc)
+                                  ? 'gst'
+                                  : isRcDocument(doc)
+                                    ? 'rc'
+                                    : 'license',
+                              docId: doc.id,
+                              name: doc.name,
+                              identifyNumber: doc.identifyNumber || '',
+                              birthDate: toDateInputValue(doc.birthDate),
+                              requestNumber: doc.requestNumber || '',
+                              isSubmitting: false,
+                              isVerifying: false,
+                            });
+                          }}
+                          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 text-[10px] font-black uppercase tracking-widest text-emerald-600 transition-all hover:bg-emerald-100 active:scale-90"
+                        >
+                          <ShieldCheck size={13} strokeWidth={2.5} />
+                          <span>
+                            {isPanDocument(doc)
+                              ? doc.verified ? 'View PAN' : 'Verify PAN'
+                              : isGstDocument(doc)
+                                ? doc.verified ? 'View GST' : 'Verify GST'
+                                : isRcDocument(doc)
+                                  ? doc.verified ? 'View RC' : 'Verify RC'
+                              : doc.verified ? 'View DL' : 'Verify DL'}
+                          </span>
+                        </button>
+                      ) : null}
                       {doc.hasExpiryDate ? (
                         <button
                           type="button"

@@ -354,6 +354,10 @@ export const adminService = {
   updateMapSettings: (data) => api.patch('/admin/integration-settings/map', data),
   getMailSettings: () => api.get('/admin/integration-settings/mail'),
   updateMailSettings: (data) => api.patch('/admin/integration-settings/mail', data),
+  getRechargeApiSettings: () => api.get('/admin/integration-settings/recharge-api'),
+  updateRechargeApiSettings: (data) => api.patch('/admin/integration-settings/recharge-api', data),
+  generateRechargeApiToken: () => api.post('/admin/integration-settings/recharge-api/generate-token'),
+  testRechargeApiSettings: () => api.post('/admin/integration-settings/recharge-api/test'),
 
   /**
    * Onboarding Screens Management

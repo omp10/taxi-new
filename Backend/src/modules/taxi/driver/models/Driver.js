@@ -329,6 +329,84 @@ const driverSchema = new mongoose.Schema(
         default: '',
         trim: true,
       },
+      verificationStatus: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      verificationMode: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      verificationMessage: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      verificationReferenceId: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      verifiedBankName: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      verifiedBranchName: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      verifiedAccountHolderName: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      verifiedAt: {
+        type: Date,
+        default: null,
+      },
+      upiVerificationStatus: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      upiVerificationMode: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      upiVerificationMessage: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      upiVerificationReferenceId: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      upiVerifiedName: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      upiAccountIfsc: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      upiAccountType: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+      upiVerifiedAt: {
+        type: Date,
+        default: null,
+      },
       updatedAt: {
         type: Date,
         default: null,

@@ -55,6 +55,12 @@ export const env = {
     process.env.FRONTEND_PUBLIC_URL ||
     process.env.FRONTEND_URL ||
     '',
+  publicBackendUrl:
+    process.env.PUBLIC_BACKEND_URL ||
+    process.env.APP_BACKEND_URL ||
+    process.env.BACKEND_PUBLIC_URL ||
+    process.env.BACKEND_URL ||
+    '',
   phonePeRedirectBaseUrl:
     process.env.PHONEPE_REDIRECT_BASE_URL ||
     process.env.PHONEPE_CALLBACK_BASE_URL ||

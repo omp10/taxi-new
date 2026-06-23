@@ -100,6 +100,7 @@ import {
   summarizePhonePePayload,
   summarizePhonePeRequestBody,
 } from "../../services/paymentDiagnostics.js";
+import { requestDrivingLicenseVerificationWithRecharge, verifyBankAccountWithRecharge, verifyDrivingLicenseWithRecharge, verifyGstinWithRecharge, verifyPanWithRecharge, verifyRcWithRecharge, verifyUpiWithRecharge } from "../../services/rechargeVerificationService.js";
 
 const generateDriverReferralCode = (driver) => {
   const idPart = String(driver?._id || "")
@@ -252,20 +253,49 @@ const serializeDriverBankDetails = (bankDetails = {}) => ({
   accountNumber: String(bankDetails?.accountNumber || "").trim(),
   ifsc: String(bankDetails?.ifsc || "").trim().toUpperCase(),
   branchName: String(bankDetails?.branchName || "").trim(),
+  verificationStatus: String(bankDetails?.verificationStatus || "").trim(),
+  verificationMode: String(bankDetails?.verificationMode || "").trim(),
+  verificationMessage: String(bankDetails?.verificationMessage || "").trim(),
+  verificationReferenceId: String(bankDetails?.verificationReferenceId || "").trim(),
+  verifiedBankName: String(bankDetails?.verifiedBankName || "").trim(),
+  verifiedBranchName: String(bankDetails?.verifiedBranchName || "").trim(),
+  verifiedAccountHolderName: String(bankDetails?.verifiedAccountHolderName || "").trim(),
+  verifiedAt: bankDetails?.verifiedAt || null,
+  upiVerificationStatus: String(bankDetails?.upiVerificationStatus || "").trim(),
+  upiVerificationMode: String(bankDetails?.upiVerificationMode || "").trim(),
+  upiVerificationMessage: String(bankDetails?.upiVerificationMessage || "").trim(),
+  upiVerificationReferenceId: String(bankDetails?.upiVerificationReferenceId || "").trim(),
+  upiVerifiedName: String(bankDetails?.upiVerifiedName || "").trim(),
+  upiAccountIfsc: String(bankDetails?.upiAccountIfsc || "").trim(),
+  upiAccountType: String(bankDetails?.upiAccountType || "").trim(),
+  upiVerifiedAt: bankDetails?.upiVerifiedAt || null,
   updatedAt: bankDetails?.updatedAt || null,
 });
 
 const normalizeDriverBankDetails = (payload = {}, existing = {}) => {
   const next = serializeDriverBankDetails(existing);
+  let shouldResetVerification = false;
 
   if (Object.prototype.hasOwnProperty.call(payload, "accountHolderName")) {
-    next.accountHolderName = String(payload.accountHolderName || "").trim().slice(0, 120);
+    const accountHolderName = String(payload.accountHolderName || "").trim().slice(0, 120);
+    shouldResetVerification = shouldResetVerification || accountHolderName !== next.accountHolderName;
+    next.accountHolderName = accountHolderName;
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "upiId")) {
     const upiId = String(payload.upiId || "").trim().toLowerCase();
     if (upiId && !/^[a-z0-9.\-_]{2,}@[a-z0-9.\-_]{2,}$/i.test(upiId)) {
       throw new ApiError(400, "Enter a valid UPI ID");
+    }
+    if (upiId !== next.upiId) {
+      next.upiVerificationStatus = "";
+      next.upiVerificationMode = "";
+      next.upiVerificationMessage = "";
+      next.upiVerificationReferenceId = "";
+      next.upiVerifiedName = "";
+      next.upiAccountIfsc = "";
+      next.upiAccountType = "";
+      next.upiVerifiedAt = null;
     }
     next.upiId = upiId;
   }
@@ -279,6 +309,7 @@ const normalizeDriverBankDetails = (payload = {}, existing = {}) => {
     if (accountNumber && !/^\d{6,20}$/.test(accountNumber)) {
       throw new ApiError(400, "Account number must be 6 to 20 digits");
     }
+    shouldResetVerification = shouldResetVerification || accountNumber !== next.accountNumber;
     next.accountNumber = accountNumber;
   }
 
@@ -287,6 +318,7 @@ const normalizeDriverBankDetails = (payload = {}, existing = {}) => {
     if (ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
       throw new ApiError(400, "Enter a valid IFSC code");
     }
+    shouldResetVerification = shouldResetVerification || ifsc !== next.ifsc;
     next.ifsc = ifsc;
   }
 
@@ -294,9 +326,38 @@ const normalizeDriverBankDetails = (payload = {}, existing = {}) => {
     next.branchName = String(payload.branchName || "").trim().slice(0, 120);
   }
 
+  if (shouldResetVerification) {
+    next.verificationStatus = "";
+    next.verificationMode = "";
+    next.verificationMessage = "";
+    next.verificationReferenceId = "";
+    next.verifiedBankName = "";
+    next.verifiedBranchName = "";
+    next.verifiedAccountHolderName = "";
+    next.verifiedAt = null;
+  }
+
   next.updatedAt = new Date();
   return next;
 };
+
+const buildDriverBankVerificationRequestId = (driver) =>
+  `BANK-${String(driver?._id || "").slice(-6)}-${Date.now()}`;
+
+const buildDriverLicenseVerificationRequestId = (driver) =>
+  `DL-${String(driver?._id || "").slice(-6)}-${Date.now()}`;
+
+const buildDriverPanVerificationRequestId = (driver) =>
+  `PAN-${String(driver?._id || "").slice(-6)}-${Date.now()}`;
+
+const buildDriverUpiVerificationRequestId = (driver) =>
+  `UPI-${String(driver?._id || "").slice(-6)}-${Date.now()}`;
+
+const buildDriverGstinVerificationRequestId = (driver) =>
+  `GST-${String(driver?._id || "").slice(-6)}-${Date.now()}`;
+
+const buildDriverRcVerificationRequestId = (driver) =>
+  `RC-${String(driver?._id || "").slice(-6)}-${Date.now()}`;
 
 const validateBusPassengerName = (value = "") => {
   if (!BUS_DRIVER_NAME_REGEX.test(String(value || "").trim())) {
@@ -3403,6 +3464,518 @@ export const updateCurrentDriver = async (req, res) => {
   });
 };
 
+export const verifyCurrentDriverBankDetails = async (req, res) => {
+  const driver = await Driver.findById(req.auth.sub);
+
+  if (!driver) {
+    throw new ApiError(404, "Driver not found");
+  }
+
+  const mode = String(req.body?.mode || "penny_less").trim().toLowerCase();
+  const bankDetails = serializeDriverBankDetails(driver.bankDetails || {});
+
+  if (!bankDetails.accountNumber) {
+    throw new ApiError(400, "Please save your account number first");
+  }
+
+  if (!bankDetails.ifsc) {
+    throw new ApiError(400, "Please save your IFSC code first");
+  }
+
+  if (mode !== "v3" && !bankDetails.accountHolderName) {
+    throw new ApiError(400, "Please save account holder name first");
+  }
+
+  const providerResponse = await verifyBankAccountWithRecharge({
+    accountNumber: bankDetails.accountNumber,
+    ifscCode: bankDetails.ifsc,
+    accountHolderName: bankDetails.accountHolderName,
+    partnerRequestId: buildDriverBankVerificationRequestId(driver),
+    mode,
+  });
+
+  const accountDetails = providerResponse?.cardData?.response?.account_details || {};
+  const verificationSucceeded = Number(providerResponse?.status || 0) === 1;
+
+  driver.bankDetails = {
+    ...(driver.bankDetails?.toObject?.() || driver.bankDetails || {}),
+    verificationStatus: verificationSucceeded ? "verified" : "failed",
+    verificationMode: mode,
+    verificationMessage: String(
+      providerResponse?.cardData?.response?.message
+      || providerResponse?.data?.message
+      || providerResponse?.msg
+      || "",
+    ).trim(),
+    verificationReferenceId: String(
+      providerResponse?.orderid
+      || providerResponse?.optransid
+      || providerResponse?.cardData?.request_id
+      || providerResponse?.data?.requestId
+      || "",
+    ).trim(),
+    verifiedBankName: String(accountDetails?.bank_name || "").trim(),
+    verifiedBranchName: String(accountDetails?.branch_name || "").trim(),
+    verifiedAccountHolderName: String(accountDetails?.beneficiary_name || "").trim(),
+    verifiedAt: new Date(),
+    updatedAt: driver.bankDetails?.updatedAt || new Date(),
+  };
+
+  await driver.save();
+
+  res.json({
+    success: true,
+    data: {
+      bankDetails: serializeDriverBankDetails(driver.bankDetails),
+      verification: providerResponse,
+    },
+  });
+};
+
+export const verifyCurrentDriverUpiDetails = async (req, res) => {
+  const driver = await Driver.findById(req.auth.sub);
+
+  if (!driver) {
+    throw new ApiError(404, "Driver not found");
+  }
+
+  const bankDetails = serializeDriverBankDetails(driver.bankDetails || {});
+  const mode = String(req.body?.mode || "basic").trim().toLowerCase();
+
+  if (!bankDetails.upiId) {
+    throw new ApiError(400, "Please save your UPI ID first");
+  }
+
+  const providerResponse = await verifyUpiWithRecharge({
+    upiId: bankDetails.upiId,
+    partnerRequestId: buildDriverUpiVerificationRequestId(driver),
+    mode,
+  });
+
+  const result = providerResponse?.cardData?.result || {};
+  const vpaDetails = result?.vpa_details || {};
+  const accountDetails = result?.account_details || {};
+  const verificationSucceeded = Number(providerResponse?.status || 0) === 1 || String(providerResponse?.status || "") === "1";
+
+  driver.bankDetails = {
+    ...(driver.bankDetails?.toObject?.() || driver.bankDetails || {}),
+    upiVerificationStatus: verificationSucceeded ? "verified" : "failed",
+    upiVerificationMode: mode,
+    upiVerificationMessage: String(
+      providerResponse?.cardData?.message ||
+      providerResponse?.msg ||
+      "",
+    ).trim(),
+    upiVerificationReferenceId: String(
+      providerResponse?.orderid ||
+      providerResponse?.cardData?.request_id ||
+      providerResponse?.cardData?.client_ref_num ||
+      "",
+    ).trim(),
+    upiVerifiedName: String(vpaDetails?.account_holder_name || "").trim(),
+    upiAccountIfsc: String(accountDetails?.account_ifsc || "").trim(),
+    upiAccountType: String(accountDetails?.account_type || "").trim(),
+    upiVerifiedAt: new Date(),
+    updatedAt: driver.bankDetails?.updatedAt || new Date(),
+  };
+
+  await driver.save();
+
+  res.json({
+    success: true,
+    data: {
+      bankDetails: serializeDriverBankDetails(driver.bankDetails),
+      verification: providerResponse,
+    },
+  });
+};
+
+export const verifyCurrentDriverLicenseDocument = async (req, res) => {
+  const documentKey = String(req.params.documentKey || "").trim();
+
+  if (!documentKey) {
+    throw new ApiError(400, "Document key is required");
+  }
+
+  const driver = await Driver.findById(req.auth.sub);
+
+  if (!driver) {
+    throw new ApiError(404, "Driver not found");
+  }
+
+  const existingDocument = driver.documents?.[documentKey] || {};
+  const licenseNumber = String(
+    existingDocument.identifyNumber ||
+    existingDocument.identify_number ||
+    existingDocument.documentNumber ||
+    existingDocument.document_number ||
+    req.body?.licenseNumber ||
+    req.body?.license_no ||
+    "",
+  ).trim().toUpperCase();
+  const birthDate = String(
+    existingDocument.birthDate ||
+    existingDocument.birth_date ||
+    req.body?.birthDate ||
+    req.body?.birth_date ||
+    "",
+  ).trim();
+  const requestNumber = String(
+    existingDocument.requestNumber ||
+    existingDocument.request_no ||
+    req.body?.requestNumber ||
+    req.body?.request_no ||
+    "",
+  ).trim();
+
+  if (!licenseNumber) {
+    throw new ApiError(400, "Driving license number is required before verification");
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+    throw new ApiError(400, "Birth date must use YYYY-MM-DD format before verification");
+  }
+
+  let resolvedRequestNumber = requestNumber;
+
+  if (!resolvedRequestNumber) {
+    const requestResponse = await requestDrivingLicenseVerificationWithRecharge({
+      licenseNumber,
+      birthDate,
+    });
+
+    resolvedRequestNumber = String(
+      requestResponse?.cardData?.request_id ||
+      requestResponse?.request_id ||
+      requestResponse?.data?.request_id ||
+      "",
+    ).trim();
+
+    if (!resolvedRequestNumber) {
+      throw new ApiError(502, "RechargeKit did not return a driving license request id");
+    }
+  }
+
+  const providerResponse = await verifyDrivingLicenseWithRecharge({
+    licenseNumber,
+    birthDate,
+    partnerRequestId: buildDriverLicenseVerificationRequestId(driver),
+    requestNumber: resolvedRequestNumber,
+  });
+
+  const result = providerResponse?.cardData?.result || {};
+  const sourceOutput = result?.source_output || {};
+  const verificationSucceeded = String(providerResponse?.status || "") === "1" || Number(providerResponse?.status || 0) === 1;
+  const verificationMessage = String(
+    providerResponse?.msg ||
+    result?.status ||
+    sourceOutput?.dl_status ||
+    "",
+  ).trim();
+
+  const updatedDocument = {
+    ...(typeof existingDocument === "object" ? existingDocument : {}),
+    key: documentKey,
+    identifyNumber: licenseNumber,
+    identify_number: licenseNumber,
+    documentNumber: licenseNumber,
+    document_number: licenseNumber,
+    birthDate,
+    birth_date: birthDate,
+    requestNumber: String(
+      providerResponse?.optransid ||
+      providerResponse?.cardData?.request_id ||
+      resolvedRequestNumber,
+    ).trim(),
+    request_no: String(
+      providerResponse?.optransid ||
+      providerResponse?.cardData?.request_id ||
+      resolvedRequestNumber,
+    ).trim(),
+    verificationStatus: verificationSucceeded ? "verified" : "failed",
+    reviewStatus: verificationSucceeded ? "verified" : "failed",
+    status: verificationSucceeded ? "verified" : "failed",
+    verifiedAt: new Date().toISOString(),
+    reviewedAt: new Date().toISOString(),
+    verificationMessage,
+    comment: verificationSucceeded ? "" : verificationMessage,
+    remarks: verificationSucceeded ? "" : verificationMessage,
+    reason: verificationSucceeded ? "" : verificationMessage,
+    verificationReferenceId: String(
+      providerResponse?.orderid ||
+      providerResponse?.optransid ||
+      providerResponse?.cardData?.request_id ||
+      "",
+    ).trim(),
+    verifiedName: String(sourceOutput?.name || "").trim(),
+    verifiedDob: String(sourceOutput?.dob || birthDate).trim(),
+    dlStatus: String(sourceOutput?.dl_status || "").trim(),
+    issuingRtoName: String(sourceOutput?.issuing_rto_name || "").trim(),
+    relativeName: String(sourceOutput?.relatives_name || "").trim(),
+    verificationResponse: providerResponse,
+  };
+
+  driver.documents = {
+    ...(driver.documents || {}),
+    [documentKey]: updatedDocument,
+  };
+
+  driver.markModified("documents");
+  await driver.save();
+
+  res.json({
+    success: true,
+    data: {
+      document: updatedDocument,
+      documents: driver.documents || {},
+      verification: providerResponse,
+    },
+  });
+};
+
+export const verifyCurrentDriverPanDocument = async (req, res) => {
+  const documentKey = String(req.params.documentKey || "").trim();
+
+  if (!documentKey) {
+    throw new ApiError(400, "Document key is required");
+  }
+
+  const driver = await Driver.findById(req.auth.sub);
+
+  if (!driver) {
+    throw new ApiError(404, "Driver not found");
+  }
+
+  const existingDocument = driver.documents?.[documentKey] || {};
+  const panNumber = String(
+    existingDocument.identifyNumber ||
+    existingDocument.identify_number ||
+    existingDocument.documentNumber ||
+    existingDocument.document_number ||
+    req.body?.panNumber ||
+    req.body?.pan_no ||
+    "",
+  ).trim().toUpperCase();
+
+  const providerResponse = await verifyPanWithRecharge({
+    panNumber,
+    partnerRequestId: buildDriverPanVerificationRequestId(driver),
+  });
+
+  const cardData = providerResponse?.cardData || {};
+  const verificationSucceeded = Number(providerResponse?.status || 0) === 1 || String(providerResponse?.status || "") === "1";
+  const verificationMessage = String(providerResponse?.msg || "").trim();
+
+  const updatedDocument = {
+    ...(typeof existingDocument === "object" ? existingDocument : {}),
+    key: documentKey,
+    identifyNumber: panNumber,
+    identify_number: panNumber,
+    documentNumber: panNumber,
+    document_number: panNumber,
+    verificationStatus: verificationSucceeded ? "verified" : "failed",
+    reviewStatus: verificationSucceeded ? "verified" : "failed",
+    status: verificationSucceeded ? "verified" : "failed",
+    verifiedAt: new Date().toISOString(),
+    reviewedAt: new Date().toISOString(),
+    verificationMessage,
+    comment: verificationSucceeded ? "" : verificationMessage,
+    remarks: verificationSucceeded ? "" : verificationMessage,
+    reason: verificationSucceeded ? "" : verificationMessage,
+    verificationReferenceId: String(
+      providerResponse?.orderid ||
+      providerResponse?.optransid ||
+      cardData?.reference_id ||
+      "",
+    ).trim(),
+    panType: String(cardData?.type || "").trim(),
+    verifiedName: String(cardData?.registered_name || "").trim(),
+    fatherName: String(cardData?.father_name || "").trim(),
+    panValid: String(cardData?.valid || "").trim(),
+    verificationResponse: providerResponse,
+  };
+
+  driver.documents = {
+    ...(driver.documents || {}),
+    [documentKey]: updatedDocument,
+  };
+
+  driver.markModified("documents");
+  await driver.save();
+
+  res.json({
+    success: true,
+    data: {
+      document: updatedDocument,
+      documents: driver.documents || {},
+      verification: providerResponse,
+    },
+  });
+};
+
+export const verifyCurrentDriverGstinDocument = async (req, res) => {
+  const documentKey = String(req.params.documentKey || "").trim();
+
+  if (!documentKey) {
+    throw new ApiError(400, "Document key is required");
+  }
+
+  const driver = await Driver.findById(req.auth.sub);
+
+  if (!driver) {
+    throw new ApiError(404, "Driver not found");
+  }
+
+  const existingDocument = driver.documents?.[documentKey] || {};
+  const gstin = String(
+    existingDocument.identifyNumber ||
+    existingDocument.identify_number ||
+    existingDocument.documentNumber ||
+    existingDocument.document_number ||
+    req.body?.gstin ||
+    req.body?.GSTIN ||
+    "",
+  ).trim().toUpperCase();
+
+  const providerResponse = await verifyGstinWithRecharge({
+    gstin,
+    partnerRequestId: buildDriverGstinVerificationRequestId(driver),
+  });
+
+  const result = providerResponse?.cardData?.result || {};
+  const taxpayerDetails = result?.taxpayerDetails || {};
+  const verificationSucceeded = Number(providerResponse?.status || 0) === 1 || String(providerResponse?.status || "") === "1";
+  const verificationMessage = String(providerResponse?.msg || "").trim();
+
+  const updatedDocument = {
+    ...(typeof existingDocument === "object" ? existingDocument : {}),
+    key: documentKey,
+    identifyNumber: gstin,
+    identify_number: gstin,
+    documentNumber: gstin,
+    document_number: gstin,
+    verificationStatus: verificationSucceeded ? "verified" : "failed",
+    reviewStatus: verificationSucceeded ? "verified" : "failed",
+    status: verificationSucceeded ? "verified" : "failed",
+    verifiedAt: new Date().toISOString(),
+    reviewedAt: new Date().toISOString(),
+    verificationMessage,
+    comment: verificationSucceeded ? "" : verificationMessage,
+    remarks: verificationSucceeded ? "" : verificationMessage,
+    reason: verificationSucceeded ? "" : verificationMessage,
+    verificationReferenceId: String(
+      providerResponse?.orderid ||
+      providerResponse?.optransid ||
+      providerResponse?.cardData?.request_id ||
+      "",
+    ).trim(),
+    verifiedName: String(taxpayerDetails?.lgnm || taxpayerDetails?.tradeNam || "").trim(),
+    gstStatus: String(taxpayerDetails?.sts || "").trim(),
+    gstType: String(taxpayerDetails?.dty || "").trim(),
+    gstConstitution: String(taxpayerDetails?.ctb || "").trim(),
+    verificationResponse: providerResponse,
+  };
+
+  driver.documents = {
+    ...(driver.documents || {}),
+    [documentKey]: updatedDocument,
+  };
+
+  driver.markModified("documents");
+  await driver.save();
+
+  res.json({
+    success: true,
+    data: {
+      document: updatedDocument,
+      documents: driver.documents || {},
+      verification: providerResponse,
+    },
+  });
+};
+
+export const verifyCurrentDriverRcDocument = async (req, res) => {
+  const documentKey = String(req.params.documentKey || "").trim();
+
+  if (!documentKey) {
+    throw new ApiError(400, "Document key is required");
+  }
+
+  const driver = await Driver.findById(req.auth.sub);
+
+  if (!driver) {
+    throw new ApiError(404, "Driver not found");
+  }
+
+  const existingDocument = driver.documents?.[documentKey] || {};
+  const rcNumber = String(
+    existingDocument.identifyNumber ||
+    existingDocument.identify_number ||
+    existingDocument.documentNumber ||
+    existingDocument.document_number ||
+    req.body?.rcNumber ||
+    req.body?.rc_no ||
+    "",
+  ).trim().toUpperCase();
+
+  const providerResponse = await verifyRcWithRecharge({
+    rcNumber,
+    partnerRequestId: buildDriverRcVerificationRequestId(driver),
+  });
+
+  const result = providerResponse?.cardData?.result || {};
+  const verificationSucceeded = Number(providerResponse?.status || 0) === 1 || String(providerResponse?.status || "") === "1";
+  const verificationMessage = String(providerResponse?.msg || "").trim();
+
+  const updatedDocument = {
+    ...(typeof existingDocument === "object" ? existingDocument : {}),
+    key: documentKey,
+    identifyNumber: rcNumber,
+    identify_number: rcNumber,
+    documentNumber: rcNumber,
+    document_number: rcNumber,
+    verificationStatus: verificationSucceeded ? "verified" : "failed",
+    reviewStatus: verificationSucceeded ? "verified" : "failed",
+    status: verificationSucceeded ? "verified" : "failed",
+    verifiedAt: new Date().toISOString(),
+    reviewedAt: new Date().toISOString(),
+    verificationMessage,
+    comment: verificationSucceeded ? "" : verificationMessage,
+    remarks: verificationSucceeded ? "" : verificationMessage,
+    reason: verificationSucceeded ? "" : verificationMessage,
+    verificationReferenceId: String(
+      providerResponse?.orderid ||
+      providerResponse?.optransid ||
+      providerResponse?.cardData?.request_id ||
+      "",
+    ).trim(),
+    verifiedName: String(result?.owner_name || "").trim(),
+    rcStatus: String(result?.status || "").trim(),
+    vehicleModel: String(result?.model || "").trim(),
+    vehicleManufacturer: String(result?.vehicle_manufacturer_name || "").trim(),
+    vehicleRegistrationDate: String(result?.reg_date || "").trim(),
+    vehicleInsuranceUpto: String(result?.vehicle_insurance_upto || "").trim(),
+    verificationResponse: providerResponse,
+  };
+
+  driver.documents = {
+    ...(driver.documents || {}),
+    [documentKey]: updatedDocument,
+  };
+
+  driver.markModified("documents");
+  await driver.save();
+
+  res.json({
+    success: true,
+    data: {
+      document: updatedDocument,
+      documents: driver.documents || {},
+      verification: providerResponse,
+    },
+  });
+};
+
 export const requestDriverAccountDeletion = async (req, res) => {
   const driverId = req.auth?.sub;
   const reason = String(req.body?.reason || "").trim();
@@ -3465,14 +4038,6 @@ export const updateCurrentDriverDocument = async (req, res) => {
     throw new ApiError(400, "Document key is required");
   }
 
-  const previewUrl = String(
-    document.previewUrl || document.secureUrl || document.url || "",
-  ).trim();
-
-  if (!previewUrl) {
-    throw new ApiError(400, "Uploaded document image URL is required");
-  }
-
   const driver = await Driver.findById(req.auth.sub);
 
   if (!driver) {
@@ -3480,6 +4045,14 @@ export const updateCurrentDriverDocument = async (req, res) => {
   }
 
   const existingDocument = driver.documents?.[documentKey] || {};
+  const previewUrl = String(
+    document.previewUrl || document.secureUrl || document.url || existingDocument.previewUrl || existingDocument.secureUrl || existingDocument.url || "",
+  ).trim();
+
+  if (!previewUrl) {
+    throw new ApiError(400, "Uploaded document image URL is required");
+  }
+
   const existingStatus = String(
     existingDocument.status ||
     existingDocument.verificationStatus ||
@@ -3500,14 +4073,63 @@ export const updateCurrentDriverDocument = async (req, res) => {
     secureUrl: String(document.secureUrl || previewUrl).trim(),
     imageUrl: previewUrl,
     images: [previewUrl],
-    status: "pending",
-    verificationStatus: "pending",
-    reviewStatus: "pending",
-    comment: "",
-    remarks: "",
-    reason: "",
-    admin_comment: "",
-    rejection_reason: "",
+    identifyNumber: String(
+      document.identifyNumber ||
+      document.identify_number ||
+      document.documentNumber ||
+      document.document_number ||
+      existingDocument.identifyNumber ||
+      existingDocument.identify_number ||
+      existingDocument.documentNumber ||
+      existingDocument.document_number ||
+      "",
+    ).trim().toUpperCase(),
+    identify_number: String(
+      document.identifyNumber ||
+      document.identify_number ||
+      document.documentNumber ||
+      document.document_number ||
+      existingDocument.identifyNumber ||
+      existingDocument.identify_number ||
+      existingDocument.documentNumber ||
+      existingDocument.document_number ||
+      "",
+    ).trim().toUpperCase(),
+    documentNumber: String(
+      document.identifyNumber ||
+      document.identify_number ||
+      document.documentNumber ||
+      document.document_number ||
+      existingDocument.identifyNumber ||
+      existingDocument.identify_number ||
+      existingDocument.documentNumber ||
+      existingDocument.document_number ||
+      "",
+    ).trim().toUpperCase(),
+    document_number: String(
+      document.identifyNumber ||
+      document.identify_number ||
+      document.documentNumber ||
+      document.document_number ||
+      existingDocument.identifyNumber ||
+      existingDocument.identify_number ||
+      existingDocument.documentNumber ||
+      existingDocument.document_number ||
+      "",
+    ).trim().toUpperCase(),
+    birthDate: String(document.birthDate || document.birth_date || existingDocument.birthDate || existingDocument.birth_date || "").trim(),
+    birth_date: String(document.birthDate || document.birth_date || existingDocument.birthDate || existingDocument.birth_date || "").trim(),
+    expiryDate: String(document.expiryDate || document.expiry_date || existingDocument.expiryDate || existingDocument.expiry_date || "").trim(),
+    expiry_date: String(document.expiryDate || document.expiry_date || existingDocument.expiryDate || existingDocument.expiry_date || "").trim(),
+    expiresAt: String(document.expiryDate || document.expiry_date || existingDocument.expiryDate || existingDocument.expiry_date || "").trim(),
+    status: document.status ? String(document.status).trim() : "pending",
+    verificationStatus: document.verificationStatus ? String(document.verificationStatus).trim() : "pending",
+    reviewStatus: document.reviewStatus ? String(document.reviewStatus).trim() : "pending",
+    comment: document.comment !== undefined ? String(document.comment || "").trim() : "",
+    remarks: document.remarks !== undefined ? String(document.remarks || "").trim() : "",
+    reason: document.reason !== undefined ? String(document.reason || "").trim() : "",
+    admin_comment: document.admin_comment !== undefined ? String(document.admin_comment || "").trim() : "",
+    rejection_reason: document.rejection_reason !== undefined ? String(document.rejection_reason || "").trim() : "",
     reviewedAt: null,
     reverificationRequestedAt: new Date().toISOString(),
   };

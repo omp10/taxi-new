@@ -16,6 +16,7 @@ const initialDocumentForm = {
   image_type: '',
   has_identify_number: '',
   identify_number_key: '',
+  verification_type: 'none',
   is_editable: false,
   is_required: false,
   active: true,
@@ -54,6 +55,45 @@ const imageTypeOptions = [
   { value: 'front', label: 'Front Only' },
   { value: 'back', label: 'Back Only' },
 ];
+
+const verificationTypeOptions = [
+  { value: 'none', label: 'General Document (No API)' },
+  { value: 'driving_license', label: 'Driving License Verification' },
+  { value: 'pan', label: 'PAN Verification' },
+  { value: 'gstin', label: 'GSTIN Verification' },
+  { value: 'rc', label: 'RC Verification' },
+];
+
+const documentVerificationPresets = {
+  driving_license: {
+    name: 'Driving License',
+    image_type: 'image',
+    has_expiry_date: '1',
+    has_identify_number: '1',
+    identify_number_key: 'license_no',
+  },
+  pan: {
+    name: 'PAN Card',
+    image_type: 'image',
+    has_expiry_date: '0',
+    has_identify_number: '1',
+    identify_number_key: 'pan_no',
+  },
+  gstin: {
+    name: 'GST Certificate',
+    image_type: 'image',
+    has_expiry_date: '0',
+    has_identify_number: '1',
+    identify_number_key: 'gstin',
+  },
+  rc: {
+    name: 'Vehicle RC',
+    image_type: 'image',
+    has_expiry_date: '0',
+    has_identify_number: '1',
+    identify_number_key: 'rc_no',
+  },
+};
 
 const vehicleFieldOptions = [
   { value: 'locationId', label: 'Operating City', field_type: 'location_select', field_group: 'common', placeholder: '', account_type: 'both' },
@@ -108,6 +148,7 @@ const fromDocumentResponse = (payload = {}) => ({
   has_identify_number:
     payload.has_identify_number === true ? '1' : payload.has_identify_number === false ? '0' : '',
   identify_number_key: payload.identify_number_key || '',
+  verification_type: payload.verification_type || 'none',
   is_editable: normalizeBooleanLike(payload.is_editable, false),
   is_required: normalizeBooleanLike(payload.is_required, false),
   active: normalizeBooleanLike(payload.active, true),
@@ -183,6 +224,12 @@ const DriverDocumentForm = () => {
       ...current,
       [key]: value,
       ...(key === 'has_identify_number' && value !== '1' ? { identify_number_key: '' } : {}),
+      ...(key === 'verification_type'
+        ? {
+            ...(value !== 'none' ? documentVerificationPresets[value] || {} : {}),
+            verification_type: value,
+          }
+        : {}),
     }));
   };
 
@@ -274,6 +321,7 @@ const DriverDocumentForm = () => {
           has_identify_number: documentForm.has_identify_number === '1',
           identify_number_key:
             documentForm.has_identify_number === '1' ? String(documentForm.identify_number_key || '').trim() : '',
+          verification_type: documentForm.verification_type || 'none',
           is_editable: Boolean(documentForm.is_editable),
           is_required: Boolean(documentForm.is_required),
           active: Boolean(documentForm.active),
@@ -584,6 +632,21 @@ const DriverDocumentForm = () => {
             </div>
 
             <div>
+              <label className={labelClass}>Verification Mapping</label>
+              <select
+                value={documentForm.verification_type}
+                onChange={(event) => handleDocumentChange('verification_type', event.target.value)}
+                className={inputClass}
+              >
+                {verificationTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
               <label className={labelClass}>Has Expiry Date *</label>
               <select
                 value={documentForm.has_expiry_date}
@@ -678,6 +741,9 @@ const DriverDocumentForm = () => {
               </div>
               <p className="mt-3 text-xs text-gray-500">
                 When required is enabled, this document must be completed in the signup flow before registration can finish.
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                Pick a verification mapping for documents like Driving License, PAN, GST, or RC so the driver app shows the matching RechargeKit verify action automatically.
               </p>
             </div>
           </div>

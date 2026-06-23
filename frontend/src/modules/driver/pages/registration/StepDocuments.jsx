@@ -57,6 +57,23 @@ const getDocumentIdentifyValue = (doc) =>
 const getDocumentExpiryValue = (doc) =>
   String(doc?.expiryDate || doc?.expiry_date || doc?.expiry || doc?.expiresAt || '').trim();
 
+const getDocumentBirthDateValue = (doc) =>
+  String(doc?.birthDate || doc?.birth_date || '').trim();
+
+const getDocumentRequestNumberValue = (doc) =>
+  String(doc?.requestNumber || doc?.request_no || '').trim();
+
+const normalizeVerificationType = (value) => {
+  const normalized = String(value || 'none').trim().toLowerCase();
+  return ['driving_license', 'pan', 'gstin', 'rc'].includes(normalized) ? normalized : 'none';
+};
+
+const templateNeedsBirthDate = (template = {}) =>
+  normalizeVerificationType(template?.verification_type) === 'driving_license';
+
+const templateSupportsRequestNumber = (template = {}) =>
+  normalizeVerificationType(template?.verification_type) === 'driving_license';
+
 const buildTemplateMetaState = (templates = [], documents = {}) =>
   Object.fromEntries(
     templates.map((template) => {
@@ -70,6 +87,8 @@ const buildTemplateMetaState = (templates = [], documents = {}) =>
         {
           identifyNumber: getDocumentIdentifyValue(firstDocument),
           expiryDate: getDocumentExpiryValue(firstDocument),
+          birthDate: getDocumentBirthDateValue(firstDocument),
+          requestNumber: getDocumentRequestNumberValue(firstDocument),
         },
       ];
     }),
@@ -399,9 +418,16 @@ const StepDocuments = () => {
   }, [routePrefix, docs, documentMeta]);
 
   const applyTemplateMetaToDocuments = (templateId, templateDocuments, metaOverride = null) => {
-    const meta = metaOverride || documentMeta[templateId] || { identifyNumber: '', expiryDate: '' };
+    const meta = metaOverride || documentMeta[templateId] || {
+      identifyNumber: '',
+      expiryDate: '',
+      birthDate: '',
+      requestNumber: '',
+    };
     const identifyNumber = String(meta.identifyNumber || '').trim();
     const expiryDate = String(meta.expiryDate || '').trim();
+    const birthDate = String(meta.birthDate || '').trim();
+    const requestNumber = String(meta.requestNumber || '').trim();
 
     return Object.fromEntries(
       Object.entries(templateDocuments).map(([docKey, docValue]) => [
@@ -415,6 +441,10 @@ const StepDocuments = () => {
               document_number: identifyNumber,
               expiryDate,
               expiry_date: expiryDate,
+              birthDate,
+              birth_date: birthDate,
+              requestNumber,
+              request_no: requestNumber,
             }
           : docValue,
       ]),
@@ -485,6 +515,8 @@ const StepDocuments = () => {
             mimeType: effectiveMimeType,
             identifyNumber: documentMeta[templateId]?.identifyNumber || '',
             expiryDate: documentMeta[templateId]?.expiryDate || '',
+            birthDate: documentMeta[templateId]?.birthDate || '',
+            requestNumber: documentMeta[templateId]?.requestNumber || '',
           },
         },
       });
@@ -642,7 +674,8 @@ const StepDocuments = () => {
       const meta = documentMeta[template.id] || {};
       const hasIdentifyNumber = !template.has_identify_number || Boolean(String(meta.identifyNumber || '').trim());
       const hasExpiryDate = !template.has_expiry_date || Boolean(String(meta.expiryDate || '').trim());
-      return hasIdentifyNumber && hasExpiryDate;
+      const hasBirthDate = !templateNeedsBirthDate(template) || /^\d{4}-\d{2}-\d{2}$/.test(String(meta.birthDate || '').trim());
+      return hasIdentifyNumber && hasExpiryDate && hasBirthDate;
     }) &&
     !uploading &&
     !templatesLoading;
@@ -680,6 +713,29 @@ const StepDocuments = () => {
         );
       }
 
+      const submittedDocumentSummary = uploadFields.map((field) => ({
+        key: field.key,
+        label: field.label || field.templateName || field.key,
+        status: submittedDocumentsWithMeta[field.key] ? 'pending' : 'missing',
+        reason: '',
+        verificationType: field.verificationType || 'none',
+        providerStatus:
+          submittedDocumentsWithMeta[field.key] && String(field.verificationType || 'none') !== 'none'
+            ? 'queued'
+            : 'not_started',
+        providerMessage:
+          submittedDocumentsWithMeta[field.key] && String(field.verificationType || 'none') !== 'none'
+            ? 'Verification will start shortly'
+            : '',
+        previewUrl: String(
+          submittedDocumentsWithMeta[field.key]?.previewUrl ||
+          submittedDocumentsWithMeta[field.key]?.secureUrl ||
+          submittedDocumentsWithMeta[field.key]?.url ||
+          '',
+        ).trim(),
+        reverificationPending: false,
+      }));
+
       const completeResponse = await completeDriverOnboarding({
         registrationId: session.registrationId,
         phone: session.phone,
@@ -700,8 +756,14 @@ const StepDocuments = () => {
         completedRegistration: payload || null,
       });
       clearDriverRegistrationSession();
-
-      navigate(`${routePrefix}/registration-status`);
+      navigate(`${routePrefix}/registration-status`, {
+        replace: true,
+        state: {
+          role: normalizedRole,
+          completedRegistration: payload || null,
+          submittedDocumentSummary,
+        },
+      });
     } catch (submitError) {
       setError(submitError?.message || 'Unable to complete registration');
     } finally {
@@ -884,6 +946,16 @@ const StepDocuments = () => {
                 </div>
 
                 {(template.has_identify_number || template.has_expiry_date) ? (
+                  <div className="space-y-2 pt-2">
+                    {normalizeVerificationType(template.verification_type) !== 'none' ? (
+                      <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                        Verification details required for API check
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {(template.has_identify_number || template.has_expiry_date || templateNeedsBirthDate(template) || templateSupportsRequestNumber(template)) ? (
                   <div className="space-y-4 pt-2">
                     {template.has_identify_number ? (
                       <div className="group rounded-[1.8rem] border-2 transition-all p-4 border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white focus-within:shadow-xl focus-within:shadow-slate-900/5">
@@ -903,6 +975,40 @@ const StepDocuments = () => {
                                     className="w-full border-none bg-transparent p-0 text-lg font-black text-slate-900 outline-none focus:ring-0 placeholder:text-slate-200"
                                 />
                             </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {templateNeedsBirthDate(template) ? (
+                      <div
+                        onClick={(e) => {
+                          const input = e.currentTarget.querySelector('input[type="date"]');
+                          if (input) {
+                            try {
+                              input.showPicker();
+                            } catch {
+                              input.focus();
+                              input.click();
+                            }
+                          }
+                        }}
+                        className="group cursor-pointer rounded-[1.8rem] border-2 transition-all p-4 border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white focus-within:shadow-xl focus-within:shadow-slate-900/5"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm group-focus-within:bg-slate-900 group-focus-within:text-white transition-all">
+                            <AlertCircle size={20} strokeWidth={2.5} />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 opacity-70">
+                              Birth Date
+                            </label>
+                            <input
+                              type="date"
+                              value={documentMeta[template.id]?.birthDate || ''}
+                              onChange={(event) => handleMetaChange(template.id, 'birthDate', event.target.value)}
+                              className="w-full border-none bg-transparent p-0 text-lg font-black text-slate-900 outline-none focus:ring-0"
+                            />
+                          </div>
                         </div>
                       </div>
                     ) : null}
@@ -937,6 +1043,28 @@ const StepDocuments = () => {
                                     className="w-full border-none bg-transparent p-0 text-lg font-black text-slate-900 outline-none focus:ring-0"
                                 />
                             </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {templateSupportsRequestNumber(template) ? (
+                      <div className="group rounded-[1.8rem] border-2 transition-all p-4 border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white focus-within:shadow-xl focus-within:shadow-slate-900/5">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm group-focus-within:bg-slate-900 group-focus-within:text-white transition-all">
+                            <FileText size={20} strokeWidth={2.5} />
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <label className="block text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 opacity-70">
+                              Request Number
+                            </label>
+                            <input
+                              type="text"
+                              value={documentMeta[template.id]?.requestNumber || ''}
+                              onChange={(event) => handleMetaChange(template.id, 'requestNumber', event.target.value)}
+                              placeholder="Optional, auto-generated later if left blank"
+                              className="w-full border-none bg-transparent p-0 text-lg font-black text-slate-900 outline-none focus:ring-0 placeholder:text-slate-200"
+                            />
+                          </div>
                         </div>
                       </div>
                     ) : null}

@@ -243,6 +243,7 @@ export const AdminFirebaseSettings = lazy(() => import('../modules/admin/pages/s
 export const AdminMapSettings = lazy(() => import('../modules/admin/pages/settings/MapSettings'));
 export const AdminMailSettings = lazy(() => import('../modules/admin/pages/settings/MailSettings'));
 export const AdminNotificationChannels = lazy(() => import('../modules/admin/pages/settings/NotificationChannels'));
+export const AdminRechargeApiSettings = lazy(() => import('../modules/admin/pages/settings/RechargeApiSettings'));
 export const AdminDispatcherAddons = lazy(() => import('../modules/admin/pages/settings/DispatcherAddons'));
 export const AdminCountryManagement = lazy(() => import('../modules/admin/pages/masters/CountryManagement'));
 export const AdminSupportTicketTitle = lazy(() => import('../modules/admin/pages/support/TicketTitle'));

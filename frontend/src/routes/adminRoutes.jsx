@@ -82,6 +82,7 @@ import {
   AdminOwnerPasswordUpdate,
   AdminOwnerReport,
   AdminPaymentGateways,
+  AdminRechargeApiSettings,
   AdminPaymentMethods,
   AdminPendingBusDrivers,
   AdminPendingDrivers,
@@ -400,6 +401,7 @@ const adminRoutes = (
       <Route path="settings/third-party/map-apis" element={<AdminMapSettings />} />
       <Route path="settings/third-party/mail" element={<AdminMailSettings />} />
       <Route path="settings/third-party/notification-channel" element={<AdminNotificationChannels />} />
+      <Route path="settings/third-party/recharge-api" element={<AdminRechargeApiSettings />} />
       <Route path="settings/addons/dispatcher" element={<AdminDispatcherAddons />} />
       <Route path="settings/addons/*" element={<AdminReportPlaceholder title="Addons Management" />} />
       <Route path="settings/cms/*" element={<AdminReportPlaceholder title="CMS Management" />} />

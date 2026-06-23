@@ -42,6 +42,7 @@ const GlobalDocuments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [pageSize, setPageSize] = useState(10);
   const [error, setError] = useState('');
+  const [togglingIds, setTogglingIds] = useState({});
 
   const loadItems = async () => {
     setIsLoading(true);
@@ -83,13 +84,39 @@ const GlobalDocuments = () => {
   };
 
   const handleToggleStatus = async (item) => {
+    const itemId = item.id || item._id;
+
+    setTogglingIds((current) => ({
+      ...current,
+      [itemId]: true,
+    }));
+
     try {
-      await adminService.updateDriverNeededDocument(item.id || item._id, {
+      await adminService.updateDriverNeededDocument(itemId, {
         active: !item.active,
       });
-      await loadItems();
+      setDocuments((current) =>
+        current.map((entry) =>
+          (entry.id || entry._id) === itemId
+            ? { ...entry, active: !item.active, status: !item.active ? 'active' : 'inactive' }
+            : entry,
+        ),
+      );
+      setVehicleFields((current) =>
+        current.map((entry) =>
+          (entry.id || entry._id) === itemId
+            ? { ...entry, active: !item.active, status: !item.active ? 'active' : 'inactive' }
+            : entry,
+        ),
+      );
     } catch (err) {
       alert(err?.message || 'Unable to update status');
+    } finally {
+      setTogglingIds((current) => {
+        const next = { ...current };
+        delete next[itemId];
+        return next;
+      });
     }
   };
 
@@ -129,19 +156,39 @@ const GlobalDocuments = () => {
     })
     .slice(0, Number(pageSize));
 
-  const renderStatusButton = (item) => (
-    <button
-      type="button"
-      onClick={() => handleToggleStatus(item)}
-      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
-        item.active
-          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-      }`}
-    >
-      {item.active ? 'Active' : 'Inactive'}
-    </button>
-  );
+  const renderStatusToggle = (item) => {
+    const itemId = item.id || item._id;
+    const isToggling = Boolean(togglingIds[itemId]);
+
+    return (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={item.active ? 'true' : 'false'}
+        aria-label={`Set ${item.name || item.field_key || 'item'} ${item.active ? 'inactive' : 'active'}`}
+        disabled={isToggling}
+        onClick={() => handleToggleStatus(item)}
+        className={`inline-flex items-center gap-3 rounded-full px-2 py-1 text-xs font-semibold transition ${
+          isToggling ? 'cursor-wait opacity-60' : 'cursor-pointer'
+        }`}
+      >
+        <span
+          className={`relative h-6 w-11 rounded-full transition-colors ${
+            item.active ? 'bg-emerald-500' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+              item.active ? 'translate-x-5' : 'translate-x-0.5'
+            }`}
+          />
+        </span>
+        <span className={item.active ? 'text-emerald-700' : 'text-gray-600'}>
+          {isToggling ? 'Saving...' : item.active ? 'Active' : 'Inactive'}
+        </span>
+      </button>
+    );
+  };
 
   const renderActions = (item, templateType) => (
     <div className="flex items-center justify-end gap-2">
@@ -237,7 +284,9 @@ const GlobalDocuments = () => {
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-6 py-4">
             <h2 className="text-base font-semibold text-gray-900">Driver Needed Documents</h2>
-            <p className="mt-1 text-sm text-gray-500">Templates used by the documents step of onboarding.</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Templates used by the documents step of onboarding. Turn a document inactive here to hide it from `/taxi/driver/step-documents`.
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full">
@@ -265,7 +314,7 @@ const GlobalDocuments = () => {
                       <td className="px-6 py-4 text-sm font-semibold text-gray-900">{item.name}</td>
                       <td className="px-6 py-4 text-sm text-gray-700">{typeLabel(item.account_type)}</td>
                       <td className="px-6 py-4 text-sm text-gray-700">{typeLabel(item.image_type)}</td>
-                      <td className="px-6 py-4">{renderStatusButton(item)}</td>
+                      <td className="px-6 py-4">{renderStatusToggle(item)}</td>
                       <td className="px-6 py-4">{renderActions(item, 'document')}</td>
                     </tr>
                   ))
@@ -323,7 +372,7 @@ const GlobalDocuments = () => {
                           {item.is_required ? 'Required' : 'Optional'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">{renderStatusButton(item)}</td>
+                      <td className="px-6 py-4">{renderStatusToggle(item)}</td>
                       <td className="px-6 py-4">{renderActions(item, 'vehicle_field')}</td>
                     </tr>
                   ))

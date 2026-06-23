@@ -467,6 +467,10 @@ export const getDriverRideHistory = (params = {}) =>
 
 export const updateDriverProfile = (payload) =>
   api.patch("/drivers/me", payload, withDriverAuth());
+export const verifyDriverBankDetails = (mode = "penny_less") =>
+  api.post("/drivers/me/bank-details/verify", { mode }, withDriverAuth());
+export const verifyDriverUpiDetails = (mode = "basic") =>
+  api.post("/drivers/me/upi/verify", { mode }, withDriverAuth());
 export const deleteCurrentDriverAccount = (reason = "") =>
   api.delete("/drivers/me", withDriverAuth({ data: { reason } }));
 export const requestDriverAccountDeletion = (reason) =>
@@ -652,6 +656,34 @@ export const updateDriverDocument = (documentKey, document) =>
   api.patch(
     `/drivers/documents/${encodeURIComponent(documentKey)}`,
     { document },
+    withDriverAuth(),
+  );
+
+export const verifyDriverLicenseDocument = (documentKey, payload = {}) =>
+  api.post(
+    `/drivers/documents/${encodeURIComponent(documentKey)}/verify-license`,
+    payload,
+    withDriverAuth(),
+  );
+
+export const verifyDriverPanDocument = (documentKey, payload = {}) =>
+  api.post(
+    `/drivers/documents/${encodeURIComponent(documentKey)}/verify-pan`,
+    payload,
+    withDriverAuth(),
+  );
+
+export const verifyDriverGstinDocument = (documentKey, payload = {}) =>
+  api.post(
+    `/drivers/documents/${encodeURIComponent(documentKey)}/verify-gst`,
+    payload,
+    withDriverAuth(),
+  );
+
+export const verifyDriverRcDocument = (documentKey, payload = {}) =>
+  api.post(
+    `/drivers/documents/${encodeURIComponent(documentKey)}/verify-rc`,
+    payload,
     withDriverAuth(),
   );
 
