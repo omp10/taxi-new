@@ -203,6 +203,9 @@ export const saveDriverReferral = (payload) =>
 export const saveDriverVehicle = (payload) =>
   api.patch("/drivers/onboarding/vehicle", payload);
 
+export const verifyDriverVehicleRc = (payload) =>
+  api.post("/drivers/onboarding/vehicle/verify-rc", payload);
+
 export const saveDriverDocuments = (payload) =>
   api.patch("/drivers/onboarding/documents", payload);
 
@@ -254,6 +257,7 @@ export const buildDriverOnboardingSessionSnapshot = (payload = {}, fallbackSessi
       : (fallbackSession.serviceCategories || []),
     locationId: vehicle.locationId || fallbackSession.locationId || "",
     vehicleTypeId: vehicle.vehicleTypeId || fallbackSession.vehicleTypeId || "",
+    rcNumber: vehicle.rcNumber || fallbackSession.rcNumber || "",
     make: vehicle.make || fallbackSession.make || "",
     model: vehicle.model || fallbackSession.model || "",
     year: vehicle.year || fallbackSession.year || "",

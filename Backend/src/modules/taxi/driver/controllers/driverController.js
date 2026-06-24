@@ -85,6 +85,7 @@ import {
   saveDriverPersonalDetails,
   saveDriverReferral,
   saveDriverVehicle,
+  verifyDriverVehicleRc,
   startDriverOnboarding,
   verifyDriverOtp,
 } from "../services/onboardingService.js";
@@ -9706,6 +9707,11 @@ export const saveOnboardingReferral = async (req, res) => {
 
 export const saveOnboardingVehicle = async (req, res) => {
   const result = await saveDriverVehicle(req.body);
+  res.json({ success: true, data: result });
+};
+
+export const verifyOnboardingVehicleRc = async (req, res) => {
+  const result = await verifyDriverVehicleRc(req.body);
   res.json({ success: true, data: result });
 };
 

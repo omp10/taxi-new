@@ -16,6 +16,7 @@ import {
     saveDriverVehicle,
     getDriverVehicleTypes,
     getDriverVehicleFieldTemplates,
+    verifyDriverVehicleRc,
 } from '../../services/registrationService';
 
 const VEHICLE_NUMBER_PATTERNS = [
@@ -27,6 +28,44 @@ const normalizeVehicleNumber = (value = '') => String(value).replace(/[^A-Za-z0-
 const normalizePostalCode = (value = '') => String(value).replace(/\D/g, '').slice(0, 6);
 const isValidIndianVehicleNumber = (value = '') =>
     VEHICLE_NUMBER_PATTERNS.some((pattern) => pattern.test(value));
+const normalizeLabel = (value = '') => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const findAutofillCustomFieldKey = (fields, aliases = []) => {
+    const normalizedAliases = aliases.map(normalizeLabel).filter(Boolean);
+    return (
+        fields.find((field) => {
+            const fieldKey = normalizeLabel(field?.field_key);
+            const fieldName = normalizeLabel(field?.name);
+            return normalizedAliases.some((alias) => fieldKey === alias || fieldName.includes(alias) || alias.includes(fieldName));
+        })?.field_key || ''
+    );
+};
+const applyAutofillCustomField = (currentValue, fieldConfig, nextValue) => {
+    if (!fieldConfig || !nextValue) return currentValue;
+
+    const fieldType = String(fieldConfig.field_type || 'text').trim().toLowerCase();
+    const normalizedValue = String(nextValue || '').trim();
+
+    if (!normalizedValue) return currentValue;
+
+    if (fieldType === 'multi_select') {
+        const values = Array.isArray(currentValue) ? [...currentValue] : [];
+        return values.includes(normalizedValue) ? values : [...values, normalizedValue];
+    }
+
+    return normalizedValue;
+};
+const hasRcAutofillData = (formData = {}, customFields = {}, customKeys = []) =>
+    Boolean(
+        String(formData.make || '').trim()
+        || String(formData.model || '').trim()
+        || String(formData.year || '').trim()
+        || String(formData.number || '').trim()
+        || String(formData.color || '').trim()
+        || customKeys.some((key) => {
+            const value = customFields?.[key];
+            return Array.isArray(value) ? value.length > 0 : Boolean(String(value || '').trim());
+        }),
+    );
 const matchesVehicleFieldAccountType = (accountType, isOwner) => {
     const rawAccountType = String(accountType || '').trim().toLowerCase();
     const normalizedAccountType = rawAccountType || 'individual';
@@ -96,6 +135,7 @@ const defaultVehicleFieldConfigs = [
     { field_key: 'locationId', name: 'Operating City', account_type: 'both', is_required: true, active: true, sort_order: 10, placeholder: '', help_text: '' },
     { field_key: 'serviceCategories', name: 'Service Category', account_type: 'individual', is_required: true, active: true, sort_order: 20, placeholder: '', help_text: '' },
     { field_key: 'vehicleTypeId', name: 'Vehicle Type', account_type: 'individual', is_required: true, active: true, sort_order: 30, placeholder: '', help_text: 'Select the type of vehicle you drive.' },
+    { field_key: 'rcNumber', name: 'RC / Permit Number', account_type: 'individual', is_required: true, active: true, sort_order: 35, placeholder: 'MP09AB1234', help_text: 'Enter RC number to fetch vehicle details automatically.' },
     { field_key: 'make', name: 'Brand / Make', account_type: 'individual', is_required: true, active: true, sort_order: 40, placeholder: 'e.g. Maruti Suzuki', help_text: '' },
     { field_key: 'model', name: 'Model', account_type: 'individual', is_required: true, active: true, sort_order: 50, placeholder: 'Swift, Bolt', help_text: '' },
     { field_key: 'year', name: 'Year', account_type: 'individual', is_required: true, active: true, sort_order: 60, placeholder: String(getCurrentVehicleYear()), help_text: '' },
@@ -135,6 +175,7 @@ const StepVehicle = () => {
         serviceCategories: normalizeServiceCategories(session.serviceCategories || session.vehicleSession?.vehicle?.serviceCategories || [], session.registerFor || 'taxi'),
         locationId: session.locationId || '',
         vehicleTypeId: session.vehicleTypeId || '',
+        rcNumber: session.rcNumber || session.vehicleSession?.vehicle?.rcNumber || '',
         make: session.make || '',
         model: session.model || '',
         year: session.year || '',
@@ -152,6 +193,10 @@ const StepVehicle = () => {
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
     const [submitAttempted, setSubmitAttempted] = useState(false);
+    const [rcVerificationLoading, setRcVerificationLoading] = useState(false);
+    const [rcVerificationMessage, setRcVerificationMessage] = useState('');
+    const [rcVerificationError, setRcVerificationError] = useState('');
+    const lastVerifiedRcRef = useRef('');
 
     useEffect(() => {
         saveDriverRegistrationSession({
@@ -277,6 +322,7 @@ const StepVehicle = () => {
         'locationId',
         'serviceCategories',
         'vehicleTypeId',
+        'rcNumber',
         'make',
         'model',
         'year',
@@ -326,6 +372,120 @@ const StepVehicle = () => {
     const visibleCustomVehicleFields = customVehicleFields.filter((item) =>
         matchesVehicleFieldAccountType(item?.account_type, isOwner),
     );
+    const fuelTypeFieldKey = findAutofillCustomFieldKey(visibleCustomVehicleFields, ['fuel type', 'fuel', 'vehicle fuel']);
+    const seatCapacityFieldKey = findAutofillCustomFieldKey(visibleCustomVehicleFields, ['seat capacity', 'seating capacity', 'seats']);
+    const manufacturerFieldKey = findAutofillCustomFieldKey(visibleCustomVehicleFields, ['manufacturer', 'vehicle manufacturer', 'brand']);
+    const rcAutofillCustomFieldKeys = [fuelTypeFieldKey, seatCapacityFieldKey, manufacturerFieldKey].filter(Boolean);
+    const showRcAutofilledFields = isOwner || hasRcAutofillData(formData, formData.customFields, rcAutofillCustomFieldKeys);
+
+    const handleVerifyRc = async () => {
+        if (isOwner || rcVerificationLoading) {
+            return;
+        }
+
+        const normalizedRcNumber = normalizeVehicleNumber(formData.rcNumber);
+
+        if (!normalizedRcNumber) {
+            setFieldErrors((previous) => ({ ...previous, rcNumber: 'RC number is required' }));
+            setRcVerificationError('');
+            setRcVerificationMessage('');
+            return;
+        }
+
+        if (!isValidIndianVehicleNumber(normalizedRcNumber)) {
+            setFieldErrors((previous) => ({ ...previous, rcNumber: 'Invalid RC format - e.g. DL1RT1234 or MH12AB1234' }));
+            setRcVerificationError('');
+            setRcVerificationMessage('');
+            return;
+        }
+
+        if (!registrationId || !phone) {
+            setRcVerificationError('Registration session expired. Please restart onboarding.');
+            setRcVerificationMessage('');
+            return;
+        }
+
+        clearFieldError('rcNumber');
+        setRcVerificationError('');
+        setRcVerificationMessage('');
+
+        try {
+            setRcVerificationLoading(true);
+            const response = await verifyDriverVehicleRc({
+                registrationId,
+                phone: session.phone,
+                rcNumber: normalizedRcNumber,
+            });
+
+            const vehicle = response?.data?.data?.vehicle || response?.data?.vehicle || {};
+            const verificationMessage = response?.data?.data?.message || response?.data?.message || 'RC verified successfully';
+
+            setFormData((previous) => {
+                const nextCustomFields = {
+                    ...(previous.customFields || {}),
+                };
+
+                if (fuelTypeFieldKey) {
+                    nextCustomFields[fuelTypeFieldKey] = applyAutofillCustomField(
+                        previous.customFields?.[fuelTypeFieldKey],
+                        fieldConfigMap[fuelTypeFieldKey],
+                        vehicle.fuelType,
+                    );
+                }
+
+                if (seatCapacityFieldKey) {
+                    nextCustomFields[seatCapacityFieldKey] = applyAutofillCustomField(
+                        previous.customFields?.[seatCapacityFieldKey],
+                        fieldConfigMap[seatCapacityFieldKey],
+                        vehicle.seatCapacity,
+                    );
+                }
+
+                if (manufacturerFieldKey) {
+                    nextCustomFields[manufacturerFieldKey] = applyAutofillCustomField(
+                        previous.customFields?.[manufacturerFieldKey],
+                        fieldConfigMap[manufacturerFieldKey],
+                        vehicle.make,
+                    );
+                }
+
+                return {
+                    ...previous,
+                    rcNumber: normalizedRcNumber,
+                    make: vehicle.make || previous.make,
+                    model: vehicle.model || previous.model,
+                    year: vehicle.year || previous.year,
+                    number: vehicle.number || previous.number,
+                    color: vehicle.color || previous.color,
+                    customFields: nextCustomFields,
+                };
+            });
+
+            setFieldErrors((previous) => {
+                const next = { ...previous };
+                delete next.rcNumber;
+                delete next.make;
+                delete next.model;
+                delete next.year;
+                delete next.number;
+                delete next.color;
+                if (fuelTypeFieldKey) delete next[`custom_${fuelTypeFieldKey}`];
+                if (seatCapacityFieldKey) delete next[`custom_${seatCapacityFieldKey}`];
+                if (manufacturerFieldKey) delete next[`custom_${manufacturerFieldKey}`];
+                return next;
+            });
+
+            lastVerifiedRcRef.current = normalizedRcNumber;
+            setRcVerificationMessage(verificationMessage);
+            setRcVerificationError('');
+        } catch (err) {
+            lastVerifiedRcRef.current = '';
+            setRcVerificationMessage('');
+            setRcVerificationError(err?.message || 'Unable to verify RC number');
+        } finally {
+            setRcVerificationLoading(false);
+        }
+    };
 
     const validateFields = () => {
         const errors = {};
@@ -356,6 +516,17 @@ const StepVehicle = () => {
         } else {
             if (isFieldRequired('vehicleTypeId', true) && !isFilled(formData.vehicleTypeId)) {
                 errors.vehicleTypeId = 'Please select a vehicle type';
+            }
+            if (!isFilled(formData.rcNumber)) {
+                errors.rcNumber = 'RC number is required';
+            } else {
+                const normalizedRcNumber = normalizeVehicleNumber(formData.rcNumber);
+                if (!isValidIndianVehicleNumber(normalizedRcNumber)) {
+                    errors.rcNumber = 'Invalid RC format - e.g. DL1RT1234 or MH12AB1234';
+                }
+            }
+            if (!showRcAutofilledFields) {
+                errors.rcNumber = errors.rcNumber || 'Verify the RC number to fetch vehicle details';
             }
             if (isFieldRequired('make', true) && !isFilled(formData.make)) {
                 errors.make = 'Brand / make is required';
@@ -413,6 +584,7 @@ const StepVehicle = () => {
         setFieldErrors({});
 
         try {
+            const normalizedRcNumber = normalizeVehicleNumber(formData.rcNumber);
             const normalizedNumber = normalizeVehicleNumber(formData.number);
             const selectedServiceLocation = locations.find(
                 (item) => String(item._id || item.id) === String(formData.locationId)
@@ -427,6 +599,7 @@ const StepVehicle = () => {
                 locationName: selectedServiceLocation?.name || selectedServiceLocation?.service_location_name || '',
                 serviceLocation: selectedServiceLocation || null,
                 vehicleTypeId: formData.vehicleTypeId,
+                rcNumber: normalizedRcNumber,
                 make: formData.make,
                 model: formData.model,
                 year: formData.year,
@@ -443,6 +616,7 @@ const StepVehicle = () => {
             saveDriverRegistrationSession({
                 ...session,
                 ...formData,
+                rcNumber: normalizedRcNumber,
                 number: normalizedNumber,
                 vehicleSession: response?.data?.session || null,
             });
@@ -464,6 +638,7 @@ const StepVehicle = () => {
 
     const locationField = getFieldConfig('locationId', { name: 'Operating City' });
     const vehicleTypeField = getFieldConfig('vehicleTypeId', { name: 'Vehicle Type', help_text: 'Select the type of vehicle you drive.' });
+    const rcNumberField = getFieldConfig('rcNumber', { name: 'RC / Permit Number', placeholder: 'MP09AB1234', help_text: 'Enter RC number to fetch vehicle details automatically.' });
     const companyNameField = getFieldConfig('companyName', { name: 'Company Name', placeholder: 'Legal Company Name' });
     const companyAddressField = getFieldConfig('companyAddress', { name: 'Company Address', placeholder: 'Business Address' });
     const cityField = getFieldConfig('city', { name: 'City', placeholder: 'City' });
@@ -475,7 +650,7 @@ const StepVehicle = () => {
     const numberField = getFieldConfig('number', { name: 'Plate Number', placeholder: 'DL1RT1234' });
     const colorField = getFieldConfig('color', { name: 'Exterior Color', placeholder: 'e.g. White, Black' });
     const ownerHasVisibleFields = ['companyName', 'companyAddress', 'city', 'postalCode', 'taxNumber'].some((key) => shouldShowField(key, true));
-    const driverHasTechnicalFields = ['make', 'model', 'year', 'number', 'color'].some((key) => shouldShowField(key, true));
+    const driverHasTechnicalFields = ['rcNumber', 'make', 'model', 'year', 'number', 'color'].some((key) => shouldShowField(key, true));
     const canContinue = isOwner
         ? [
             !isFieldRequired('locationId', true) || isFilled(formData.locationId),
@@ -488,6 +663,7 @@ const StepVehicle = () => {
         : [
             !isFieldRequired('locationId', true) || isFilled(formData.locationId),
             !isFieldRequired('vehicleTypeId', true) || isFilled(formData.vehicleTypeId),
+            isFilled(formData.rcNumber),
             !isFieldRequired('make', true) || isFilled(formData.make),
             !isFieldRequired('model', true) || isFilled(formData.model),
             !isFieldRequired('year', true) || isFilled(formData.year),
@@ -802,7 +978,51 @@ const StepVehicle = () => {
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
-                                        {shouldShowField('make', true) ? (
+                                        {shouldShowField('rcNumber', true) ? (
+                                        <div className={`group rounded-[1.8rem] border-2 transition-all p-4 focus-within:shadow-xl focus-within:shadow-slate-900/5 col-span-2 ${
+                                            fieldErrors.rcNumber ? 'border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white'
+                                        }`}>
+                                            <label className={`block text-[10px] font-black uppercase tracking-[0.15em] opacity-70 px-1 mb-1 ${ fieldErrors.rcNumber ? 'text-rose-400' : 'text-slate-400' }`}>{rcNumberField.name}</label>
+                                            <input
+                                                value={formData.rcNumber}
+                                                onChange={(e) => {
+                                                    clearFieldError('rcNumber');
+                                                    lastVerifiedRcRef.current = '';
+                                                    setRcVerificationMessage('');
+                                                    setRcVerificationError('');
+                                                    setFormData((p) => ({ ...p, rcNumber: normalizeVehicleNumber(e.target.value) }));
+                                                }}
+                                                placeholder={rcNumberField.placeholder || 'MP09AB1234'}
+                                                className="w-full bg-transparent border-none p-0 text-[16px] font-semibold text-slate-950 focus:outline-none focus:ring-0 placeholder:text-slate-300 uppercase tracking-widest"
+                                            />
+                                            <div className="mt-3 flex justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={handleVerifyRc}
+                                                    disabled={rcVerificationLoading}
+                                                    className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.15em] transition-colors ${
+                                                        rcVerificationLoading
+                                                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                                                            : 'bg-slate-900 text-white hover:bg-black'
+                                                    }`}
+                                                >
+                                                    {rcVerificationLoading ? 'Verifying...' : 'Verify RC'}
+                                                </button>
+                                            </div>
+                                            {fieldErrors.rcNumber ? <p className="text-[10px] font-bold text-rose-500 pt-1 px-1">{fieldErrors.rcNumber}</p> : null}
+                                            {!fieldErrors.rcNumber && !isOwner && rcVerificationLoading ? (
+                                                <p className="text-[10px] font-bold text-sky-600 pt-1 px-1">Verifying RC and fetching vehicle details...</p>
+                                            ) : null}
+                                            {!fieldErrors.rcNumber && !isOwner && !rcVerificationLoading && rcVerificationMessage ? (
+                                                <p className="text-[10px] font-bold text-emerald-600 pt-1 px-1">{rcVerificationMessage}</p>
+                                            ) : null}
+                                            {!fieldErrors.rcNumber && !isOwner && !rcVerificationLoading && rcVerificationError ? (
+                                                <p className="text-[10px] font-bold text-amber-600 pt-1 px-1">{rcVerificationError}</p>
+                                            ) : null}
+                                        </div>
+                                        ) : null}
+
+                                        {showRcAutofilledFields && shouldShowField('make', true) ? (
                                         <div className={`group rounded-[1.8rem] border-2 transition-all p-4 focus-within:shadow-xl focus-within:shadow-slate-900/5 col-span-2 ${
                                             fieldErrors.make ? 'border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white'
                                         }`}>
@@ -817,7 +1037,7 @@ const StepVehicle = () => {
                                         </div>
                                         ) : null}
 
-                                        {shouldShowField('model', true) ? (
+                                        {showRcAutofilledFields && shouldShowField('model', true) ? (
                                         <div className={`group rounded-[1.8rem] border-2 transition-all p-4 focus-within:shadow-xl focus-within:shadow-slate-900/5 ${
                                             fieldErrors.model ? 'border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white'
                                         }`}>
@@ -832,7 +1052,7 @@ const StepVehicle = () => {
                                         </div>
                                         ) : null}
 
-                                        {shouldShowField('year', true) ? (
+                                        {showRcAutofilledFields && shouldShowField('year', true) ? (
                                         <div className={`group rounded-[1.8rem] border-2 transition-all p-4 focus-within:shadow-xl focus-within:shadow-slate-900/5 ${
                                             fieldErrors.year ? 'border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white'
                                         }`}>
@@ -849,7 +1069,7 @@ const StepVehicle = () => {
                                         </div>
                                         ) : null}
 
-                                        {shouldShowField('number', true) ? (
+                                        {showRcAutofilledFields && shouldShowField('number', true) ? (
                                         <div className={`group rounded-[1.8rem] border-2 transition-all p-4 focus-within:shadow-xl focus-within:shadow-slate-900/5 col-span-2 ${
                                             fieldErrors.number ? 'border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white'
                                         }`}>
@@ -864,7 +1084,7 @@ const StepVehicle = () => {
                                         </div>
                                         ) : null}
 
-                                        {shouldShowField('color', true) ? (
+                                        {showRcAutofilledFields && shouldShowField('color', true) ? (
                                         <div className={`group rounded-[1.8rem] border-2 transition-all p-4 focus-within:shadow-xl focus-within:shadow-slate-900/5 col-span-2 ${
                                             fieldErrors.color ? 'border-rose-200 bg-rose-50/30' : 'border-slate-50 bg-slate-50 focus-within:border-slate-900/10 focus-within:bg-white'
                                         }`}>
@@ -882,7 +1102,7 @@ const StepVehicle = () => {
                                 </div>
                                 ) : null}
 
-                                {visibleCustomVehicleFields.length > 0 ? (
+                                {visibleCustomVehicleFields.length > 0 && showRcAutofilledFields ? (
                                     <div className="space-y-5 pt-1">
                                         <div className="space-y-1 px-1">
                                             <h2 className="text-lg font-black tracking-tight text-slate-900">Additional Details</h2>

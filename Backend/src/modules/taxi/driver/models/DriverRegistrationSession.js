@@ -63,6 +63,7 @@ const driverRegistrationSessionSchema = new mongoose.Schema(
       locationId: { type: String, default: '' },
       locationName: { type: String, default: '' },
       vehicleTypeId: { type: String, default: '' },
+      rcNumber: { type: String, default: '' },
       make: { type: String, default: '' },
       model: { type: String, default: '' },
       year: { type: String, default: '' },

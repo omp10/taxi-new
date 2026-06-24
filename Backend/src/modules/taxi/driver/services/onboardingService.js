@@ -31,6 +31,7 @@ import {
 } from './loginOtpService.js';
 import { findZoneByPickup } from './locationService.js';
 import { sendOtpSms } from '../../services/smsService.js';
+import { verifyRcWithRecharge } from '../../services/rechargeVerificationService.js';
 import { WalletTransaction } from '../models/WalletTransaction.js';
 import { BusDriver } from '../models/BusDriver.js';
 import { applyDriverWalletAdjustment } from './walletService.js';
@@ -125,6 +126,27 @@ const getPrimaryRegisterFor = (serviceCategories = [], fallback = 'taxi') => {
   return String(fallback || 'taxi').trim().toLowerCase() || 'taxi';
 };
 const normalizeReferralCode = (value = '') => String(value || '').trim().toUpperCase();
+const buildOnboardingRcVerificationRequestId = (session) =>
+  `RC-${String(session?.registrationId || '').replace(/[^A-Za-z0-9]/g, '').slice(-8) || 'ONBOARD'}-${Date.now()}`;
+
+const parseRcManufacturingYear = (value = '') => {
+  const normalized = String(value || '').trim();
+  const yearMatch = normalized.match(/\b(19|20)\d{2}\b/);
+  return yearMatch ? yearMatch[0] : '';
+};
+
+const normalizeRcVerificationResult = (result = {}, rcNumber = '') => ({
+  make: String(result?.vehicle_manufacturer_name || '').trim(),
+  model: String(result?.model || '').trim(),
+  year: parseRcManufacturingYear(result?.vehicle_manufacturing_month_year),
+  number: String(result?.reg_no || rcNumber || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase(),
+  color: String(result?.vehicle_colour || '').trim(),
+  fuelType: String(result?.type || '').trim(),
+  seatCapacity: String(result?.vehicle_seat_capacity || '').trim(),
+  ownerName: String(result?.owner_name || '').trim(),
+  manufacturingMonthYear: String(result?.vehicle_manufacturing_month_year || '').trim(),
+});
+
 const generateDriverReferralCode = (driver) => {
   const idPart = String(driver?._id || '')
     .slice(-6)
@@ -967,6 +989,7 @@ export const saveDriverVehicle = async ({
   locationName,
   serviceLocation,
   vehicleTypeId,
+  rcNumber,
   make,
   model,
   year,
@@ -997,6 +1020,7 @@ export const saveDriverVehicle = async ({
   const isOwner = String(session.role || '').toLowerCase() === 'owner';
   const requiredFieldMap = await getRequiredVehicleFieldMap(session.role);
   const normalizedYear = String(year || '').trim();
+  const normalizedRcNumber = String(rcNumber || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   const normalizedNumber = String(number || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   const normalizedPostalCode = String(postalCode || '').replace(/\D/g, '');
   const normalizedCustomFields = Object.entries(customFields || {}).reduce((acc, [key, value]) => {
@@ -1040,6 +1064,9 @@ export const saveDriverVehicle = async ({
 
     requireField('serviceCategories', normalizedServiceCategories, 'Service category');
     requireField('vehicleTypeId', vehicleTypeId, 'Vehicle type');
+    if (!normalizedRcNumber) {
+      throw new ApiError(400, 'RC number is required');
+    }
     requireField('make', make, 'Brand / Make');
     requireField('model', model, 'Model');
     requireField('year', normalizedYear, 'Year');
@@ -1105,6 +1132,7 @@ export const saveDriverVehicle = async ({
         }
       : null,
     vehicleTypeId: String(vehicleTypeId || '').trim(),
+    rcNumber: normalizedRcNumber,
     make: String(make || '').trim(),
     model: String(model || '').trim(),
     year: normalizedYear,
@@ -1620,6 +1648,7 @@ export const completeDriverOnboarding = async ({ registrationId, phone, document
         locationId: session.vehicle.locationId,
         locationName: session.vehicle.locationName,
         vehicleTypeId: session.vehicle.vehicleTypeId,
+        rcNumber: session.vehicle.rcNumber,
         make: session.vehicle.make,
         model: session.vehicle.model,
         year: session.vehicle.year,
@@ -1667,5 +1696,54 @@ export const getDriverOnboardingSession = async ({ registrationId, phone }) => {
     documents: session.documents,
     roleDetails: session.roleDetails,
     completedAt: session.completedAt,
+  };
+};
+
+export const verifyDriverVehicleRc = async ({
+  registrationId,
+  phone,
+  rcNumber,
+}) => {
+  const session = await getSession(registrationId, phone);
+
+  if (!session.personal?.fullName) {
+    throw new ApiError(400, 'Save personal details before RC verification');
+  }
+
+  const normalizedRcNumber = String(rcNumber || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+  if (!normalizedRcNumber) {
+    throw new ApiError(400, 'RC number is required');
+  }
+
+  if (!VEHICLE_NUMBER_PATTERNS.some((pattern) => pattern.test(normalizedRcNumber))) {
+    throw new ApiError(400, 'RC number must be in a valid format, for example DL1AB2345 or MH12AB1234');
+  }
+
+  const providerResponse = await verifyRcWithRecharge({
+    rcNumber: normalizedRcNumber,
+    partnerRequestId: buildOnboardingRcVerificationRequestId(session),
+  });
+
+  const cardData = providerResponse?.cardData || {};
+  const result = cardData?.result || providerResponse?.result || providerResponse?.data || {};
+  const verificationSucceeded =
+    Number(providerResponse?.status || 0) === 1
+    || String(providerResponse?.status || '').trim() === '1';
+
+  if (!verificationSucceeded) {
+    throw new ApiError(
+      400,
+      String(providerResponse?.msg || providerResponse?.message || 'RC verification failed'),
+    );
+  }
+
+  const vehicle = normalizeRcVerificationResult(result, normalizedRcNumber);
+
+  return {
+    message: String(providerResponse?.msg || 'RC verified successfully').trim(),
+    rcNumber: normalizedRcNumber,
+    vehicle,
+    verification: providerResponse,
   };
 };
