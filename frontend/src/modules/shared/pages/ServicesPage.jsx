@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ContainerScroll } from '@/components/ui/container-scroll-animation';
 import {
   ArrowLeft,
   Car,
@@ -27,10 +28,10 @@ const ServicesPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 border-b border-gray-200 shadow-sm">
+      <div className="fixed top-0 left-0 right-0 bg-yellow-50/90 backdrop-blur-md z-50 border-b border-yellow-100/80 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-all">
+            <button onClick={() => navigate(-1)} className="p-2 hover:bg-yellow-100/50 rounded-full transition-all">
               <ArrowLeft size={20} />
             </button>
             <span className="font-bold text-sm uppercase tracking-widest text-gray-800">Our Services</span>
@@ -113,6 +114,29 @@ const ServicesPage = () => {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Scroll Animation Showcase */}
+      <div className="bg-[#1a1a1a] text-white py-16">
+        <ContainerScroll
+          titleComponent={
+            <div className="mb-8">
+              <h2 className="text-3xl font-extrabold text-white tracking-tight leading-none text-center">
+                Uncompromising service, <br />
+                <span className="text-4xl md:text-5xl font-black text-[#FFB300] mt-2 block leading-none">
+                  Tailored to you
+                </span>
+              </h2>
+            </div>
+          }
+        >
+          <img
+            src="https://ui.aceternity.com/_next/image?url=%2Flinear.webp&w=3840&q=75"
+            alt="Rydon premium services dashboard"
+            className="mx-auto rounded-2xl object-cover h-full object-left-top w-full"
+            draggable={false}
+          />
+        </ContainerScroll>
       </div>
     </div>
   );

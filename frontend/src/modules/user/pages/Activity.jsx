@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BottomNavbar from '../components/BottomNavbar';
+import { useUserTheme } from '../../../shared/context/UserThemeContext';
+
 import ActivityHeader from '../components/activity/ActivityHeader';
 import ActivityTabs from '../components/activity/ActivityTabs';
 import ActivityCard from '../components/activity/ActivityCard';
@@ -259,8 +261,13 @@ const Activity = () => {
   };
   const helperText = useMemo(() => getHelperText(activeTab), [activeTab]);
 
+  const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col bg-slate-50 font-sans pb-28">
+    <div className={`mx-auto flex min-h-screen max-w-lg flex-col font-sans pb-28 transition-colors duration-300 ${
+      isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'
+    }`}>
       <ActivityHeader helperText={helperText} onBack={() => navigate(-1)} />
       <ActivityTabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} />
 
@@ -286,6 +293,8 @@ const Activity = () => {
           </div>
         )}
       </div>
+
+
 
       <BottomNavbar />
     </div>

@@ -3,6 +3,40 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSettings, normalizeAssetUrl } from '../../../shared/context/SettingsContext';
 
+import taxiFallback from '../../../assets/user-app/taxi.png';
+import bikeFallback from '../../../assets/user-app/bike.png';
+import deliveryFallback from '../../../assets/user-app/delivery.png';
+import parcelFallback from '../../../assets/user-app/parcel.png';
+import truckFallback from '../../../assets/user-app/truck.png';
+import busFallback from '../../../assets/user-app/bus.png';
+import fallbackCar from '../../../assets/user-app/fallback-car.png';
+
+const getFallbackIcon = (module = {}) => {
+  const name = String(module?.name || '').toLowerCase();
+  const serviceType = String(module?.service_type || '').toLowerCase();
+  const transportType = String(module?.transport_type || '').toLowerCase();
+
+  if (serviceType === 'bus' || name.includes('bus')) {
+    return busFallback;
+  }
+  if (serviceType === 'rental' || name.includes('bike') || name.includes('rental')) {
+    return bikeFallback;
+  }
+  if (transportType === 'delivery' || serviceType === 'delivery' || name.includes('delivery')) {
+    return deliveryFallback;
+  }
+  if (name.includes('parcel')) {
+    return parcelFallback;
+  }
+  if (name.includes('truck')) {
+    return truckFallback;
+  }
+  if (name.includes('taxi') || name.includes('cab') || name.includes('ride') || name.includes('normal')) {
+    return taxiFallback;
+  }
+  return fallbackCar;
+};
+
 const normalizeModuleText = (value = '') => String(value || '').trim().toLowerCase();
 
 const isDeliveryModule = (module = {}) => {
@@ -168,14 +202,38 @@ const ServiceGrid = () => {
           return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { sensitivity: 'base' });
         })
         .map((m, idx) => {
+          const apiIcon = normalizeAssetUrl(m.mobile_menu_icon);
           return {
-            icon: normalizeAssetUrl(m.mobile_menu_icon),
+            icon: apiIcon && apiIcon.trim() !== '' ? apiIcon : getFallbackIcon(m),
             label: m.name,
             description: m.short_description,
             path: getPath(m),
             accentClass: getAccent(idx),
           };
         });
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.06,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 12 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 260,
+        damping: 22,
+      },
+    },
+  };
 
   const optionCount = loading ? '...' : services.length;
   const optionLabel = services.length === 1 ? 'option' : 'options';
@@ -200,15 +258,22 @@ const ServiceGrid = () => {
           </div>
         </div>
 
-        <div className="mt-4 grid auto-rows-fr grid-cols-3 gap-3 md:grid-cols-4">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          className="mt-4 grid auto-rows-fr grid-cols-3 gap-3 md:grid-cols-4"
+        >
           {loading ? (
              [...Array(4)].map((_, i) => <ServiceTile key={i} loading />)
           ) : (
             services.map((service, index) => (
-              <ServiceTile key={getServiceKey(service, index)} {...service} />
+              <motion.div key={getServiceKey(service, index)} variants={itemVariants}>
+                <ServiceTile {...service} />
+              </motion.div>
             ))
           )}
-        </div>
+        </motion.div>
       </Motion.section>
     </div>
   );

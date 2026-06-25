@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Search, Wallet } from 'lucide-react';
+import { MapPin, Search, Wallet, Sun, Moon } from 'lucide-react';
 import { DEFAULT_LOCATION_LABEL, getSavedLocationLabel, LOCATION_UPDATED_EVENT } from '../services/locationStore';
+import { useUserTheme } from '../../../shared/context/UserThemeContext';
 
 const fallingCoins = [
   { id: 1, left: '24%', delay: 0 },
@@ -16,6 +17,7 @@ const HeaderGreeting = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
+  const { theme, toggleTheme } = useUserTheme();
   
   const { settings, loading, hasBootstrapSettings } = useSettings();
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
@@ -90,45 +92,60 @@ const HeaderGreeting = () => {
           </motion.button>
         </div>
 
-        <button
-          onClick={() => navigate('/wallet')}
-          className="relative w-12 h-12 overflow-hidden rounded-full border border-white/80 bg-white/95 flex items-center justify-center shadow-[0_12px_30px_rgba(15,23,42,0.08)] shrink-0 active:scale-95 transition-transform"
-        >
-          <motion.div
-            className="absolute inset-x-2 top-1 h-3 rounded-full bg-gradient-to-b from-amber-200/50 to-transparent"
-            animate={{ opacity: [0.15, 0.35, 0.15] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-          />
-
-          {fallingCoins.map((coin) => (
-            <motion.span
-              key={coin.id}
-              aria-hidden="true"
-              className="absolute top-1 block h-1.5 w-1.5 rounded-full bg-gradient-to-br from-amber-300 to-yellow-500 shadow-[0_1px_4px_rgba(245,158,11,0.45)]"
-              style={{ left: coin.left }}
-              animate={{
-                y: [0, 10, 16],
-                opacity: [0, 1, 1, 0],
-                scale: [0.85, 1, 0.92],
-              }}
-              transition={{
-                duration: 1.8,
-                delay: coin.delay,
-                repeat: Infinity,
-                repeatDelay: 0.8,
-                ease: 'easeIn',
-              }}
-            />
-          ))}
-
-          <motion.div
-            className="relative z-10"
-            animate={{ y: [0, -1, 0], rotate: [0, -2, 0] }}
-            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+        <div className="flex items-center gap-2 shrink-0">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={toggleTheme}
+            className="w-12 h-12 rounded-full border border-white/80 bg-white/95 flex items-center justify-center shadow-[0_12px_30px_rgba(15,23,42,0.08)] shrink-0 active:scale-95 transition-transform"
           >
-            <Wallet size={20} className="text-gray-900" strokeWidth={2.5} />
-          </motion.div>
-        </button>
+            {theme === 'dark' ? (
+              <Sun size={20} className="text-white fill-white" />
+            ) : (
+              <Moon size={20} className="text-slate-900 fill-slate-900" />
+            )}
+          </motion.button>
+
+          <button
+            onClick={() => navigate(`${routePrefix}/wallet`)}
+            className="relative w-12 h-12 overflow-hidden rounded-full border border-white/80 bg-white/95 flex items-center justify-center shadow-[0_12px_30px_rgba(15,23,42,0.08)] shrink-0 active:scale-95 transition-transform"
+          >
+            <motion.div
+              className="absolute inset-x-2 top-1 h-3 rounded-full bg-gradient-to-b from-slate-200/50 to-transparent"
+              animate={{ opacity: [0.15, 0.35, 0.15] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+
+            {fallingCoins.map((coin) => (
+              <motion.span
+                key={coin.id}
+                aria-hidden="true"
+                className="absolute top-1 block h-1.5 w-1.5 rounded-full bg-gradient-to-br from-slate-300 to-slate-500 shadow-[0_1px_4px_rgba(148,163,184,0.45)]"
+                style={{ left: coin.left }}
+                animate={{
+                  y: [0, 10, 16],
+                  opacity: [0, 1, 1, 0],
+                  scale: [0.85, 1, 0.92],
+                }}
+                transition={{
+                  duration: 1.8,
+                  delay: coin.delay,
+                  repeat: Infinity,
+                  repeatDelay: 0.8,
+                  ease: 'easeIn',
+                }}
+              />
+            ))}
+
+            <motion.div
+              className="relative z-10"
+              animate={{ y: [0, -1, 0], rotate: [0, -2, 0] }}
+              transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <Wallet size={20} className="text-gray-900" strokeWidth={2.5} />
+            </motion.div>
+          </button>
+        </div>
       </div>
 
       <motion.div
@@ -140,14 +157,14 @@ const HeaderGreeting = () => {
         <motion.button
           type="button"
           whileTap={{ scale: 0.99 }}
-          onClick={() => navigate(`${routePrefix}/ride/select-category`)}
+          onClick={() => navigate(`${routePrefix}/ride/select-location`)}
           className="flex w-full items-center gap-2 rounded-[18px] border border-white/80 bg-white/92 px-3.5 py-3 text-left shadow-[0_12px_26px_rgba(15,23,42,0.06)]"
         >
           <Search size={16} className="text-slate-500" strokeWidth={2.5} />
           <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-500">
             Search destination
           </span>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-600">Go</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-900">Go</span>
         </motion.button>
       </motion.div>
     </div>

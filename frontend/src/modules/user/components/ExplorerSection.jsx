@@ -1,35 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useUserTheme } from '../../../shared/context/UserThemeContext';
 import indiaGateImg from '@/assets/india_gate_real.png';
 import jaipurImg from '@/assets/jaipur.avif';
 import tajMahalImg from '@/assets/taj mahal.jpeg';
 
 const ExplorerSection = () => {
   const navigate = useNavigate();
-  const cities = [
-    {
-      title: 'Airport Indore',
-      image: '/Gemini_Generated_Image_ob17d1ob17d1ob17.png',
-      label: '10 min',
-      code: 'IDR',
-      drop: 'Devi Ahilya Bai Holkar Airport, Indore',
-    },
-    {
-      title: 'Indore Junction',
-      image: '/train_station_illustration.png',
-      label: '5 min',
-      code: 'JCT',
-      drop: 'Indore Junction Railway Station, Indore',
-    },
-    {
-      title: 'Rajwada',
-      image: '/Gemini_Generated_Image_17lko817lko817lk.png',
-      label: '15 min',
-      code: 'RAJ',
-      drop: 'Rajwada Palace, Indore',
-    },
-  ];
+  const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
 
   const indiaCities = [
     {
@@ -63,64 +44,102 @@ const ExplorerSection = () => {
     });
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.95, y: 15 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 260,
+        damping: 24,
+      },
+    },
+  };
+
   return (
     <div className="px-5 pb-8 flex flex-col gap-10">
-      {/* Explore Indore Section */}
-      
-
-      {/* Explore India Section */}
       <div>
         <div className="mb-3 ml-1">
-          <h2 className="text-[19px] font-black text-gray-900 tracking-tight">Explore India</h2>
-          <p className="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">
+          <h2 className="text-[19px] font-black tracking-tight">Explore India</h2>
+          <p className="mt-1 text-[11px] font-black uppercase tracking-[0.18em] opacity-60">
             Top tourist destinations across the country
           </p>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-5 px-1">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-40px" }}
+          className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-5 px-1"
+        >
           {indiaCities.map((city, idx) => (
-            <button
+            <motion.button
               key={idx}
+              variants={cardVariants}
               type="button"
               onClick={() => handleExploreDestination(city)}
               className="flex-shrink-0 w-[214px] group text-left transition-all active:scale-[0.98] cursor-pointer"
             >
-              <div className="rounded-[20px] bg-white/92 border border-white/80 shadow-[0_18px_40px_rgba(15,23,42,0.07)] overflow-hidden h-[136px] transition-all relative">
+              <div className={`rounded-[20px] border overflow-hidden h-[136px] transition-all relative ${
+                isDark ? 'border-slate-800 bg-slate-900' : 'border-slate-200/40 bg-white'
+              }`}>
                 <img
                   src={city.image}
                   alt={city.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent"></div>
-                <div className="absolute top-4 right-4 bg-white/92 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm border border-white/60 z-10">
-                  <p className="text-[9px] font-black text-primary tracking-widest uppercase">{city.code}</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/45 to-transparent"></div>
+                <div className={`absolute top-4 right-4 backdrop-blur-md px-2.5 py-1 rounded-full shadow-sm border z-10 ${
+                  isDark ? 'bg-slate-900/90 border-slate-700' : 'bg-white/92 border-slate-200'
+                }`}>
+                  <p className="text-[9px] font-black text-yellow-500 tracking-widest uppercase">{city.code}</p>
                 </div>
               </div>
               <div className="mt-3 px-2">
-                <h4 className="text-[15px] font-black text-gray-900 leading-tight tracking-tight flex items-center justify-between">
+                <h4 className="text-[15px] font-black leading-tight tracking-tight flex items-center justify-between">
                   {city.title}
-                  <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                    isDark ? 'bg-slate-800 text-yellow-400 group-hover:bg-yellow-400 group-hover:text-slate-950' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-900 group-hover:text-white'
+                  }`}>
                     <ArrowRight size={14} strokeWidth={2.5} />
                   </div>
                 </h4>
-                <p className="text-[11px] text-gray-400 font-bold mt-1 tracking-tight">
+                <p className="text-[11px] opacity-60 font-bold mt-1 tracking-tight">
                   Located in {city.label}
                 </p>
               </div>
-            </button>
+            </motion.button>
           ))}
           
-          <button
+          <motion.button
+            variants={cardVariants}
             type="button"
             onClick={() => handleExploreDestination(indiaCities[0])}
-            className="flex-shrink-0 w-[128px] flex flex-col justify-center items-center gap-2 bg-white/75 border border-white/80 rounded-[18px] active:scale-95 transition-all text-slate-500 font-black h-[136px] self-start shadow-[0_14px_32px_rgba(15,23,42,0.05)]"
+            className={`flex-shrink-0 w-[128px] flex flex-col justify-center items-center gap-2 border rounded-[18px] active:scale-95 transition-all font-black h-[136px] self-start shadow-md ${
+              isDark ? 'bg-slate-900/80 border-slate-800 text-yellow-400' : 'bg-white/75 border-slate-200/60 text-slate-500'
+            }`}
           >
-            <div className="w-10 h-10 rounded-full bg-slate-50 border border-white/80 shadow-sm flex items-center justify-center">
-              <ArrowRight size={18} strokeWidth={2.5} className="text-slate-300" />
+            <div className={`w-10 h-10 rounded-full border shadow-sm flex items-center justify-center ${
+              isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
+            }`}>
+              <ArrowRight size={18} strokeWidth={2.5} className="text-yellow-500" />
             </div>
             <span className="text-[11px] uppercase tracking-[0.14em]">View All</span>
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </div>
     </div>
   );

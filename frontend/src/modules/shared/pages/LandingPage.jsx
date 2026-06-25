@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Phone, Mail, LogIn, Check, MapPin, Gift, Clock, Shield, ArrowRight, Menu, X 
+import {
+  Phone, Mail, LogIn, MapPin, Gift, Clock, Shield, ArrowRight, Menu, X
 } from 'lucide-react';
 import './LandingPage.css';
 import { useSettings } from '../../../shared/context/SettingsContext';
@@ -49,16 +49,11 @@ function LandingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Handle transparent to dark nav transition on scroll
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(window.scrollY > 50);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -90,13 +85,12 @@ function LandingPage() {
     return nameStr;
   };
 
-  // Framer Motion Animation Presets
   const fadeInUp = {
-    hidden: { opacity: 0, y: 40 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } 
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
     }
   };
 
@@ -104,31 +98,30 @@ function LandingPage() {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
   return (
     <div className="landing-page">
-      {/* Absolute Background Glowing Neon Lines */}
+      {/* Background Neon Vector Decorative Graphics */}
       <div className="neon-glow-line-container">
         <svg className="neon-glow-svg" viewBox="0 0 1440 3200" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-          {/* Static track */}
-          <path 
-            d="M 1200 -50 C 950 250, 450 350, 450 750 C 450 1150, 1150 1200, 1150 1600 C 1150 2000, 300 2150, 300 2550 C 300 2950, 1050 3000, 1050 3350" 
-            stroke="rgba(249, 211, 6, 0.08)" 
-            strokeWidth="2" 
+          <path
+            d="M 1200 -50 C 950 250, 450 350, 450 750 C 450 1150, 1150 1200, 1150 1600 C 1150 2000, 300 2150, 300 2550 C 300 2950, 1050 3000, 1050 3350"
+            stroke="rgba(249, 211, 6, 0.08)"
+            strokeWidth="2"
             strokeLinecap="round"
           />
-          {/* Flowing animated light path */}
-          <path 
+          <motion.path
             className="neon-glow-line-active"
-            d="M 1200 -50 C 950 250, 450 350, 450 750 C 450 1150, 1150 1200, 1150 1600 C 1150 2000, 300 2150, 300 2550 C 300 2950, 1050 3000, 1050 3350" 
-            stroke="#F9D306" 
-            strokeWidth="3.5" 
+            d="M 1200 -50 C 950 250, 450 350, 450 750 C 450 1150, 1150 1200, 1150 1600 C 1150 2000, 300 2150, 300 2550 C 300 2950, 1050 3000, 1050 3350"
+            stroke="#F9D306"
+            strokeWidth="3.5"
             strokeLinecap="round"
+            initial={{ strokeDasharray: "0 1000" }}
+            animate={{ strokeDasharray: ["0 1000", "1000 0", "0 1000"] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
         </svg>
       </div>
@@ -183,48 +176,23 @@ function LandingPage() {
           </div>
         </div>
 
-        {/* Mobile Navigation Dropdown */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.ul 
+            <motion.ul
               className="mobile-nav-menu"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <li>
-                <a href="#home" className="mobile-nav-link" onClick={handleRedirect('#home', 'home')}>
-                  HOME
-                </a>
-              </li>
-              <li>
-                <Link to="/about" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                  COMPANY
-                </Link>
-              </li>
-              <li>
-                <a href="#services" className="mobile-nav-link" onClick={handleRedirect('#services', 'services')}>
-                  SERVICES
-                </a>
-              </li>
-              <li>
-                <Link to="/faq" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                  FAQS
-                </Link>
-              </li>
-              <li>
-                <Link to="/blog" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                  BLOG
-                </Link>
-              </li>
+              <li><a href="#home" className="mobile-nav-link" onClick={handleRedirect('#home', 'home')}>HOME</a></li>
+              <li><Link to="/about" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>COMPANY</Link></li>
+              <li><a href="#services" className="mobile-nav-link" onClick={handleRedirect('#services', 'services')}>SERVICES</a></li>
+              <li><Link to="/faq" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>FAQS</Link></li>
+              <li><Link to="/blog" className="mobile-nav-link" onClick={() => setIsMobileMenuOpen(false)}>BLOG</Link></li>
               <li className="mobile-ctas">
-                <button className="btn-login-text" onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}>
-                  LOGIN
-                </button>
-                <button className="btn-book-now" onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}>
-                  BOOK NOW
-                </button>
+                <button className="btn-login-text" onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}>LOGIN</button>
+                <button className="btn-book-now" onClick={() => { setIsMobileMenuOpen(false); navigate('/login'); }}>BOOK NOW</button>
               </li>
             </motion.ul>
           )}
@@ -233,7 +201,7 @@ function LandingPage() {
 
       {/* Hero Section */}
       <section id="home" className="hero-section">
-        <motion.div 
+        <motion.div
           className="hero-left"
           initial="hidden"
           whileInView="visible"
@@ -244,7 +212,7 @@ function LandingPage() {
             <span className="badge-dot"></span>
             <span>TRAVEL SECURELY WITH US!</span>
           </div>
-          
+
           <h1 className="hero-title">
             Book your taxi<br />
             from <span className="italic-serif">anywhere</span><br />
@@ -267,19 +235,32 @@ function LandingPage() {
           </div>
         </motion.div>
 
-        {/* Hero Right Card (Car Mockup) */}
-        <motion.div 
-          className="hero-right"
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView="visible"
-          viewport={{ once: true }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        >
+        {/* Hero Right: 3D Unbound Parallax Drive-In Layer */}
+        <div className="hero-right">
           <div className="hero-car-card">
-            <img src={newHeroTaxiImg} alt="Rydon Taxi Model" className="hero-car-img" />
+            {/* Background Base Frame Card holds layout depth structure */}
           </div>
-        </motion.div>
+
+          <div className="viewport-car-track">
+            <motion.img
+              src={newHeroTaxiImg}
+              alt="Rydon Taxi Model"
+              className="hero-car-standalone-asset"
+              loading="eager"
+              initial={{ x: "120vw", scale: 0.95, opacity: 0 }}
+              animate={{ x: 0, scale: 1, opacity: 1 }}
+              transition={{
+                duration: 1.6,
+                ease: [0.16, 1, 0.3, 1],
+                delay: 0.1
+              }}
+              onAnimationComplete={() => {
+                document.getElementById('rydon-car-engine')?.classList.add('animate-engine-idle');
+              }}
+              id="rydon-car-engine"
+            />
+          </div>
+        </div>
       </section>
 
       {/* Services Section */}
@@ -287,14 +268,13 @@ function LandingPage() {
         <h2 className="section-title-serif">OUR SERVICES</h2>
         <div className="section-underline"></div>
 
-        <motion.div 
+        <motion.div
           className="services-grid"
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
         >
-          {/* Service Card 1 */}
           <motion.div className="service-card" variants={fadeInUp}>
             <div className="service-img-wrapper">
               <img src={rideImg} alt="City Taxi Service" />
@@ -303,7 +283,6 @@ function LandingPage() {
             <p>Comfortable and safe city rides to any destination you want to go with our professional drivers.</p>
           </motion.div>
 
-          {/* Service Card 2 */}
           <motion.div className="service-card" variants={fadeInUp}>
             <div className="service-img-wrapper">
               <img src={bikeImg} alt="Quick Bike Rides" />
@@ -312,7 +291,6 @@ function LandingPage() {
             <p>Beat the traffic and reach your destination faster with our quick and affordable bike taxi service.</p>
           </motion.div>
 
-          {/* Service Card 3 */}
           <motion.div className="service-card" variants={fadeInUp}>
             <div className="service-img-wrapper">
               <img src={parcelImg} alt="Secure Parcel Delivery" />
@@ -328,7 +306,7 @@ function LandingPage() {
         <h2 className="section-title-serif">SOME BENEFITS</h2>
         <div className="section-underline"></div>
 
-        <motion.div 
+        <motion.div
           className="benefits-grid"
           variants={staggerContainer}
           initial="hidden"
@@ -336,9 +314,7 @@ function LandingPage() {
           viewport={{ once: true, margin: "-100px" }}
         >
           <motion.div className="benefit-item" variants={fadeInUp}>
-            <div className="benefit-icon-box">
-              <MapPin size={24} />
-            </div>
+            <div className="benefit-icon-box"><MapPin size={24} /></div>
             <div className="benefit-content">
               <h3>HOME PICKUP</h3>
               <p>We run do home pickup to serve you more better and to your convenience</p>
@@ -346,9 +322,7 @@ function LandingPage() {
           </motion.div>
 
           <motion.div className="benefit-item" variants={fadeInUp}>
-            <div className="benefit-icon-box">
-              <Gift size={24} />
-            </div>
+            <div className="benefit-icon-box"><Gift size={24} /></div>
             <div className="benefit-content">
               <h3>BONUSES FOR RIDE</h3>
               <p>When you book us frequently we give you different bonuses that can put a smile on your face</p>
@@ -356,9 +330,7 @@ function LandingPage() {
           </motion.div>
 
           <motion.div className="benefit-item" variants={fadeInUp}>
-            <div className="benefit-icon-box">
-              <Clock size={24} />
-            </div>
+            <div className="benefit-icon-box"><Clock size={24} /></div>
             <div className="benefit-content">
               <h3>FAST BOOKING</h3>
               <p>Our book method is very fast and easy. It won't stress you.</p>
@@ -366,9 +338,7 @@ function LandingPage() {
           </motion.div>
 
           <motion.div className="benefit-item" variants={fadeInUp}>
-            <div className="benefit-icon-box">
-              <Shield size={24} />
-            </div>
+            <div className="benefit-icon-box"><Shield size={24} /></div>
             <div className="benefit-content">
               <h3>GPS SEARCHING</h3>
               <p>We run GPS searching incase you aren't sure of your destination. So you don't have to worry.</p>
@@ -379,7 +349,7 @@ function LandingPage() {
 
       {/* Login Dashboard Callout */}
       <section className="login-showcase-section">
-        <motion.div 
+        <motion.div
           className="login-card-layout"
           initial="hidden"
           whileInView="visible"
@@ -394,17 +364,12 @@ function LandingPage() {
               REQUESTS.
             </h2>
             <div className="login-actions-row">
-              <button className="btn-hero-capsule" onClick={() => navigate('/login')}>
-                GO TO LOGIN
-              </button>
-              <button className="btn-hero-capsule-outline" onClick={() => navigate('/signup')}>
-                CREATE ACCOUNT
-              </button>
+              <button className="btn-hero-capsule" onClick={() => navigate('/login')}>GO TO LOGIN</button>
+              <button className="btn-hero-capsule-outline" onClick={() => navigate('/signup')}>CREATE ACCOUNT</button>
             </div>
           </div>
 
           <div className="login-graphic-content">
-            {/* Desktop Dashboard Mockup */}
             <div className="browser-mockup">
               <div className="browser-header">
                 <span className="browser-dot red"></span>
@@ -438,7 +403,7 @@ function LandingPage() {
 
       {/* Community & QR Download App */}
       <section className="community-section">
-        <motion.div 
+        <motion.div
           className="community-card"
           initial="hidden"
           whileInView="visible"
@@ -446,38 +411,21 @@ function LandingPage() {
           variants={fadeInUp}
         >
           <div className="community-left">
-            <h2>
-              JOIN THE RYDON24<br />
-              <span className="italic-serif">COMMUNITY</span>
-            </h2>
-            <p>
-              Follow us on social media for exclusive updates, promo codes, and ride-hailing tips from our global community.
-            </p>
+            <h2>JOIN THE RYDON24<br /><span className="italic-serif">COMMUNITY</span></h2>
+            <p>Follow us on social media for exclusive updates, promo codes, and ride-hailing tips from our global community.</p>
             <div className="socials-row">
-              <a href="https://www.facebook.com/people/Rydon24/61590718764212" target="_blank" rel="noopener noreferrer" className="social-square-btn" aria-label="Facebook">
-                <FacebookIcon size={22} />
-              </a>
-              <a href="https://www.instagram.com/rydon24official?igsh=MWQ3cWoxazJ1ZGV1OQ%3D%3D" target="_blank" rel="noopener noreferrer" className="social-square-btn" aria-label="Instagram">
-                <InstagramIcon size={22} />
-              </a>
-              <a href="https://youtube.com/@rydon24official?si=RfVhOYUay--g9BhB" target="_blank" rel="noopener noreferrer" className="social-square-btn" aria-label="YouTube">
-                <YoutubeIcon size={22} />
-              </a>
-              <a href="https://www.linkedin.com/company/124914072/admin/dashboard/" target="_blank" rel="noopener noreferrer" className="social-square-btn" aria-label="LinkedIn">
-                <LinkedinIcon size={22} />
-              </a>
+              <a href="https://www.facebook.com/people/Rydon24/61590718764212" target="_blank" rel="noopener noreferrer" className="social-square-btn" aria-label="Facebook"><FacebookIcon size={22} /></a>
+              <a href="https://www.instagram.com/rydon24official?igsh=MWQ3cWoxazJ1ZGV1OQ%3D%3D" target="_blank" rel="noopener noreferrer" className="social-square-btn" aria-label="Instagram"><InstagramIcon size={22} /></a>
+              <a href="https://youtube.com/@rydon24official?si=RfVhOYUay--g9BhB" target="_blank" rel="noopener noreferrer" className="social-square-btn" aria-label="YouTube"><YoutubeIcon size={22} /></a>
+              <a href="https://www.linkedin.com/company/124914072/admin/dashboard/" target="_blank" rel="noopener noreferrer" className="social-square-btn" aria-label="LinkedIn"><LinkedinIcon size={22} /></a>
             </div>
           </div>
 
           <div className="community-right">
             <div className="qr-download-card">
               <h3 className="qr-title">SCAN TO DOWNLOAD</h3>
-              <div className="qr-box">
-                <img src={checkUsOutImg} alt="Download App QR Code" />
-              </div>
-              <p className="qr-desc">
-                Get the app now for the best experience on the go.
-              </p>
+              <div className="qr-box"><img src={checkUsOutImg} alt="Download App QR Code" /></div>
+              <p className="qr-desc">Get the app now for the best experience on the go.</p>
             </div>
           </div>
         </motion.div>
@@ -488,12 +436,9 @@ function LandingPage() {
         <div className="footer-container">
           <div className="footer-grid">
             <div className="footer-brand">
-              <h2 style={{ color: 'var(--primary-yellow)' }}>
-                Rydon<span style={{ color: '#fff' }}>24</span>
-              </h2>
+              <h2 style={{ color: 'var(--primary-yellow)' }}>Rydon<span style={{ color: '#fff' }}>24</span></h2>
               <p>Redefining urban mobility with kinetic efficiency and premium service.</p>
             </div>
-
             <div className="footer-col">
               <h3>COMPANY</h3>
               <ul>
@@ -502,7 +447,6 @@ function LandingPage() {
                 <li><Link to="/blog">Press</Link></li>
               </ul>
             </div>
-
             <div className="footer-col">
               <h3>SERVICES</h3>
               <ul>
@@ -511,7 +455,6 @@ function LandingPage() {
                 <li><Link to="/login">Deliver</Link></li>
               </ul>
             </div>
-
             <div className="footer-col">
               <h3>SUPPORT</h3>
               <ul>
@@ -520,7 +463,6 @@ function LandingPage() {
                 <li><Link to="/faq">Safety</Link></li>
               </ul>
             </div>
-
             <div className="footer-col">
               <h3>LEGAL</h3>
               <ul>
@@ -530,20 +472,11 @@ function LandingPage() {
               </ul>
             </div>
           </div>
-
           <div className="footer-bottom">
-            <div className="footer-copyright">
-              Copyright 2026 © All Rights Reserved | Rydon24
-            </div>
+            <div className="footer-copyright">Copyright 2026 © All Rights Reserved | Rydon24</div>
             <div className="footer-contacts">
-              <div className="footer-contact-item">
-                <Phone size={14} />
-                <span>91-93-911-911</span>
-              </div>
-              <div className="footer-contact-item">
-                <Mail size={14} />
-                <span>customercare@rydon24.com</span>
-              </div>
+              <div className="footer-contact-item"><Phone size={14} /><span>91-93-911-911</span></div>
+              <div className="footer-contact-item"><Mail size={14} /><span>customercare@rydon24.com</span></div>
             </div>
           </div>
         </div>

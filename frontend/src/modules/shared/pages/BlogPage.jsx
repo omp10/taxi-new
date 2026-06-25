@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Calendar, User, ArrowRight, X, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Clock, User, MessageSquare } from 'lucide-react';
+import { ContainerScroll } from '@/components/ui/container-scroll-animation';
+import { BlogInsightsHelper } from '@/components/ui/BlogInsightsHelper';
 
 const BlogPage = () => {
   const navigate = useNavigate();
@@ -221,6 +223,24 @@ const BlogPage = () => {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Blog Scroll Animation Section */}
+      <div className="bg-[#1a1a1a] text-white py-16">
+        <ContainerScroll
+          titleComponent={
+            <div className="mb-8">
+              <h2 className="text-3xl font-extrabold text-white tracking-tight leading-none text-center">
+                Stay updated with the <br />
+                <span className="text-4xl md:text-5xl font-black text-[#FFB300] mt-2 block leading-none">
+                  Latest Insights
+                </span>
+              </h2>
+            </div>
+          }
+        >
+          <BlogInsightsHelper />
+        </ContainerScroll>
       </div>
 
       {/* Article Detail Modal */}

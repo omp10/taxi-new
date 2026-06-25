@@ -4,6 +4,7 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, History, Gift } from 'lucide-react';
 import { userAuthService } from '../services/authService';
 import { useSettings } from '../../../shared/context/SettingsContext';
+import { useUserTheme } from '../../../shared/context/UserThemeContext';
 import { openExternalCheckout } from '../../../shared/utils/externalNavigation';
 import { rememberPendingPhonePeRedirect } from '../../../shared/utils/phonePeResume';
 
@@ -210,8 +211,13 @@ const Wallet = () => {
     }
   };
 
+  const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
+
   return (
-    <div className="min-h-screen bg-slate-50 max-w-lg mx-auto flex flex-col font-sans pb-24 relative overflow-x-hidden">
+    <div className={`min-h-screen max-w-lg mx-auto flex flex-col font-sans pb-28 relative overflow-x-hidden transition-colors duration-300 ${
+      isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'
+    }`}>
       <AnimatePresence>
         {showAddMoney && (
           <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/40 backdrop-blur-sm p-4">
@@ -219,17 +225,17 @@ const Wallet = () => {
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
-              className="bg-white w-full max-w-md rounded-3xl p-8 pb-10 space-y-8 shadow-2xl relative"
+              className={`w-full max-w-md rounded-3xl p-8 pb-10 space-y-8 shadow-2xl relative ${isDark ? 'bg-slate-900 text-white shadow-black/40 border border-slate-800' : 'bg-white text-slate-900 shadow-slate-900/10'}`}
             >
               <button
                 onClick={() => setShowAddMoney(false)}
-                className="absolute top-6 right-6 w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 active:scale-90 transition-colors"
+                className={`absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center active:scale-90 transition-colors ${isDark ? 'bg-slate-950 text-slate-500 hover:text-white' : 'bg-slate-50 text-slate-400'}`}
               >
                 <Plus size={20} className="rotate-45" />
               </button>
 
                 <div className="text-center space-y-2">
-                <h3 className="text-xl font-bold text-slate-900">Add Money</h3>
+                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Add Money</h3>
                 <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
                   {activePaymentGateway ? `Top-up via ${walletTopUpGatewayLabel}` : 'Select amount to top-up'}
                 </p>
@@ -289,15 +295,15 @@ const Wallet = () => {
         )}
       </AnimatePresence>
 
-      <header className="bg-white px-5 pt-10 pb-4 sticky top-0 z-20 border-b border-slate-100 shadow-sm">
+      <header className={`px-5 pt-10 pb-4 sticky top-0 z-20 border-b transition-colors duration-300 ${isDark ? 'bg-slate-900/90 border-slate-800 text-white shadow-sm' : 'bg-white border-slate-100 text-slate-900 shadow-sm'}`}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center shadow-sm active:scale-95 transition-all"
+            className={`w-9 h-9 rounded-xl border flex items-center justify-center shadow-sm active:scale-95 transition-all cursor-pointer ${isDark ? 'border-slate-800 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-900'}`}
           >
-            <ArrowLeft size={18} className="text-slate-900" />
+            <ArrowLeft size={18} className={isDark ? 'text-white' : 'text-slate-900'} />
           </button>
-          <h1 className="text-lg font-bold text-slate-900">My Wallet</h1>
+          <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>My Wallet</h1>
         </div>
       </header>
 
@@ -305,7 +311,7 @@ const Wallet = () => {
         <Motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl shadow-slate-200 relative overflow-hidden"
+          className={`rounded-3xl p-8 text-white shadow-xl relative overflow-hidden ${isDark ? 'bg-slate-900 border border-slate-800 shadow-black/40' : 'bg-slate-900 shadow-slate-900/20'}`}
         >
           <div className="relative z-10 flex flex-col gap-8">
             <div className="space-y-1">
@@ -346,26 +352,26 @@ const Wallet = () => {
       <div className="px-5 mt-6">
         <button
           onClick={() => navigate(`${basePath}/referral`)}
-          className="w-full bg-white border border-slate-100 rounded-3xl p-5 flex items-center gap-4 active:scale-[0.98] transition-all shadow-sm group"
+          className={`w-full border rounded-3xl p-5 flex items-center gap-4 active:scale-[0.98] transition-all shadow-sm group cursor-pointer ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
         >
-          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-all shrink-0">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shrink-0 ${isDark ? 'bg-slate-950 text-white group-hover:bg-white group-hover:text-slate-950' : 'bg-slate-50 text-slate-900 group-hover:bg-slate-900 group-hover:text-white'}`}>
             <Gift size={20} />
           </div>
           <div className="flex-1 text-left">
-            <h4 className="text-sm font-bold text-slate-900">Refer & Earn ₹50</h4>
+            <h4 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Refer & Earn ₹50</h4>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Invite friends to {appName}</p>
           </div>
-          <ArrowLeft size={18} className="text-slate-300 rotate-180 group-hover:text-slate-900 transition-colors" />
+          <ArrowLeft size={18} className={`rotate-180 transition-colors ${isDark ? 'text-slate-600 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-900'}`} />
         </button>
       </div>
 
       <div className="px-5 mt-10">
         <div className="flex items-center justify-between mb-4 px-1">
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Transaction History</h3>
-          <button onClick={() => navigate(`${basePath}/activity`)} className="text-[10px] font-bold text-slate-900 uppercase tracking-wider">View All</button>
+          <button onClick={() => navigate(`${basePath}/activity`)} className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-white' : 'text-slate-900'}`}>View All</button>
         </div>
         
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden divide-y divide-slate-50">
+        <div className={`rounded-3xl border shadow-sm overflow-hidden divide-y ${isDark ? 'bg-slate-900 border-slate-800 divide-slate-800/60' : 'bg-white border-slate-100 divide-slate-50'}`}>
           {walletLoading ? (
             <div className="p-8 text-center text-xs font-bold text-slate-400">Loading transactions...</div>
           ) : wallet.recentTransactions?.length ? (
@@ -377,20 +383,20 @@ const Wallet = () => {
               const whenText = tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
               return (
-                <div key={tx.id} className="flex items-center gap-4 p-4 hover:bg-slate-50 transition-colors group">
+                <div key={tx.id} className={`flex items-center gap-4 p-4 transition-colors group ${isDark ? 'hover:bg-slate-850' : 'hover:bg-slate-50'}`}>
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
-                      isDebit ? 'bg-slate-50 text-slate-600' : 'bg-emerald-50 text-emerald-600'
+                      isDebit ? (isDark ? 'bg-slate-950 text-slate-400' : 'bg-slate-50 text-slate-600') : (isDark ? 'bg-emerald-950/30 text-emerald-400' : 'bg-emerald-50 text-emerald-600')
                     }`}
                   >
                     {isDebit ? <ArrowLeft size={16} className="rotate-45" /> : <Plus size={16} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-bold text-slate-900 truncate">{title}</h4>
+                    <h4 className={`text-sm font-bold truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{title}</h4>
                     <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">{whenText}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <h4 className={`text-base font-bold ${isDebit ? 'text-slate-900' : 'text-emerald-600'}`}>
+                    <h4 className={`text-base font-bold ${isDebit ? (isDark ? 'text-white' : 'text-slate-900') : 'text-emerald-600'}`}>
                       {sign}₹{amountText}
                     </h4>
                     <span className={`text-[8px] font-bold uppercase tracking-wider ${isDebit ? 'text-slate-400' : 'text-emerald-400'}`}>

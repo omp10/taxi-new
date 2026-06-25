@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Briefcase, MapPin, Calendar, User, Mail, Phone, Award, Send, CheckCircle, Share2, Copy, Globe2, Network, MessageCircle } from 'lucide-react';
 import api from '../../../shared/api/axiosInstance';
 import toast from 'react-hot-toast';
+import { ContainerScroll } from '@/components/ui/container-scroll-animation';
+import { CareersDashboardHelper } from '@/components/ui/CareersDashboardHelper';
 
 const CareersPage = () => {
   const navigate = useNavigate();
@@ -184,7 +186,7 @@ const CareersPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 border-b border-gray-200 shadow-sm">
+      <div className="fixed top-0 left-0 right-0 bg-yellow-50/90 backdrop-blur-md z-50 border-b border-yellow-100/80 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -577,6 +579,24 @@ const CareersPage = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Careers Scroll Animation Section */}
+      <div className="bg-slate-100 py-16">
+        <ContainerScroll
+          titleComponent={
+            <div className="mb-8">
+              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none text-center">
+                Build the future of mobility <br />
+                <span className="text-4xl md:text-5xl font-black text-[#FFB300] mt-2 block leading-none">
+                  Join Our Team
+                </span>
+              </h2>
+            </div>
+          }
+        >
+          <CareersDashboardHelper />
+        </ContainerScroll>
       </div>
     </div>
   );

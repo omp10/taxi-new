@@ -1,5 +1,6 @@
 import React from 'react';
 import { Download, ExternalLink, Shield, Zap, Star } from 'lucide-react';
+import { ContainerScroll } from '@/components/ui/container-scroll-animation';
 import './LinksPage.css';
 import bannerImg from '@/assets/images/links-banner.png';
 
@@ -180,6 +181,29 @@ const LinksPage = () => {
               <ExternalLink size={16} className="social-ext" />
             </a>
           </div>
+        </div>
+
+        {/* Scroll Animation Section */}
+        <div className="bg-zinc-900 text-white rounded-[32px] py-10 my-10 overflow-hidden">
+          <ContainerScroll
+            titleComponent={
+              <div className="mb-6">
+                <h2 className="text-2xl md:text-4xl font-extrabold text-white tracking-tight leading-none text-center">
+                  Quick Access to All <br />
+                  <span className="text-3xl md:text-5xl font-black text-[#FFB300] mt-2 block leading-none">
+                    Rydon24 Platforms
+                  </span>
+                </h2>
+              </div>
+            }
+          >
+            <img
+              src="https://ui.aceternity.com/_next/image?url=%2Flinear.webp&w=3840&q=75"
+              alt="Rydon platforms overview"
+              className="mx-auto rounded-2xl object-cover h-full object-left-top w-full"
+              draggable={false}
+            />
+          </ContainerScroll>
         </div>
 
         <footer className="links-footer">

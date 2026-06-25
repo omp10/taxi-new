@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Clock3, Mail, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { SUPPORT_INFO } from '../content/supportInfo';
+import { ContainerScroll } from '@/components/ui/container-scroll-animation';
 
 const quickCards = [
   {
@@ -46,11 +47,11 @@ const SupportPage = () => {
 
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900">
-      <div className="fixed left-0 right-0 top-0 z-50 border-b border-stone-200 bg-white/90 backdrop-blur-md">
+      <div className="fixed left-0 right-0 top-0 z-50 border-b border-yellow-100/80 bg-yellow-50/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-6">
           <button
             onClick={() => navigate(-1)}
-            className="rounded-full p-2 transition-all hover:bg-stone-100"
+            className="rounded-full p-2 transition-all hover:bg-yellow-100/50"
           >
             <ArrowLeft size={20} />
           </button>
@@ -123,6 +124,29 @@ const SupportPage = () => {
           ))}
         </div>
       </section>
+
+      {/* Support Scroll Animation Section */}
+      <div className="bg-stone-100 py-16">
+        <ContainerScroll
+          titleComponent={
+            <div className="mb-8">
+              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none text-center">
+                Need more assistance? <br />
+                <span className="text-4xl md:text-5xl font-black text-[#FFB300] mt-2 block leading-none">
+                  We've got you covered
+                </span>
+              </h2>
+            </div>
+          }
+        >
+          <img
+            src="https://ui.aceternity.com/_next/image?url=%2Flinear.webp&w=3840&q=75"
+            alt="Rydon client support dashboard"
+            className="mx-auto rounded-2xl object-cover h-full object-left-top w-full"
+            draggable={false}
+          />
+        </ContainerScroll>
+      </div>
     </div>
   );
 };

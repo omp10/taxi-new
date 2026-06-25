@@ -70,40 +70,50 @@ const LocationMapSection = () => {
     }
 
     setStatus('loading');
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const next = {
-          lat: position.coords.latitude,
-          lon: position.coords.longitude,
-        };
 
-        persistCoords(next);
-        if (map) {
-          map.panTo({ lat: next.lat, lng: next.lon });
-          map.setZoom(DEFAULT_ZOOM);
-        }
+    const handleSuccess = (position) => {
+      const next = {
+        lat: position.coords.latitude,
+        lon: position.coords.longitude,
+      };
 
-        if (window.google?.maps?.Geocoder) {
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode({ location: { lat: next.lat, lng: next.lon } }, (results, geocodeStatus) => {
-            if (geocodeStatus === 'OK' && results?.[0]?.formatted_address) {
-              try {
-                persistAddress(results[0].formatted_address);
-              } catch {
-                // ignore
-              }
+      persistCoords(next);
+      if (map) {
+        map.panTo({ lat: next.lat, lng: next.lon });
+        map.setZoom(DEFAULT_ZOOM);
+      }
+
+      if (window.google?.maps?.Geocoder) {
+        const geocoder = new window.google.maps.Geocoder();
+        geocoder.geocode({ location: { lat: next.lat, lng: next.lon } }, (results, geocodeStatus) => {
+          if (geocodeStatus === 'OK' && results?.[0]?.formatted_address) {
+            try {
+              persistAddress(results[0].formatted_address);
+            } catch {
+              // ignore
             }
-          });
-        }
-      },
+          }
+        });
+      }
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
       (error) => {
         if (error?.code === 1) {
           setStatus('denied');
           return;
         }
-        setStatus('error');
+        // Try fallback with low-accuracy for fast IP-based tracking
+        navigator.geolocation.getCurrentPosition(
+          handleSuccess,
+          () => {
+            setStatus('error');
+          },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 },
     );
   };
 
@@ -159,12 +169,12 @@ const LocationMapSection = () => {
             <Navigation 
               size={14} 
               strokeWidth={2.8} 
-              className={`transition-colors ${status === 'loading' ? 'animate-pulse text-emerald-600' : 'text-slate-500'}`} 
+              className={`transition-colors ${status === 'loading' ? 'animate-pulse text-yellow-500' : 'text-slate-500'}`} 
             />
             {coords && (
               <motion.span
                 layoutId="active-dot"
-                className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]"
                 animate={{ scale: [1, 1.25, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
@@ -174,7 +184,7 @@ const LocationMapSection = () => {
         </motion.button>
       </div>
 
-      <div className="relative mt-3 rounded-[20px] bg-[linear-gradient(135deg,rgba(16,185,129,0.40)_0%,rgba(56,189,248,0.22)_50%,rgba(251,146,60,0.16)_100%)] p-[1px] shadow-[0_0_0_1px_rgba(16,185,129,0.10),0_10px_22px_rgba(15,23,42,0.06)]">
+      <div className="relative mt-3 rounded-[20px] bg-[linear-gradient(135deg,rgba(234,179,8,0.40)_0%,rgba(250,204,21,0.22)_50%,rgba(251,146,60,0.16)_100%)] p-[1px] shadow-[0_0_0_1px_rgba(234,179,8,0.10),0_10px_22px_rgba(15,23,42,0.06)]">
         <motion.div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 z-0 rounded-[20px] blur-xl"
@@ -182,7 +192,7 @@ const LocationMapSection = () => {
           transition={{ duration: 4.2, repeat: Infinity, ease: 'easeInOut' }}
           style={{
             background:
-              'linear-gradient(135deg, rgba(16,185,129,0.22) 0%, rgba(56,189,248,0.14) 52%, rgba(251,146,60,0.10) 100%)',
+              'linear-gradient(135deg, rgba(234,179,8,0.22) 0%, rgba(250,204,21,0.14) 52%, rgba(251,146,60,0.10) 100%)',
           }}
         />
 
@@ -321,11 +331,11 @@ const LocationMapSection = () => {
                     <path
                       d="M16 2C9.1 2 4 7.21 4 13.88c0 9.54 8.58 18.76 11.13 28.42.18.69.58 1.7.87 2.7.29-1 .69-2.01.87-2.7C19.42 32.64 28 23.42 28 13.88 28 7.21 22.9 2 16 2Z"
                       fill="white"
-                      stroke="#10b981"
+                      stroke="#FFB300"
                       strokeWidth="2.4"
                       strokeLinejoin="round"
                     />
-                    <circle cx="16" cy="14" r="6.5" fill="#10b981" />
+                    <circle cx="16" cy="14" r="6.5" fill="#FFB300" />
                     <circle cx="16" cy="14" r="2.4" fill="white" fillOpacity="0.95" />
                   </svg>
                 </div>

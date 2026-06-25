@@ -292,3 +292,227 @@ body {
 .redigo-admin-root td {
   border-color: #f1f5f9 !important;
 }
+
+/* ==========================================================================
+   USER APP PREMIUM REDESIGN - DARK & LIGHT THEME STYLING
+   ========================================================================== */
+
+/* 1. Global Font and Typography for User App */
+.user-app-theme,
+.user-app-theme * {
+  font-family: 'Poppins', 'Inter', 'Outfit', system-ui, -apple-system, sans-serif !important;
+}
+
+/* 2. Color Schemes for Dark Mode (Default) */
+.user-app-theme.dark {
+  --bg-app: #020617;
+  --bg-card: #0f172a;
+  --bg-card-hover: #1e293b;
+  --bg-input: #1e293b;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --border-color-hover: #475569;
+  --accent: #ffffff; /* White Accent */
+  --accent-hover: #e2e8f0;
+  --shadow-color: rgba(0, 0, 0, 0.8);
+  --card-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7);
+}
+
+/* 3. Color Schemes for Light Mode */
+.user-app-theme.light {
+  --bg-app: #ffffff;
+  --bg-card: #f8fafc;
+  --bg-card-hover: #f1f5f9;
+  --bg-input: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --border-color-hover: #cbd5e1;
+  --accent: #0f172a; /* Black Accent */
+  --accent-hover: #1e293b;
+  --shadow-color: rgba(15, 23, 42, 0.08);
+  --card-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.08);
+}
+
+/* 4. Adaptive Utility Class Mappings inside User App */
+.user-app-theme {
+  background-color: var(--bg-app) !important;
+  color: var(--text-primary) !important;
+}
+
+.user-app-theme .bg-white,
+.user-app-theme .bg-white\/70,
+.user-app-theme .bg-white\/75,
+.user-app-theme .bg-white\/80,
+.user-app-theme .bg-white\/85,
+.user-app-theme .bg-white\/90,
+.user-app-theme .bg-white\/92,
+.user-app-theme .bg-white\/95,
+.user-app-theme .bg-slate-50,
+.user-app-theme .bg-gray-50,
+.user-app-theme .bg-gray-50\/50 {
+  background-color: var(--bg-card) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.user-app-theme .text-slate-900,
+.user-app-theme .text-slate-800,
+.user-app-theme .text-gray-900,
+.user-app-theme .text-gray-800,
+.user-app-theme .text-slate-950,
+.user-app-theme .text-black {
+  color: var(--text-primary) !important;
+}
+
+.user-app-theme .text-slate-500,
+.user-app-theme .text-slate-400,
+.user-app-theme .text-gray-500,
+.user-app-theme .text-gray-400 {
+  color: var(--text-secondary) !important;
+}
+
+.user-app-theme .border-white,
+.user-app-theme .border-white\/80,
+.user-app-theme .border-slate-100,
+.user-app-theme .border-slate-200,
+.user-app-theme .border-slate-200\/40,
+.user-app-theme .border-slate-50,
+.user-app-theme .border-gray-100,
+.user-app-theme .border-gray-200 {
+  border-color: var(--border-color) !important;
+}
+
+.user-app-theme .shadow-sm,
+.user-app-theme .shadow-md,
+.user-app-theme .shadow-lg,
+.user-app-theme .shadow-xl,
+.user-app-theme .shadow-2xl,
+.user-app-theme .shadow-premium {
+  box-shadow: var(--card-shadow) !important;
+}
+
+/* Accent overrides */
+.user-app-theme .text-primary,
+.user-app-theme .text-amber-500,
+.user-app-theme .text-orange-500 {
+  color: var(--accent) !important;
+}
+
+.user-app-theme.dark .bg-primary,
+.user-app-theme.dark .bg-orange-500,
+.user-app-theme.dark .bg-amber-500 {
+  background-color: var(--accent) !important;
+  color: #020617 !important;
+}
+
+.user-app-theme.light .bg-primary,
+.user-app-theme.light .bg-orange-500,
+.user-app-theme.light .bg-amber-500 {
+  background-color: var(--accent) !important;
+  color: #ffffff !important;
+}
+
+.user-app-theme .bg-slate-900,
+.user-app-theme .bg-slate-950 {
+  background-color: var(--bg-card) !important;
+}
+
+/* Glassmorphism custom components */
+.user-glass-card {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 24px !important;
+}
+
+/* For Inputs */
+.user-app-theme input,
+.user-app-theme select,
+.user-app-theme textarea {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.user-app-theme input:focus,
+.user-app-theme select:focus,
+.user-app-theme textarea:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px var(--accent) !important;
+}
+
+/* ==========================================================================
+   GLOBAL RESPONSIVE OVERRIDES FOR ARBITRARY CLASSES (LIGHT/DARK THEME)
+   ========================================================================== */
+
+/* 1. Arbitrary inline gradients */
+.user-app-theme.dark [class*="bg-\[linear-gradient"],
+.user-app-theme.dark[class*="bg-\[linear-gradient"] {
+  background: var(--bg-app) !important;
+}
+
+.user-app-theme.light [class*="bg-\[linear-gradient"],
+.user-app-theme.light[class*="bg-\[linear-gradient"] {
+  background: linear-gradient(180deg, #F8FAFC 0%, #F3F4F6 38%, #EEF2F7 100%) !important;
+}
+
+/* 2. Light grey/slate page-level backgrounds */
+.user-app-theme.dark .bg-slate-100,
+.user-app-theme.dark .bg-gray-100,
+.user-app-theme.dark .bg-slate-200,
+.user-app-theme.dark .bg-gray-200,
+.user-app-theme.dark .bg-slate-300,
+.user-app-theme.dark .bg-gray-300,
+.user-app-theme.dark .bg-slate-50\/50,
+.user-app-theme.dark .bg-slate-100\/40,
+.user-app-theme.dark .bg-\[\#f5f7fb\],
+.user-app-theme.dark .bg-\[\#f3f4f6\],
+.user-app-theme.dark .bg-\[\#f9f9f9\] {
+  background-color: var(--bg-app) !important;
+}
+
+/* 3. Lighter grey badges, card inner sections, and alerts map to input bg in dark mode */
+.user-app-theme.dark .bg-slate-100\/70,
+.user-app-theme.dark .bg-white\/10,
+.user-app-theme.dark .bg-slate-200\/50,
+.user-app-theme.dark .bg-emerald-50\/30,
+.user-app-theme.dark .bg-emerald-50\/50,
+.user-app-theme.dark .bg-indigo-50\/70,
+.user-app-theme.dark .bg-rose-50 {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 4. Ensure secondary grays are readable */
+.user-app-theme.dark .text-slate-700,
+.user-app-theme.dark .text-slate-600,
+.user-app-theme.dark .text-gray-700,
+.user-app-theme.dark .text-gray-600 {
+  color: var(--text-secondary) !important;
+}
+
+/* 5. Dropdown options adjustments */
+.user-app-theme select option {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 6. Buttons with bg-slate-900 or bg-black in dark mode should turn to yellow accent to stand out */
+.user-app-theme.dark button.bg-slate-900,
+.user-app-theme.dark button.bg-black,
+.user-app-theme.dark a.bg-slate-900,
+.user-app-theme.dark a.bg-black {
+  background-color: var(--accent) !important;
+  color: #090D16 !important;
+}
+
+/* 7. Extra border colors mapping */
+.user-app-theme .border-slate-350,
+.user-app-theme .border-gray-300,
+.user-app-theme .border-slate-300 {
+  border-color: var(--border-color) !important;
+}
+

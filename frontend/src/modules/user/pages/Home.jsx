@@ -10,13 +10,19 @@ import PromoBanners from '../components/PromoBanners';
 import ExplorerSection from '../components/ExplorerSection';
 import CheckUsOutSection from '../components/CheckUsOutSection';
 import BottomNavbar from '../components/BottomNavbar';
-import carIcon from '../../../assets/icons/car.png';
-import bikeIcon from '../../../assets/icons/bike.png';
+
+import taxiFallback from '../../../assets/user-app/taxi.png';
+import bikeFallback from '../../../assets/user-app/bike.png';
+import deliveryFallback from '../../../assets/user-app/delivery.png';
+import parcelFallback from '../../../assets/user-app/parcel.png';
+import truckFallback from '../../../assets/user-app/truck.png';
+import busFallback from '../../../assets/user-app/bus.png';
+import fallbackCar from '../../../assets/user-app/fallback-car.png';
+import yellowTaxiImg from '../../../assets/user-app/yellow-taxi.jpg';
 import indiaGateRealImg from '@/assets/india_gate_real.png';
-import autoIcon from '../../../assets/icons/auto.png';
-import deliveryIcon from '../../../assets/icons/Delivery.png';
 import api from '../../../shared/api/axiosInstance';
 import { useSettings } from '../../../shared/context/SettingsContext';
+import { useUserTheme } from '../../../shared/context/UserThemeContext';
 import { userService } from '../services/userService';
 import {
   CURRENT_RIDE_UPDATED_EVENT,
@@ -42,26 +48,30 @@ const getCurrentRideIcon = (ride) => {
     '',
   ).trim();
 
-  if (customIcon) {
+  if (customIcon && !customIcon.includes('localhost') && !customIcon.startsWith('/')) {
     return customIcon;
   }
 
   const serviceType = String(ride?.serviceType || ride?.type || '').toLowerCase();
   const iconType = String(ride?.vehicleIconType || ride?.driver?.vehicleIconType || ride?.driver?.vehicleType || '').toLowerCase();
 
-  if (serviceType === 'parcel') {
-    return deliveryIcon;
+  if (serviceType === 'parcel' || serviceType === 'delivery') {
+    return parcelFallback;
   }
 
   if (iconType.includes('bike')) {
-    return bikeIcon;
+    return bikeFallback;
   }
 
   if (iconType.includes('auto')) {
-    return autoIcon;
+    return taxiFallback;
   }
 
-  return carIcon;
+  if (serviceType === 'bus') {
+    return busFallback;
+  }
+
+  return taxiFallback;
 };
 
 const unwrapApiPayload = (response) => response?.data?.data || response?.data || response;
@@ -196,6 +206,8 @@ const Home = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings } = useSettings();
+  const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
   const appName = settings.general?.app_name || 'App';
 
   const [currentRide, setCurrentRide] = useState(() => {
@@ -565,14 +577,48 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] pb-24 max-w-lg mx-auto relative overflow-hidden font-sans no-scrollbar">
-      <div className="absolute -top-16 right-[-40px] h-44 w-44 rounded-full bg-orange-100/60 blur-3xl pointer-events-none" />
-      <div className="absolute top-52 left-[-60px] h-52 w-52 rounded-full bg-emerald-100/60 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-28 right-[-40px] h-40 w-40 rounded-full bg-blue-100/60 blur-3xl pointer-events-none" />
+    <div className={`min-h-screen pb-24 max-w-lg mx-auto relative overflow-hidden font-sans no-scrollbar transition-colors duration-300 ${isDark ? 'bg-slate-900 text-white' : 'bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] text-slate-900'}`}>
+      <div className={`absolute -top-16 right-[-40px] h-44 w-44 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-orange-100/60'}`} />
+      <div className={`absolute top-52 left-[-60px] h-52 w-52 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-emerald-100/60'}`} />
+      <div className={`absolute bottom-28 right-[-40px] h-40 w-40 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-blue-100/60'}`} />
 
 
       <div className="relative z-10 space-y-4 pb-6">
         <HeaderGreeting />
+
+        {/* Premium Top Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          onClick={() => navigate(`${routePrefix}/ride/select-category`)}
+          className="mx-5 overflow-hidden rounded-[30px] border border-slate-800 shadow-[0_16px_36px_rgba(0,0,0,0.3)] relative min-h-[175px] flex items-center p-6 cursor-pointer group"
+        >
+          {/* Zooming Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-700 ease-out group-hover:scale-105"
+            style={{
+              backgroundImage: `url(${yellowTaxiImg})`,
+              backgroundPosition: 'center',
+            }}
+          />
+          {/* Dark gradient overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
+
+          <div className="relative z-20 max-w-[80%] space-y-2">
+            <span className="inline-block text-[9px] font-extrabold uppercase tracking-widest text-yellow-500 bg-yellow-400/10 px-2 py-0.5 rounded-full">
+              Super Saver
+            </span>
+            <h2 className="text-[17px] font-black leading-tight tracking-tight uppercase font-['Outfit'] text-white">
+              <span className="text-yellow-400">Experience</span> A New <br />
+              Standard With <br />
+              <span className="text-yellow-400">Rydon 24</span>
+            </h2>
+            <p className="text-[11px] font-semibold text-slate-300 leading-snug">
+              A premier private hire service where luxury and reliability converge for an unrivaled journey.
+            </p>
+          </div>
+        </motion.div>
 
         {isScheduledAcceptedRide && (
           <motion.button
@@ -581,49 +627,61 @@ const Home = () => {
             animate={{ opacity: 1, y: 0 }}
             whileTap={{ scale: 0.99 }}
             onClick={() => navigate(trackingPath, { state: currentRide })}
-            className="mx-5 block w-[calc(100%-2.5rem)] overflow-hidden rounded-[32px] border border-emerald-100/50 bg-[linear-gradient(135deg,#ffffff_0%,#f0fdf4_100%)] p-6 text-left shadow-[0_24px_48px_rgba(16,185,129,0.12)]"
+            className={`mx-5 block w-[calc(100%-2.5rem)] overflow-hidden rounded-[32px] border p-6 text-left shadow-[0_24px_48px_rgba(0,0,0,0.15)] transition-all duration-300 ${
+              isDark 
+                ? 'border-slate-800 bg-slate-900/90 text-white' 
+                : 'border-emerald-100/50 bg-[linear-gradient(135deg,#ffffff_0%,#f0fdf4_100%)] text-slate-900 shadow-[0_24px_48px_rgba(16,185,129,0.12)]'
+            }`}
           >
             <div className="flex items-center justify-between">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100/50 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+              <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] ${
+                isDark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-emerald-100/50 text-emerald-700'
+              }`}>
                 <ShieldCheck size={12} strokeWidth={3} />
                 Confirmed
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-600">Live Status</span>
+                <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${isDark ? 'bg-yellow-400' : 'bg-emerald-500'}`} />
+                <span className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                  isDark ? 'text-yellow-400' : 'text-emerald-600'
+                }`}>Live Status</span>
               </div>
             </div>
 
             <div className="mt-5 flex items-end justify-between">
               <div className="min-w-0">
-                <h2 className="text-[32px] font-semibold tracking-tight text-slate-950 leading-none">
+                <h2 className="text-[32px] font-semibold tracking-tight leading-none text-white dark:text-white light:text-slate-950">
                   {scheduledCountdown}
                 </h2>
-                <p className="mt-2 text-[14px] font-medium text-slate-500">
+                <p className="mt-2 text-[14px] font-medium opacity-60">
                   {scheduledDateLabel}
                 </p>
               </div>
               <div className="relative mb-1">
-                <div className="absolute -inset-4 rounded-full bg-emerald-100/30 blur-xl animate-pulse" />
+                <div className="absolute -inset-4 rounded-full bg-yellow-400/5 blur-xl animate-pulse" />
                 <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 shadow-2xl shadow-slate-950/40 border border-slate-800">
                   <img src={currentRideIcon} alt="" className="h-10 w-10 object-contain" />
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-between rounded-2xl bg-white/60 p-3 shadow-sm border border-white">
+            <div className={`mt-6 flex items-center justify-between rounded-2xl p-3 shadow-sm border ${
+              isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-white/60 border-white'
+            }`}>
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-10 w-10 shrink-0 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                  <User size={20} className="text-emerald-600" />
+                <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center border ${
+                  isDark ? 'bg-slate-900 border-slate-800 text-yellow-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                }`}>
+                  <User size={20} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 leading-none">Driver & Vehicle</p>
-                  <p className="mt-1 truncate text-[13px] font-semibold text-slate-900">{driverName} • {vehicleLabel}</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-50 leading-none">Driver & Vehicle</p>
+                  <p className="mt-1 truncate text-[13px] font-semibold">{driverName} • {vehicleLabel}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 leading-none">Fare</p>
-                <p className="mt-1 text-[13px] font-semibold text-slate-900">₹{Number(currentRide?.fare || 0).toFixed(0)}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-50 leading-none">Fare</p>
+                <p className="mt-1 text-[13px] font-semibold">₹{Number(currentRide?.fare || 0).toFixed(0)}</p>
               </div>
             </div>
 
@@ -633,7 +691,7 @@ const Home = () => {
                 <div className="mt-1 flex items-center gap-2 text-[12px] font-medium">
                   <span className="truncate max-w-[100px] text-white/90">{(currentRide?.pickup || 'Pickup').split(',')[0]}</span>
                   <ChevronRight size={12} className="text-white/30" />
-                  <span className="truncate max-w-[100px] text-emerald-400">{(currentRide?.drop || 'Drop').split(',')[0]}</span>
+                  <span className="truncate max-w-[100px] text-yellow-400">{(currentRide?.drop || 'Drop').split(',')[0]}</span>
                 </div>
               </div>
               <div className="h-8 w-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center">
@@ -643,168 +701,7 @@ const Home = () => {
           </motion.button>
         )}
 
-        {/* Active Rental Dashboard - Only visible during active rentals */}
-        {serviceType === 'rental' && (() => {
-          const rentalH = Math.floor(rentalElapsedSeconds / 3600);
-          const rentalM = Math.floor((rentalElapsedSeconds % 3600) / 60);
-          const rentalS = rentalElapsedSeconds % 60;
 
-          const includedHours = Math.max(
-            Number(currentRide?.includedHours || 0),
-            Number(currentRide?.selectedPackage?.durationHours || 0),
-            Number(currentRide?.requestedHours || 0) > 0 && Number(currentRide?.extraHourRate || 0) <= 0 ? Number(currentRide.requestedHours) : 0,
-            1,
-          );
-
-          const packageName = currentRide?.selectedPackage?.name || `${includedHours} hrs Package`;
-          const isExtraTime = (rentalElapsedSeconds / 3600) > includedHours;
-          const progressPercentage = Math.min(100, ((rentalElapsedSeconds / 3600) / includedHours) * 100);
-
-          return (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 120 }}
-              className="mx-5 overflow-hidden rounded-[32px] border border-white/80 bg-white/70 p-5 shadow-[0_24px_48px_rgba(15,23,42,0.08)] backdrop-blur-2xl relative"
-            >
-              {/* Radial background glows */}
-              <div className="absolute -right-12 -bottom-12 h-36 w-36 rounded-full bg-orange-200/30 blur-3xl pointer-events-none" />
-              <div className="absolute -left-12 -top-12 h-36 w-36 rounded-full bg-emerald-200/30 blur-3xl pointer-events-none" />
-
-              <div className="relative z-10 space-y-4">
-                {/* Header Row */}
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-orange-600">
-                      {rideStage === 'end_requested' ? 'End Pending' : 'Live Rental'}
-                    </span>
-                  </div>
-                  <div className="rounded-full bg-slate-100/80 px-2.5 py-0.5 border border-slate-200/40 text-[9px] font-semibold text-slate-500 uppercase tracking-wider">
-                    {packageName}
-                  </div>
-                </div>
-
-                {/* Main Content Layout */}
-                <div className="grid grid-cols-12 gap-3 items-center">
-                  {/* Left Side: Vehicle Pedestal */}
-                  <div className="col-span-5 flex flex-col items-center">
-                    <motion.div
-                      animate={{ y: [0, -4, 0] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                      className="relative h-20 w-full rounded-2xl bg-gradient-to-b from-slate-50 to-slate-100/80 border border-slate-200/40 flex items-center justify-center p-2 shadow-inner overflow-hidden group"
-                    >
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.05)_0%,transparent_70%)]" />
-                      <img
-                        src={currentRideIcon}
-                        alt=""
-                        className="h-full w-full object-contain scale-110 relative z-10 transition-transform duration-300 group-hover:scale-125"
-                      />
-                    </motion.div>
-                    <p className="mt-2 text-center text-[11px] font-bold text-slate-800 truncate w-full">
-                      {currentRide.vehicle?.name || 'Honda Amaze'}
-                    </p>
-                  </div>
-
-                  {/* Right Side: Chronometer and Visual progress */}
-                  <div className="col-span-7 pl-2 flex flex-col justify-center space-y-2">
-                    <div className="space-y-1">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400">Duration Elapsed</p>
-
-                      {/* Premium stopwatch display */}
-                      <div className="flex items-center gap-1">
-                        <div className="flex flex-col items-center">
-                          <span className="font-mono text-2xl font-bold tracking-tight text-slate-900 leading-none">
-                            {String(rentalH).padStart(2, '0')}
-                          </span>
-                          <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Hrs</span>
-                        </div>
-                        <span className="text-xl font-medium text-slate-300 -translate-y-1 animate-pulse">:</span>
-                        <div className="flex flex-col items-center">
-                          <span className="font-mono text-2xl font-bold tracking-tight text-slate-900 leading-none">
-                            {String(rentalM).padStart(2, '0')}
-                          </span>
-                          <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Min</span>
-                        </div>
-                        <span className="text-xl font-medium text-slate-300 -translate-y-1 animate-pulse">:</span>
-                        <div className="flex flex-col items-center">
-                          <span className="font-mono text-2xl font-bold tracking-tight text-rose-500 leading-none">
-                            {String(rentalS).padStart(2, '0')}
-                          </span>
-                          <span className="text-[8px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Sec</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Progress slider showing package usage */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[9px] font-medium text-slate-400">
-                        <span>Limit: {includedHours} hrs</span>
-                        <span className={isExtraTime ? "text-rose-500 font-semibold" : "text-emerald-600 font-semibold"}>
-                          {isExtraTime ? 'Extra Hours Incurred' : `${progressPercentage.toFixed(0)}% consumed`}
-                        </span>
-                      </div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/30">
-                        <motion.div
-                          className={`h-full rounded-full ${isExtraTime ? 'bg-gradient-to-r from-orange-500 to-rose-500' : 'bg-gradient-to-r from-emerald-400 to-teal-500'}`}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progressPercentage}%` }}
-                          transition={{ duration: 0.8, ease: 'easeOut' }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer Section: Fare and Action */}
-                <div className="mt-2 pt-3 border-t border-slate-100 flex items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400">Live Cost</p>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xs font-semibold text-emerald-600">₹</span>
-                      <span className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
-                        {rentalCurrentCharge.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                      </span>
-                    </div>
-                    {isExtraTime && (
-                      <p className="text-[8px] font-medium text-rose-500">Includes extra hour rates</p>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEndRide();
-                    }}
-                    disabled={endingRide || rideStage === 'end_requested'}
-                    className="relative group overflow-hidden rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 px-5 py-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-[0_8px_20px_rgba(244,63,94,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:grayscale flex items-center gap-2"
-                  >
-                    {endingRide ? (
-                      <>
-                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        <span>Ending...</span>
-                      </>
-                    ) : rideStage === 'end_requested' ? (
-                      <span>Pending</span>
-                    ) : (
-                      <>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white group-hover:animate-pulse">
-                          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
-                          <line x1="12" y1="2" x2="12" y2="12"></line>
-                        </svg>
-                        <span>End Ride</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })()}
 
         <ServiceGrid />
         {showDeferredSections ? (
@@ -874,22 +771,26 @@ const Home = () => {
 
       <AnimatePresence>
         {currentRide && (
-          <Motion.button
+          <motion.button
             type="button"
             initial={{ y: 24, opacity: 0, scale: 0.96 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 18, opacity: 0, scale: 0.96 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate(trackingPath, { state: currentRide })}
-            className="fixed bottom-24 left-4 right-4 z-[60] mx-auto flex max-w-[calc(32rem-2rem)] items-center gap-3 rounded-[20px] border border-white/80 bg-white/95 px-4 py-3 text-left shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-xl"
+            className={`fixed bottom-24 left-4 right-4 z-[60] mx-auto flex max-w-[calc(32rem-2rem)] items-center gap-3 rounded-[20px] border px-4 py-3 text-left shadow-[0_12px_34px_rgba(0,0,0,0.25)] backdrop-blur-xl transition-all duration-300 ${
+              isDark ? 'border-slate-800 bg-slate-900/95 text-white' : 'border-white/80 bg-white/95 text-slate-900'
+            }`}
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-slate-900 shadow-lg">
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] shadow-lg ${
+              isDark ? 'bg-slate-950 border border-slate-800' : 'bg-slate-900'
+            }`}>
               <img src={currentRideIcon} alt={vehicleLabel} className="h-8 w-8 object-contain" draggable={false} />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
-                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-orange-600">
+                <span className={`h-2 w-2 rounded-full animate-pulse ${isDark ? 'bg-yellow-400' : 'bg-orange-500'}`} />
+                <p className={`text-[9px] font-semibold uppercase tracking-[0.16em] ${isDark ? 'text-yellow-400' : 'text-orange-600'}`}>
                   {isScheduledAcceptedRide
                     ? 'Scheduled ride ready'
                     : serviceType === 'parcel'
@@ -899,63 +800,81 @@ const Home = () => {
                         : 'Current Ride'}
                 </p>
               </div>
-              <p className="mt-0.5 truncate text-[14px] font-semibold leading-tight text-slate-900">
+              <p className="mt-0.5 truncate text-[14px] font-semibold leading-tight">
                 {rideStageContextLabel}
               </p>
               {isScheduledAcceptedRide ? (
-                <div className="mt-1 flex items-center gap-2 text-[10px] font-medium text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+                <div className="mt-1 flex items-center gap-2 text-[10px] font-medium opacity-80">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${
+                    isDark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-emerald-50 text-emerald-700'
+                  }`}>
                     <CalendarClock size={11} />
                     {scheduledDateLabel}
                   </span>
                   {scheduledCountdown ? (
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+                    <span className={`rounded-full px-2 py-1 ${
+                      isDark ? 'bg-slate-950 text-slate-300' : 'bg-slate-100 text-slate-700'
+                    }`}>
                       {scheduledCountdown}
                     </span>
                   ) : null}
                 </div>
               ) : null}
-              <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[10px] font-medium text-slate-500">
-                <MapPin size={12} className="shrink-0 text-emerald-500" strokeWidth={2.5} />
+              <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[10px] font-medium opacity-65">
+                <MapPin size={12} className={`shrink-0 ${isDark ? 'text-yellow-400' : 'text-emerald-500'}`} strokeWidth={2.5} />
                 <span className="truncate">{currentRide.pickup || 'Pickup location'}</span>
               </div>
-              <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-medium text-slate-500">
-                <MapPin size={12} className="shrink-0 text-orange-500" strokeWidth={2.5} />
+              <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[10px] font-medium opacity-65">
+                <MapPin size={12} className={`shrink-0 ${isDark ? 'text-yellow-400' : 'text-orange-500'}`} strokeWidth={2.5} />
                 <span className="truncate">{currentRide.drop || 'Drop location'}</span>
               </div>
               {serviceType === 'rental' ? (
-                <div className="mt-1 flex items-center gap-2 text-[10px] font-medium text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1">
-                    <Clock3 size={11} className="text-slate-500" />
+                <div className="mt-1 flex items-center gap-2 text-[10px] font-medium opacity-80">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${
+                    isDark ? 'bg-slate-950 text-slate-300' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    <Clock3 size={11} />
                     {rentalTimerLabel}
                   </span>
-                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+                  <span className={`rounded-full px-2 py-1 ${
+                    isDark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-emerald-50 text-emerald-700'
+                  }`}>
                     Live charge Rs {rentalCurrentCharge.toFixed(0)}
                   </span>
                 </div>
               ) : isScheduledAcceptedRide ? (
-                <div className="mt-1 flex items-center gap-2 text-[10px] font-medium text-slate-600">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-1 text-sky-700">
+                <div className="mt-1 flex items-center gap-2 text-[10px] font-medium opacity-80">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${
+                    isDark ? 'bg-slate-950 text-slate-300' : 'bg-sky-50 text-sky-700'
+                  }`}>
                     <User size={11} />
                     {driverName}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+                  <span className={`rounded-full px-2 py-1 ${
+                    isDark ? 'bg-slate-950 text-slate-400' : 'bg-slate-100 text-slate-700'
+                  }`}>
                     Live tracking unlocks soon
                   </span>
                 </div>
               ) : null}
             </div>
             <div className="shrink-0 text-right flex flex-col items-end gap-1">
-              <p className="rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-900">
+              <p className={`rounded-lg px-2 py-0.5 text-[11px] font-semibold ${
+                isDark ? 'bg-slate-950 text-yellow-400' : 'bg-slate-100 text-slate-900'
+              }`}>
                 Rs {Number(serviceType === 'rental' ? rentalCurrentCharge : currentRide.fare || 0).toFixed(0)}
               </p>
-              <div className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-[12px] bg-slate-900 text-white shadow-md">
+              <div className={`mt-1 inline-flex h-8 w-8 items-center justify-center rounded-[12px] shadow-md ${
+                isDark ? 'bg-yellow-400 text-slate-950' : 'bg-slate-900 text-white'
+              }`}>
                 <ChevronRight size={18} strokeWidth={3} />
               </div>
             </div>
-          </Motion.button>
+          </motion.button>
         )}
       </AnimatePresence>
+
+
 
       <BottomNavbar />
     </div>

@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { SettingsProvider } from './shared/context/SettingsContext';
+import { UserThemeProvider } from './shared/context/UserThemeContext';
 import AppAutoUpdater from './modules/shared/components/AppAutoUpdater';
 import MainLayout from './layouts/MainLayout';
 import AppRoutes from './routes';
@@ -17,13 +18,15 @@ function App() {
   return (
     <Router>
       <SettingsProvider>
-        <AppAutoUpdater />
-        <MainLayout>
-          <Suspense fallback={suspenseFallback}>
-            <Toaster position="top-right" />
-            <AppRoutes />
-          </Suspense>
-        </MainLayout>
+        <UserThemeProvider>
+          <AppAutoUpdater />
+          <MainLayout>
+            <Suspense fallback={suspenseFallback}>
+              <Toaster position="top-right" />
+              <AppRoutes />
+            </Suspense>
+          </MainLayout>
+        </UserThemeProvider>
       </SettingsProvider>
     </Router>
   );

@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Target, Award, Users, ShieldCheck } from 'lucide-react';
+import { ContainerScroll } from '@/components/ui/container-scroll-animation';
+import { GlobalCommunitiesDashboard } from '@/components/ui/GlobalCommunitiesDashboard';
 
 const AboutPage = () => {
   const navigate = useNavigate();
@@ -8,7 +10,7 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 border-b border-gray-200 shadow-sm">
+      <div className="fixed top-0 left-0 right-0 bg-yellow-50/90 backdrop-blur-md z-50 border-b border-yellow-100/80 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center gap-4">
             <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-all">
               <ArrowLeft size={20} />
@@ -42,27 +44,45 @@ const AboutPage = () => {
                 </p>
             </div>
             <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="bg-yellow-50 p-6 rounded-2xl shadow-sm border border-yellow-100">
                     <Target className="text-[#FFB300] mb-4" size={32} />
                     <h3 className="font-bold text-lg mb-2">Reliability</h3>
                     <p className="text-gray-500 text-sm">Always on time, every time you ride.</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="bg-yellow-50 p-6 rounded-2xl shadow-sm border border-yellow-100">
                     <ShieldCheck className="text-[#FFB300] mb-4" size={32} />
                     <h3 className="font-bold text-lg mb-2">Safety First</h3>
                     <p className="text-gray-500 text-sm">Verified drivers and secure tracking.</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="bg-yellow-50 p-6 rounded-2xl shadow-sm border border-yellow-100">
                     <Users className="text-[#FFB300] mb-4" size={32} />
                     <h3 className="font-bold text-lg mb-2">Community</h3>
                     <p className="text-gray-500 text-sm">Empowering riders and drivers alike.</p>
                 </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="bg-yellow-50 p-6 rounded-2xl shadow-sm border border-yellow-100">
                     <Award className="text-[#FFB300] mb-4" size={32} />
                     <h3 className="font-bold text-lg mb-2">Excellence</h3>
                     <p className="text-gray-500 text-sm">Top-tier service quality guaranteed.</p>
                 </div>
             </div>
+        </div>
+
+        {/* Scroll Animation Section */}
+        <div className="bg-gray-100 py-16 mt-10">
+          <ContainerScroll
+            titleComponent={
+              <div className="mb-8">
+                <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none text-center">
+                  Dedicated to serving <br />
+                  <span className="text-4xl md:text-5xl font-black text-[#FFB300] mt-2 block leading-none">
+                    Global Communities
+                  </span>
+                </h2>
+              </div>
+            }
+          >
+            <GlobalCommunitiesDashboard />
+          </ContainerScroll>
         </div>
       </div>
     </div>

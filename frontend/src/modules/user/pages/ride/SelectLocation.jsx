@@ -720,19 +720,28 @@ const SelectLocation = () => {
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) return;
     setIsLocating(true);
+    
+    const handleSuccess = (pos) => {
+      setIsLocating(false);
+      const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.panTo(newCoords);
+        mapInstanceRef.current.setZoom(17);
+      }
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setIsLocating(false);
-        const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.panTo(newCoords);
-          mapInstanceRef.current.setZoom(17);
-        }
-      },
+      handleSuccess,
       () => {
-        setIsLocating(false);
+        navigator.geolocation.getCurrentPosition(
+          handleSuccess,
+          () => {
+            setIsLocating(false);
+          },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+        );
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   };
 
@@ -867,45 +876,56 @@ const SelectLocation = () => {
   const handleUseCurrentLocationResult = () => {
     if (!navigator.geolocation) return;
     setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setIsLocating(false);
-        const { latitude, longitude } = pos.coords;
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
-          if (status === 'OK' && results[0]) {
-            const addr = results[0].formatted_address;
-            const coords = [longitude, latitude];
-            if (isParcelFlow) {
-              returnParcelSelection(activeInput, addr, coords);
-              return;
-            }
-            if (activeInput === 'drop') {
-              setDrop(addr);
-              setDropCoords(coords);
-              handleConfirmNavigate(addr, coords);
-            } else {
-              handleSelectResult(addr, coords);
-            }
-          } else {
-            const raw = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-            const coords = [longitude, latitude];
-            if (isParcelFlow) {
-              returnParcelSelection(activeInput, raw, coords);
-              return;
-            }
-            if (activeInput === 'drop') {
-              setDrop(raw);
-              setDropCoords(coords);
-              handleConfirmNavigate(raw, coords);
-            } else {
-              handleSelectResult(raw, coords);
-            }
+
+    const handleSuccess = (pos) => {
+      setIsLocating(false);
+      const { latitude, longitude } = pos.coords;
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const addr = results[0].formatted_address;
+          const coords = [longitude, latitude];
+          if (isParcelFlow) {
+            returnParcelSelection(activeInput, addr, coords);
+            return;
           }
-        });
+          if (activeInput === 'drop') {
+            setDrop(addr);
+            setDropCoords(coords);
+            handleConfirmNavigate(addr, coords);
+          } else {
+            handleSelectResult(addr, coords);
+          }
+        } else {
+          const raw = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          const coords = [longitude, latitude];
+          if (isParcelFlow) {
+            returnParcelSelection(activeInput, raw, coords);
+            return;
+          }
+          if (activeInput === 'drop') {
+            setDrop(raw);
+            setDropCoords(coords);
+            handleConfirmNavigate(raw, coords);
+          } else {
+            handleSelectResult(raw, coords);
+          }
+        }
+      });
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
+      () => {
+        navigator.geolocation.getCurrentPosition(
+          handleSuccess,
+          () => {
+            setIsLocating(false);
+          },
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+        );
       },
-      () => setIsLocating(false),
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   };
 

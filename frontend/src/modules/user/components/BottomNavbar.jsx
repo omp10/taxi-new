@@ -78,7 +78,7 @@ const BottomNavbar = () => {
                         damping: 32,
                         mass: 1
                       }}
-                      className="absolute -inset-y-2 -inset-x-4 bg-slate-900 rounded-[20px] shadow-[0_8px_20px_rgba(15,23,42,0.25)]"
+                      className="absolute -inset-y-2 -inset-x-4 bg-yellow-400 dark:bg-yellow-500 rounded-[20px] shadow-[0_8px_20px_rgba(234,179,8,0.3)]"
                     />
                   )}
                 </AnimatePresence>
@@ -106,8 +106,8 @@ const BottomNavbar = () => {
                   ) : (
                     <Icon
                       size={21}
-                      strokeWidth={isActive ? 2.5 : 2}
-                      className={`transition-colors duration-300 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`}
+                      strokeWidth={isActive ? 2.8 : 2}
+                      className={`transition-colors duration-300 ${isActive ? 'text-slate-950 dark:text-slate-950 font-extrabold' : 'text-slate-400 group-hover:text-slate-600'}`}
                     />
                   )}
                 </motion.div>
@@ -122,8 +122,8 @@ const BottomNavbar = () => {
                   transition={{
                     duration: 0.2
                   }}
-                  className={`relative z-20 mt-1 font-['Outfit'] text-[10px] font-medium uppercase tracking-[0.12em] transition-colors duration-300 ${
-                    isActive ? 'text-white' : 'text-slate-500'
+                  className={`relative z-20 mt-1 font-['Outfit'] text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-300 ${
+                    isActive ? 'text-slate-950 dark:text-slate-950' : 'text-slate-500'
                   }`}
                 >
                   {label}
@@ -138,7 +138,7 @@ const BottomNavbar = () => {
                       stiffness: 400,
                       damping: 32
                     }}
-                    className="absolute -bottom-2 w-4 h-1 bg-white/20 rounded-full blur-[2px]"
+                    className="absolute -bottom-2 w-4 h-1 bg-slate-950/20 rounded-full blur-[2px]"
                   />
                 )}
               </div>

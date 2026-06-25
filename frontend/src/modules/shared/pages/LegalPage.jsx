@@ -169,7 +169,7 @@ const LegalPage = () => {
 
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900">
-      <div className="fixed top-0 left-0 right-0 z-50 border-b border-stone-200 bg-white/90 backdrop-blur-md">
+      <div className="fixed top-0 left-0 right-0 z-50 border-b border-yellow-100/80 bg-yellow-50/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-6">
           <button
             onClick={() => navigate(-1)}
