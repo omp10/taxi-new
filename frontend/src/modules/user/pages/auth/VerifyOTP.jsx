@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, ChevronRight, MessageSquare } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronRight, MessageSquare, Sun, Moon } from 'lucide-react';
 import { userAuthService } from '../../services/authService';
 import { useSettings } from '../../../../shared/context/SettingsContext';
-import loginIllustration from '../../../../assets/images/login-illustration.png';
+import { useUserTheme } from '../../../../shared/context/UserThemeContext';
+import yellowTaxiLoginBg from '../../../../assets/images/yellow_taxi_login_bg.png';
+import { toast } from 'react-hot-toast';
 
 const unwrap = (response) => response?.data?.data || response?.data || response;
 const PENDING_SIGNUP_PHONE_KEY = 'pendingUserSignupPhone';
@@ -32,6 +34,7 @@ const VerifyOTP = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { settings } = useSettings();
+  const { theme, toggleTheme } = useUserTheme();
   const inputs = useRef([]);
   
   const phone = String(
@@ -52,11 +55,14 @@ const VerifyOTP = () => {
     '',
   ).trim().toUpperCase();
 
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(RESEND_OTP_COOLDOWN_SECONDS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [showPermissions, setShowPermissions] = useState(false);
+  const [permissionStep, setPermissionStep] = useState('location');
 
   const appName = settings.general?.app_name || 'Rydon24';
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
@@ -78,38 +84,83 @@ const VerifyOTP = () => {
   }, [timer]);
 
   useEffect(() => {
-    const focusTimer = window.setTimeout(() => {
-      inputs.current[0]?.focus();
-    }, 500);
-    return () => window.clearTimeout(focusTimer);
-  }, []);
+    if (!showPermissions) {
+      const focusTimer = setTimeout(() => {
+        inputs.current[0]?.focus();
+      }, 300);
+      return () => clearTimeout(focusTimer);
+    }
+  }, [showPermissions]);
+
+  // Auto-verify as soon as 4 digits are typed/filled
+  useEffect(() => {
+    const enteredOtp = otp.filter(Boolean).join('');
+    if (enteredOtp.length === 4 && !loading && !success && !showPermissions) {
+      handleVerify(enteredOtp);
+    }
+  }, [otp]);
 
   const handleChange = (index, value) => {
-    if (isNaN(value)) return;
+    const cleanValue = value.replace(/\D/g, '');
+    if (!cleanValue) {
+      const newOtp = [...otp];
+      newOtp[index] = '';
+      setOtp(newOtp);
+      return;
+    }
+
     const newOtp = [...otp];
-    newOtp[index] = value.substring(value.length - 1);
+    newOtp[index] = cleanValue.substring(cleanValue.length - 1);
     setOtp(newOtp);
-    if (value && index < 3) {
+    setError('');
+
+    if (index < 5) {
       inputs.current[index + 1]?.focus();
     }
-    setError('');
   };
 
   const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputs.current[index - 1]?.focus();
+    if (e.key === 'Backspace') {
+      if (!otp[index] && index > 0) {
+        const newOtp = [...otp];
+        newOtp[index - 1] = '';
+        setOtp(newOtp);
+        inputs.current[index - 1]?.focus();
+      } else {
+        const newOtp = [...otp];
+        newOtp[index] = '';
+        setOtp(newOtp);
+      }
     }
   };
 
-  const handleVerify = async () => {
-    const fullOtp = otp.join('');
-    if (fullOtp.length < 4 || loading) return;
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pastedData) return;
+
+    const newOtp = [...otp];
+    for (let i = 0; i < 6; i++) {
+      if (i < pastedData.length) {
+        newOtp[i] = pastedData[i];
+      }
+    }
+    setOtp(newOtp);
+
+    const focusIndex = Math.min(pastedData.length, 5);
+    inputs.current[focusIndex]?.focus();
+  };
+
+  const handleVerify = async (codeToVerify) => {
+    const finalCode = codeToVerify || otp.filter(Boolean).join('');
+    if (finalCode.length < 4 || loading) return;
 
     setLoading(true);
     setError('');
+    setShake(false);
 
     try {
-      const response = await userAuthService.verifyOtp(phone, fullOtp);
+      const response = await userAuthService.verifyOtp(phone, finalCode);
       const payload = unwrap(response);
 
       setSuccess(true);
@@ -122,14 +173,21 @@ const VerifyOTP = () => {
         notifyAuthReady();
         syncPushTokens();
         sessionStorage.removeItem(PENDING_OTP_PHONE_KEY);
-        setTimeout(() => navigate('/taxi/user', { replace: true }), 1000);
+        
+        // Successful login for existing user triggers permissions flow
+        setTimeout(() => setShowPermissions(true), 800);
         return;
       }
 
-      setTimeout(() => navigate('/taxi/user/signup', { state: { phone, otpVerified: true, referralCode, employeeCode } }), 1000);
+      // New user goes to Complete Profile screen
+      setTimeout(() => navigate('/taxi/user/signup', { state: { phone, otpVerified: true, referralCode, employeeCode } }), 800);
     } catch (err) {
-      setError(err?.message || 'Invalid code. Please try again.');
-      setOtp(['', '', '', '']);
+      const errMsg = err?.message || 'Invalid code. Please try again.';
+      setError(errMsg);
+      toast.error(errMsg);
+      setShake(true);
+      setTimeout(() => setShake(false), 450);
+      setOtp(['', '', '', '', '', '']);
       inputs.current[0]?.focus();
     } finally {
       setLoading(false);
@@ -142,82 +200,211 @@ const VerifyOTP = () => {
     setError('');
     try {
       await userAuthService.startOtp(phone);
-      setOtp(['', '', '', '']);
+      setOtp(['', '', '', '', '', '']);
       setTimer(RESEND_OTP_COOLDOWN_SECONDS);
+      toast.success('OTP sent successfully');
       inputs.current[0]?.focus();
     } catch (err) {
-      setError(err?.message || 'Failed to resend code');
+      const errMsg = err?.message || 'Failed to resend code';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAllowLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          setPermissionStep('notification');
+        },
+        () => {
+          setPermissionStep('notification');
+        }
+      );
+    } else {
+      setPermissionStep('notification');
+    }
+  };
+
+  const handleAllowNotifications = async () => {
+    try {
+      if (window.__registerBrowserFcmToken) {
+        await window.__registerBrowserFcmToken({ interactive: true });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    navigate('/taxi/user', { replace: true });
+  };
+
+  // Render Post-Login Permission Sequence
+  if (showPermissions) {
+    return (
+      <div className="login-page min-h-screen max-w-lg mx-auto flex flex-col justify-between p-8 relative">
+        {/* Floating Theme Toggle */}
+        <button 
+          onClick={toggleTheme}
+          className="theme-toggle-floating"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
+        {/* Ambient Blobs */}
+        <div className="absolute top-[-10%] right-[-10%] w-72 h-72 rounded-full bg-[#FFB300]/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-72 h-72 rounded-full bg-[#FFB300]/5 blur-3xl pointer-events-none" />
+
+        <AnimatePresence mode="wait">
+          {permissionStep === 'location' ? (
+            <motion.div
+              key="location"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="flex-1 flex flex-col items-center justify-center text-center space-y-8 my-auto z-10"
+            >
+              <div className="w-24 h-24 bg-[#FFB300]/10 rounded-full flex items-center justify-center text-[#FFB300] shadow-xl">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25A7.5 7.5 0 1119.5 10.5z" />
+                </svg>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-[28px] font-black tracking-tight login-primary-text uppercase">
+                  Enable Location
+                </h2>
+                <p className="login-subtitle text-sm font-semibold leading-relaxed px-4">
+                  Allow location access to view nearby drivers, accurate pickup points, and track your rides in real-time.
+                </p>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="notification"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="flex-1 flex flex-col items-center justify-center text-center space-y-8 my-auto z-10"
+            >
+              <div className="w-24 h-24 bg-[#FFB300]/10 rounded-full flex items-center justify-center text-[#FFB300] shadow-xl">
+                <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="text-[28px] font-black tracking-tight login-primary-text uppercase">
+                  Enable Notifications
+                </h2>
+                <p className="login-subtitle text-sm font-semibold leading-relaxed px-4">
+                  Receive notifications for ride acceptance, driver arrivals, payment confirmations, and exclusive promotions.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="space-y-3 w-full pb-8 z-10">
+          <motion.button
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={permissionStep === 'location' ? handleAllowLocation : handleAllowNotifications}
+            className="login-button flex items-center justify-center gap-2 cursor-pointer animate-pulse"
+          >
+            Allow Permission
+          </motion.button>
+          
+          <button
+            onClick={permissionStep === 'location' ? () => setPermissionStep('notification') : () => navigate('/taxi/user', { replace: true })}
+            className="w-full py-4 text-sm font-extrabold uppercase tracking-widest login-subtitle hover:text-white transition-colors cursor-pointer"
+          >
+            Skip
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#E7F5E8] flex flex-col font-['Outfit'] select-none overflow-hidden relative">
-      {/* Top Background Illustration - Full Cover */}
-      <div className="absolute top-0 left-0 right-0 h-[65%] z-0">
+    <div className="login-page select-none relative">
+      {/* Floating Theme Toggle */}
+      <button 
+        onClick={toggleTheme}
+        className="theme-toggle-floating"
+        aria-label="Toggle theme"
+      >
+        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
+
+      {/* Immersive Top Background Image */}
+      <div className="login-hero">
         <motion.img 
-          initial={{ opacity: 0, scale: 1.05 }}
+          initial={{ opacity: 0, scale: 1.06 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          src={loginIllustration} 
-          alt="Travel background" 
-          className="w-full h-full object-cover object-bottom"
+          transition={{ duration: 1.0, ease: "easeOut" }}
+          src={yellowTaxiLoginBg} 
+          alt="Taxi background" 
+          className="login-hero-img"
         />
-        <div className="absolute inset-0 bg-black/5" />
+
+        {/* Floating Header Logo */}
+        <header className="login-logo flex items-center justify-between">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-xl"
+          >
+            {appLogo ? (
+              <img 
+                src={appLogo} 
+                alt={appName} 
+                className="h-6 w-6 object-contain rounded-full bg-slate-950 p-0.5"
+              />
+            ) : (
+              <div className="h-6 w-6 bg-[#FFB300] rounded-full flex items-center justify-center shadow-lg">
+                 <span className="text-[11px] font-black italic text-slate-950">{appName[0]?.toUpperCase() || 'R'}</span>
+              </div>
+            )}
+            <span className="text-[13px] font-black tracking-wide text-white uppercase">{appName}</span>
+          </motion.div>
+        </header>
+
+        {/* Floating Title Over Image */}
+        <div className="login-hero-text space-y-1.5 pointer-events-none">
+          <span className="inline-block text-[9px] font-extrabold uppercase tracking-widest login-accent-text bg-[#FFB300]/10 px-2.5 py-0.5 rounded-full">
+            Security Verification
+          </span>
+          <h1 className="text-[28px] font-black leading-[1.15] tracking-tight uppercase text-white">
+            <span className="login-accent-text">Verify Your Number</span> <br />
+            Secure Access Setup
+          </h1>
+        </div>
       </div>
 
-      {/* Top Header Section */}
-      <header className="p-6 pt-10 flex items-center justify-between z-20">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-3 bg-white/10 backdrop-blur-md p-2 pr-4 rounded-full border border-white/20 shadow-xl"
-        >
-          {appLogo ? (
-            <img 
-              src={appLogo} 
-              alt={appName} 
-              className="h-8 w-8 object-contain rounded-full bg-black p-1.5"
-            />
-          ) : (
-            <div className="h-8 w-8 bg-black rounded-full flex items-center justify-center">
-               <div className="w-3 h-3 bg-white rounded-sm" />
-            </div>
-          )}
-          <span className="text-lg font-black tracking-tighter text-black uppercase">{appName}</span>
-        </motion.div>
-
-        <motion.button 
-          whileTap={{ scale: 0.9 }}
-          onClick={() => navigate(-1)}
-          className="h-12 w-12 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-black shadow-xl"
-        >
-          <ArrowLeft size={20} strokeWidth={3} />
-        </motion.button>
-      </header>
-
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col justify-end">
-        {/* Text and Actions Section */}
         <motion.div 
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          transition={{ type: "spring", damping: 25, stiffness: 120 }}
-          className="bg-white rounded-t-[40px] px-8 pt-10 pb-12 shadow-[0_-20px_60px_rgba(0,0,0,0.1)] z-20 relative"
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+          className="login-card"
         >
           <div className="space-y-8">
-            <div className="space-y-2 text-center">
-               <h2 className="text-[30px] font-black text-slate-900 leading-[1.1] tracking-tight">
+            <div className="space-y-2">
+               <h2 className="text-[26px] font-black login-primary-text leading-tight">
                  Verify Number
                </h2>
-               <p className="text-slate-400 font-medium text-sm">
-                 We've sent a code to <span className="text-slate-900 font-bold">+91 {phone}</span>
+               <p className="login-subtitle text-[14px] font-semibold">
+                 We've sent a code to <span className="login-primary-text font-bold">+91 {phone}</span>
                </p>
             </div>
 
             {/* OTP Inputs */}
-            <div className="flex justify-between gap-3">
+            <div className={`flex justify-between gap-2.5 ${shake ? 'shake-animation' : ''}`}>
               {otp.map((digit, index) => (
                 <input
                   key={index}
@@ -228,63 +415,45 @@ const VerifyOTP = () => {
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className={`h-16 w-full rounded-2xl border-2 text-center text-3xl font-black transition-all outline-none ${
-                    digit 
-                      ? 'border-slate-900 bg-slate-50 text-slate-900 shadow-lg shadow-slate-100' 
-                      : 'border-slate-50 bg-slate-50 text-slate-900 focus:border-slate-200 focus:bg-white'
-                  }`}
+                  onPaste={handlePaste}
+                  className="h-14 w-12 rounded-xl text-center text-2xl font-extrabold outline-none otp-input-field"
                 />
               ))}
             </div>
 
-            <div className="space-y-6">
-              <AnimatePresence>
-                {error && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="bg-rose-50 border border-rose-100 rounded-2xl p-4 text-center"
-                  >
-                    <p className="text-rose-500 text-xs font-bold">{error}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="flex flex-col items-center gap-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300">
-                  Didn't receive the code?
-                </p>
-                <button
-                  onClick={handleResend}
-                  disabled={timer > 0 || loading}
-                  className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${
-                    timer > 0 
-                      ? 'text-slate-200' 
-                      : 'text-slate-900 hover:opacity-70 underline underline-offset-4 decoration-2'
-                  }`}
-                >
-                  <MessageSquare size={14} />
-                  {timer > 0 ? `Retry in ${timer}s` : 'Resend Code'}
-                </button>
+            {error && (
+              <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-400">
+                {error}
               </div>
+            )}
+
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] login-subtitle">
+                Didn't receive the code?
+              </p>
+              <button
+                onClick={handleResend}
+                disabled={timer > 0 || loading}
+                className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${
+                  timer > 0 
+                    ? 'login-subtitle opacity-40' 
+                    : 'login-primary-text hover:opacity-70 underline underline-offset-4 decoration-2 cursor-pointer'
+                }`}
+              >
+                <MessageSquare size={14} />
+                {timer > 0 ? `Retry in ${timer}s` : 'Resend Code'}
+              </button>
             </div>
 
             <motion.button 
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleVerify}
-              disabled={loading || otp.join('').length !== 4 || success}
-              className={`w-full py-5 rounded-2xl text-[16px] font-bold transition-all flex items-center justify-center gap-3 ${
-                otp.join('').length === 4 && !success
-                  ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/30'
-                  : success
-                  ? 'bg-emerald-500 text-white shadow-emerald-500/20'
-                  : 'bg-slate-100 text-slate-300 pointer-events-none'
-              }`}
+              onClick={() => handleVerify()}
+              disabled={loading || otp.filter(Boolean).join('').length < 4 || success}
+              className="login-button flex items-center justify-center gap-3"
             >
               {loading ? (
-                <div className="h-6 w-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                <div className="h-6 w-6 border-4 border-slate-950/20 border-t-slate-950 rounded-full animate-spin" />
               ) : success ? (
                 <div className="flex items-center gap-3">
                   <CheckCircle2 size={24} />
@@ -292,7 +461,7 @@ const VerifyOTP = () => {
                 </div>
               ) : (
                 <>
-                  <span className="uppercase tracking-[0.2em]">Verify & Continue</span>
+                  <span className="uppercase tracking-[0.15em]">Verify & Continue</span>
                   <ChevronRight size={24} strokeWidth={4} />
                 </>
               )}

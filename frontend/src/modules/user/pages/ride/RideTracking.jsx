@@ -94,6 +94,7 @@ const RotatingVehicleMarker = ({ position, iconUrl = carIcon, heading = 0, title
           alt={title}
           className="h-12 w-12 object-contain drop-shadow-[0_8px_10px_rgba(15,23,42,0.35)]"
           draggable={false}
+          onError={(e) => { e.target.onerror = null; e.target.src = carIcon; }}
         />
       </div>
     </div>
@@ -1391,7 +1392,7 @@ const RideTracking = () => {
                 </div>
                 {/* Car Badge */}
                 <div className="absolute -top-1 -right-1 w-6 h-6 rounded-lg bg-[#111827] border-2 border-white flex items-center justify-center shadow-md">
-                   <img src={vehicleIcon} alt="Vehicle icon" className="h-3.5 w-3.5 object-contain brightness-0 invert" draggable={false} />
+                   <img src={vehicleIcon} alt="Vehicle icon" className="h-3.5 w-3.5 object-contain brightness-0 invert" draggable={false} onError={(e) => { e.target.onerror = null; e.target.src = carIcon; }} />
                 </div>
                 {/* Rating Badge */}
                 <div className="absolute -bottom-1 -right-1 bg-yellow-400 px-1.5 py-0.5 rounded-full border-2 border-white flex items-center gap-0.5 shadow-md">
@@ -1486,7 +1487,7 @@ const RideTracking = () => {
                     onError={() => setVehicleImageBroken(true)}
                   />
                 ) : (
-                  <img src={vehicleIcon} alt={vehicleLabel} className="h-6 w-6 object-contain opacity-60" />
+                  <img src={vehicleIcon} alt={vehicleLabel} className="h-6 w-6 object-contain opacity-60" onError={(e) => { e.target.onerror = null; e.target.src = carIcon; }} />
                 )}
             </div>
             <div className="flex-1 min-w-0">

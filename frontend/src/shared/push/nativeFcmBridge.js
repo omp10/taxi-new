@@ -40,7 +40,14 @@ const getTokenPayload = (token) => {
       return null;
     }
 
-    return JSON.parse(atob(decodeBase64Url(payload)));
+    const decoded = JSON.parse(atob(decodeBase64Url(payload)));
+    if (decoded && typeof decoded.exp === 'number') {
+      const isExpired = Date.now() / 1000 >= decoded.exp;
+      if (isExpired) {
+        return null;
+      }
+    }
+    return decoded;
   } catch {
     return null;
   }

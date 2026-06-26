@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CalendarClock, ChevronRight, Clock3, MapPin, ShieldCheck, User } from 'lucide-react';
+import { CalendarClock, ChevronRight, Clock3, MapPin, ShieldCheck, User, Clock, Heart, Search } from 'lucide-react';
 import HeaderGreeting from '../components/HeaderGreeting';
 import ServiceGrid from '../components/ServiceGrid';
 import LocationMapSection from '../components/LocationMapSection';
@@ -24,6 +24,7 @@ import api from '../../../shared/api/axiosInstance';
 import { useSettings } from '../../../shared/context/SettingsContext';
 import { useUserTheme } from '../../../shared/context/UserThemeContext';
 import { userService } from '../services/userService';
+import { getLocalUserToken, clearLocalUserSession } from '../services/authService';
 import {
   CURRENT_RIDE_UPDATED_EVENT,
   getCurrentRide,
@@ -202,6 +203,165 @@ const normalizeRentalCurrentRideSnapshot = (ride = {}, previousRide = {}) => {
 const isRentalCurrentRide = (ride) =>
   String(ride?.serviceType || ride?.type || '').toLowerCase() === 'rental';
 
+const calculateDistanceKm = (fromCoords, toCoords) => {
+  const [fromLng, fromLat] = fromCoords;
+  const [toLng, toLat] = toCoords;
+
+  if (![fromLng, fromLat, toLng, toLat].every((value) => Number.isFinite(Number(value)))) {
+    return null;
+  }
+
+  const toRadians = (value) => (Number(value) * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const latDelta = toRadians(toLat - fromLat);
+  const lngDelta = toRadians(toLng - fromLng);
+  const startLat = toRadians(fromLat);
+  const endLat = toRadians(toLat);
+  const a =
+    Math.sin(latDelta / 2) ** 2 +
+    Math.cos(startLat) * Math.cos(endLat) * Math.sin(lngDelta / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return (earthRadiusKm * c).toFixed(1);
+};
+
+const RecentLocationsList = ({ routePrefix }) => {
+  const navigate = useNavigate();
+  const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
+
+  const [recentLocations, setRecentLocations] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem('rydon24:recentLocations');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    // Pre-fill with dynamic defaults from reference screenshot if empty
+    return [
+      {
+        name: 'Prakash Bakery',
+        address: 'Bk Sindhi Colony, Indore, Madhya Pradesh, India',
+        lat: 22.7039,
+        lon: 75.9048,
+        distance: '2.5 km',
+      },
+      {
+        name: 'Navlakha Bus Stand',
+        address: 'Ahilyapur, Chhanera, New Harsud, Harsud, Madhya Pradesh',
+        lat: 22.6926,
+        lon: 75.8586,
+        distance: '3.1 km',
+      },
+      {
+        name: 'Jhabua Tower Road',
+        address: 'Chhoti Gwaltoli, Indore, Madhya Pradesh, India',
+        lat: 22.7187,
+        lon: 75.8553,
+        distance: '1.2 km',
+      },
+    ];
+  });
+
+  const getSavedLocationCoords = () => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem('rydon24:lastLocation') || '{}');
+      const lat = Number(saved?.lat);
+      const lon = Number(saved?.lon);
+      if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        return [lon, lat];
+      }
+    } catch (e) {}
+    return null;
+  };
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      try {
+        const saved = window.localStorage.getItem('rydon24:recentLocations');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setRecentLocations(parsed);
+          }
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('storage', handleRefresh);
+    window.addEventListener('rydon24:recent-locations-updated', handleRefresh);
+    return () => {
+      window.removeEventListener('storage', handleRefresh);
+      window.removeEventListener('rydon24:recent-locations-updated', handleRefresh);
+    };
+  }, []);
+
+  const recentList = useMemo(() => {
+    const currentCoords = getSavedLocationCoords();
+    return recentLocations.map((item) => {
+      let distanceLabel = item.distance;
+      if (currentCoords && item.lat && item.lon) {
+        const distKm = calculateDistanceKm(currentCoords, [item.lon, item.lat]);
+        if (distKm !== null) {
+          distanceLabel = `${distKm} km`;
+        }
+      }
+      return {
+        ...item,
+        distance: distanceLabel || 'Recent',
+      };
+    }).slice(0, 3);
+  }, [recentLocations]);
+
+  return (
+    <div className="space-y-1 mt-2">
+      {recentList.map((item, index) => (
+        <div key={index} className="w-full">
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`${routePrefix}/ride/select-location`, {
+                state: {
+                  drop: item.address,
+                  dropCoords: item.lat && item.lon ? [item.lon, item.lat] : null,
+                  activeInput: 'drop',
+                },
+              })
+            }
+            className={`w-full flex items-center justify-between gap-3 py-3 text-left rounded-xl px-2 transition-colors duration-200 ${
+              isDark ? 'hover:bg-slate-900/40' : 'hover:bg-slate-100/60'
+            }`}
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 border ${
+                isDark ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-500'
+              }`}>
+                <Clock size={16} />
+              </div>
+              <div className="min-w-0">
+                <h4 className={`text-[14px] font-bold leading-tight truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  {item.name}
+                </h4>
+                <p className={`text-[11px] font-medium mt-1 truncate ${isDark ? 'text-zinc-400' : 'text-slate-500'}`}>
+                  {item.distance && `${item.distance} • `}{item.address}
+                </p>
+              </div>
+            </div>
+            <div className="text-slate-500 hover:text-rose-500 transition-colors px-1">
+              <Heart size={16} />
+            </div>
+          </button>
+          {index < recentList.length - 1 && (
+            <div className={`border-b border-dashed mx-2 ${isDark ? 'border-slate-800/80' : 'border-slate-200/80'}`} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -209,6 +369,28 @@ const Home = () => {
   const { theme } = useUserTheme();
   const isDark = theme === 'dark';
   const appName = settings.general?.app_name || 'App';
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [pickupAddress, setPickupAddress] = useState(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem('rydon24:lastLocation') || '{}');
+      return String(saved?.address || '').trim() || 'Indore, Madhya Pradesh';
+    } catch (e) {
+      return 'Indore, Madhya Pradesh';
+    }
+  });
+
+  useEffect(() => {
+    const handleLocationUpdate = () => {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem('rydon24:lastLocation') || '{}');
+        setPickupAddress(String(saved?.address || '').trim() || 'Indore, Madhya Pradesh');
+      } catch (e) {}
+    };
+    window.addEventListener('rydon24:location-updated', handleLocationUpdate);
+    return () => {
+      window.removeEventListener('rydon24:location-updated', handleLocationUpdate);
+    };
+  }, []);
 
   const [currentRide, setCurrentRide] = useState(() => {
     const ride = getCurrentRide();
@@ -272,8 +454,9 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+    const token = getLocalUserToken();
     if (!token) {
+      clearLocalUserSession();
       navigate('/taxi/user/login', { replace: true });
     }
   }, [navigate]);
@@ -371,7 +554,7 @@ const Home = () => {
       syncInFlight = true;
       lastSyncAtRef.current = Date.now();
       try {
-        const token = localStorage.getItem('userToken') || localStorage.getItem('token');
+        const token = getLocalUserToken();
         if (!token) {
           persistCurrentRide(null);
           currentRideRef.current = null;
@@ -577,198 +760,368 @@ const Home = () => {
   };
 
   return (
-    <div className={`min-h-screen pb-24 max-w-lg mx-auto relative overflow-hidden font-sans no-scrollbar transition-colors duration-300 ${isDark ? 'bg-slate-900 text-white' : 'bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] text-slate-900'}`}>
+    <div className={`min-h-screen pb-[110px] max-w-lg mx-auto relative overflow-hidden font-sans no-scrollbar transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] text-slate-900'} user-app-theme`}>
       <div className={`absolute -top-16 right-[-40px] h-44 w-44 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-orange-100/60'}`} />
       <div className={`absolute top-52 left-[-60px] h-52 w-52 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-emerald-100/60'}`} />
       <div className={`absolute bottom-28 right-[-40px] h-40 w-40 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-blue-100/60'}`} />
 
-
-      <div className="relative z-10 space-y-4 pb-6">
-        <HeaderGreeting />
-
-        {/* Premium Top Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          onClick={() => navigate(`${routePrefix}/ride/select-category`)}
-          className="mx-5 overflow-hidden rounded-[30px] border border-slate-800 shadow-[0_16px_36px_rgba(0,0,0,0.3)] relative min-h-[175px] flex items-center p-6 cursor-pointer group"
-        >
-          {/* Zooming Background Image */}
-          <div 
-            className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-700 ease-out group-hover:scale-105"
-            style={{
-              backgroundImage: `url(${yellowTaxiImg})`,
-              backgroundPosition: 'center',
-            }}
-          />
-          {/* Dark gradient overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
-
-          <div className="relative z-20 max-w-[80%] space-y-2">
-            <span className="inline-block text-[9px] font-extrabold uppercase tracking-widest text-yellow-500 bg-yellow-400/10 px-2 py-0.5 rounded-full">
-              Super Saver
-            </span>
-            <h2 className="text-[17px] font-black leading-tight tracking-tight uppercase font-['Outfit'] text-white">
-              <span className="text-yellow-400">Experience</span> A New <br />
-              Standard With <br />
-              <span className="text-yellow-400">Rydon 24</span>
-            </h2>
-            <p className="text-[11px] font-semibold text-slate-300 leading-snug">
-              A premier private hire service where luxury and reliability converge for an unrivaled journey.
-            </p>
-          </div>
-        </motion.div>
-
-        {isScheduledAcceptedRide && (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={() => navigate(trackingPath, { state: currentRide })}
-            className={`mx-5 block w-[calc(100%-2.5rem)] overflow-hidden rounded-[32px] border p-6 text-left shadow-[0_24px_48px_rgba(0,0,0,0.15)] transition-all duration-300 ${
-              isDark 
-                ? 'border-slate-800 bg-slate-900/90 text-white' 
-                : 'border-emerald-100/50 bg-[linear-gradient(135deg,#ffffff_0%,#f0fdf4_100%)] text-slate-900 shadow-[0_24px_48px_rgba(16,185,129,0.12)]'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] ${
-                isDark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-emerald-100/50 text-emerald-700'
-              }`}>
-                <ShieldCheck size={12} strokeWidth={3} />
-                Confirmed
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${isDark ? 'bg-yellow-400' : 'bg-emerald-500'}`} />
-                <span className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
-                  isDark ? 'text-yellow-400' : 'text-emerald-600'
-                }`}>Live Status</span>
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-end justify-between">
-              <div className="min-w-0">
-                <h2 className="text-[32px] font-semibold tracking-tight leading-none text-white dark:text-white light:text-slate-950">
-                  {scheduledCountdown}
-                </h2>
-                <p className="mt-2 text-[14px] font-medium opacity-60">
-                  {scheduledDateLabel}
-                </p>
-              </div>
-              <div className="relative mb-1">
-                <div className="absolute -inset-4 rounded-full bg-yellow-400/5 blur-xl animate-pulse" />
-                <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 shadow-2xl shadow-slate-950/40 border border-slate-800">
-                  <img src={currentRideIcon} alt="" className="h-10 w-10 object-contain" />
-                </div>
-              </div>
-            </div>
-
-            <div className={`mt-6 flex items-center justify-between rounded-2xl p-3 shadow-sm border ${
-              isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-white/60 border-white'
-            }`}>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center border ${
-                  isDark ? 'bg-slate-900 border-slate-800 text-yellow-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600'
-                }`}>
-                  <User size={20} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-50 leading-none">Driver & Vehicle</p>
-                  <p className="mt-1 truncate text-[13px] font-semibold">{driverName} • {vehicleLabel}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-50 leading-none">Fare</p>
-                <p className="mt-1 text-[13px] font-semibold">₹{Number(currentRide?.fare || 0).toFixed(0)}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-3 rounded-2xl bg-slate-950 px-4 py-3.5 text-white shadow-xl shadow-slate-950/20">
-              <div className="min-w-0 flex-1">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/40">Trip Route</p>
-                <div className="mt-1 flex items-center gap-2 text-[12px] font-medium">
-                  <span className="truncate max-w-[100px] text-white/90">{(currentRide?.pickup || 'Pickup').split(',')[0]}</span>
-                  <ChevronRight size={12} className="text-white/30" />
-                  <span className="truncate max-w-[100px] text-yellow-400">{(currentRide?.drop || 'Drop').split(',')[0]}</span>
-                </div>
-              </div>
-              <div className="h-8 w-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center">
-                <ChevronRight size={18} strokeWidth={3} className="text-white" />
-              </div>
-            </div>
-          </motion.button>
-        )}
-
-
-
-        <ServiceGrid />
-        {showDeferredSections ? (
-          <>
+      {/* 1. MOBILE LAYOUT: Fixed Bleed Map + Floating Cards + Draggable Bottom Sheet */}
+      <div className="block md:hidden">
+        {/* Fixed Bleed Map */}
+        <div className="fixed inset-x-0 top-0 z-0 h-[44dvh] w-full max-w-lg mx-auto overflow-hidden">
+          {showDeferredSections ? (
             <LocationMapSection />
-            <ActionsSection />
-            <PromoBanners />
-            <ExplorerSection />
+          ) : (
+            <div className="h-full w-full animate-pulse bg-slate-950" />
+          )}
 
-          </>
-        ) : (
-          <div className="space-y-4 px-5">
-            <div className="h-[170px] animate-pulse rounded-[20px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
-            <div className="h-[112px] animate-pulse rounded-[24px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
-            <div className="h-[160px] animate-pulse rounded-[24px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
-          </div>
-        )}
-        <div
-          className="relative w-full"
-          style={{
-            height: 360,
-          }}
-        >
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-[#EEF2F7]/20 via-[#EEF2F7]/5 to-transparent" />
-            <div className="relative z-10 flex h-full items-start justify-center px-6 pt-10 text-left">
-              <div className="flex max-w-[340px] flex-col items-start px-2 py-2 -translate-x-4">
-                <div className="text-[48px] font-semibold tracking-[-0.03em] text-[#FFB300] drop-shadow-[0_10px_30px_rgba(255,179,0,0.4)] leading-none">
-                  Rydon <span className="text-slate-900">24</span>
-                </div>
-                <div className="mt-2 text-[14px] font-sans italic font-medium tracking-[0.04em] text-slate-800">
-                  Your Trusted Journey Partner
-                </div>
-                <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
-                  Made for Everyone, Crafted for You.
-                  <img
-                    src="/flag-in.svg"
-                    alt="India"
-                    className="ml-0.5 inline-block h-[2.2em] w-[1.2em] align-[-0.88em]"
-                    draggable={false}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Floating Header Greeting on top of Map */}
+          <HeaderGreeting floating={true} hideSearch={true} />
 
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              filter: 'grayscale(1) contrast(1.08)',
-              ...footerIllustrationFadeMask,
-            }}
-          >
-            <div className="absolute inset-0" style={footerIllustrationBg} />
-            <div
-              className="absolute inset-0 opacity-55"
-              style={{
-                ...footerIllustrationBg,
-                filter: 'blur(3px)',
-                ...footerIllustrationEdgeBlurMask,
-              }}
-            />
+          {/* Pickup Address Pill */}
+          <div className={`absolute left-[18px] right-[18px] bottom-[68px] z-30 flex items-center gap-2.5 rounded-full px-4 py-3.5 shadow-[0_14px_35px_rgba(0,0,0,0.18)] border transition-colors duration-300 ${
+            isDark ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+          }`}>
+            <div className="w-[11px] h-[11px] rounded-full bg-[#168a45] shrink-0" />
+            <span className="text-xs font-bold truncate flex-1 leading-none">
+              {pickupAddress}
+            </span>
           </div>
         </div>
+
+        {/* Draggable Bottom Sheet */}
+        <motion.div
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 420 }}
+          dragElastic={0.15}
+          onDragEnd={(event, info) => {
+            if (info.offset.y > 60) {
+              setIsExpanded(false);
+            } else if (info.offset.y < -60) {
+              setIsExpanded(true);
+            }
+          }}
+          animate={{ y: isExpanded ? '10dvh' : '38dvh' }}
+          transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+          className={`fixed inset-x-0 bottom-0 z-30 rounded-t-[32px] px-4 pt-2 border-t max-w-lg mx-auto ${
+            isDark
+              ? 'bg-slate-950 text-white border-white/5 shadow-[0_-16px_40px_rgba(0,0,0,0.65)]'
+              : 'bg-white text-slate-900 border-slate-200/80 shadow-[0_-12px_30px_rgba(15,23,42,0.08)]'
+          }`}
+          style={{
+            height: '92dvh',
+            touchAction: 'none'
+          }}
+        >
+          {/* Drag Handle Area */}
+          <div 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full py-3.5 flex justify-center cursor-pointer active:opacity-75"
+          >
+            <div className={`w-12 h-1 rounded-full ${isDark ? 'bg-white/20' : 'bg-slate-350'}`} />
+          </div>
+
+          {/* Scrollable sheet content */}
+          <div className="overflow-y-auto h-[calc(100%-48px)] pb-[110px] no-scrollbar" style={{ touchAction: 'pan-y' }}>
+            <div className="space-y-3">
+              {/* Search Destination Bar */}
+              <div>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => navigate(`${routePrefix}/ride/select-location`)}
+                  className={`flex w-full items-center gap-3 rounded-full px-4 py-3.5 text-left transition-all relative overflow-hidden ${
+                    isDark
+                      ? 'search-button-dark shadow-[0_4px_20px_rgba(0,0,0,0.3)]'
+                      : 'bg-[#f1f3f6] border border-slate-200/40 text-slate-900 shadow-sm'
+                  }`}
+                >
+                  <Search size={18} className={isDark ? 'text-white' : 'text-slate-900'} strokeWidth={2.5} />
+                  <span className={`min-w-0 flex-1 truncate text-[14px] font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    Where do you want to go?
+                  </span>
+                </motion.button>
+              </div>
+
+              {/* Recent Locations List */}
+              <div>
+                <RecentLocationsList routePrefix={routePrefix} />
+              </div>
+
+              {/* Ride Categories (ServiceGrid) */}
+              <div>
+                <ServiceGrid />
+              </div>
+
+              {/* Top Banner (Super Saver) */}
+              <div className="pt-2">
+                <motion.div
+                  onClick={() => navigate(`${routePrefix}/ride/select-location`)}
+                  className="overflow-hidden rounded-[26px] border border-slate-800 shadow-[0_16px_36px_rgba(0,0,0,0.4)] relative min-h-[140px] flex items-center p-5 cursor-pointer group"
+                >
+                  <div 
+                    className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-700 ease-out group-hover:scale-105"
+                    style={{
+                      backgroundImage: `url(${yellowTaxiImg})`,
+                      backgroundPosition: 'center',
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
+
+                  <div className="relative z-20 max-w-[85%] space-y-1.5">
+                    <span className="inline-block text-[8px] font-extrabold uppercase tracking-widest text-[#FFB300] bg-[#FFB300]/10 px-2 py-0.5 rounded-full">
+                      Super Saver
+                    </span>
+                    <h2 className="text-[15px] font-black leading-tight tracking-tight uppercase text-slate-50">
+                      <span className="text-[#FFB300]">Experience</span> A New <br />
+                      Standard With <br />
+                      <span className="text-[#FFB300]">Rydon 24</span>
+                    </h2>
+                    <p className="text-[10px] font-semibold text-slate-200 leading-snug">
+                      A premier private hire service where luxury and reliability converge.
+                    </p>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Additional Content Areas (ActionsSection, PromoBanners, ExplorerSection) */}
+              {showDeferredSections && (
+                <div className="space-y-5 pt-2">
+                  <ActionsSection />
+                  <PromoBanners />
+                  <ExplorerSection />
+                </div>
+              )}
+
+              {/* Active Scheduled Ride Tracker */}
+              {isScheduledAcceptedRide && (
+                <div className="pt-2">
+                  <motion.button
+                    type="button"
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => navigate(trackingPath, { state: currentRide })}
+                    className="block w-full overflow-hidden rounded-[28px] border border-slate-850 p-5 text-left bg-slate-900 text-white shadow-xl"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] bg-yellow-400/10 text-yellow-400">
+                        <ShieldCheck size={11} strokeWidth={3} />
+                        Confirmed
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-1.5 w-1.5 rounded-full animate-pulse bg-yellow-400" />
+                        <span className="text-[9px] font-black uppercase tracking-[0.14em] text-yellow-400">Live Status</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-end justify-between">
+                      <div>
+                        <h2 className="text-[24px] font-black tracking-tight leading-none text-white">
+                          {scheduledCountdown}
+                        </h2>
+                        <p className="mt-1.5 text-[12px] font-bold text-slate-400">
+                          {scheduledDateLabel}
+                        </p>
+                      </div>
+                      <div className="relative mb-1">
+                        <div className="absolute -inset-4 rounded-full bg-yellow-400/5 blur-xl animate-pulse" />
+                        <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950 shadow-2xl border border-slate-800">
+                          <img src={currentRideIcon} alt="" className="h-8 w-8 object-contain" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between rounded-xl p-2.5 bg-slate-950/60 border border-slate-850">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="h-8 w-8 shrink-0 rounded-full bg-slate-900 border border-slate-800 text-yellow-400 flex items-center justify-center">
+                          <User size={16} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 leading-none">Driver & Vehicle</p>
+                          <p className="mt-0.5 truncate text-[12.5px] font-bold">{driverName} • {vehicleLabel}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500 leading-none">Fare</p>
+                        <p className="mt-0.5 text-[12.5px] font-bold">₹{Number(currentRide?.fare || 0).toFixed(0)}</p>
+                      </div>
+                    </div>
+                  </motion.button>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
       </div>
 
+      {/* 2. DESKTOP LAYOUT (hidden md:grid) */}
+      <div className="hidden md:grid md:grid-cols-12 md:gap-8 md:px-6 md:pt-6 relative z-10">
+        
+        {/* Left Column (Greeting + Categories + Promos) */}
+        <div className="md:col-span-5 space-y-4">
+          <HeaderGreeting />
+
+          {/* Premium Top Banner */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            onClick={() => navigate(`${routePrefix}/ride/select-location`)}
+            className="overflow-hidden rounded-[30px] border border-slate-800 shadow-[0_16px_36px_rgba(0,0,0,0.3)] relative min-h-[175px] flex items-center p-6 cursor-pointer group"
+          >
+            <div 
+              className="absolute inset-0 bg-cover bg-no-repeat transition-transform duration-700 ease-out group-hover:scale-105"
+              style={{
+                backgroundImage: `url(${yellowTaxiImg})`,
+                backgroundPosition: 'center',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10" />
+
+            <div className="relative z-20 max-w-[80%] space-y-2">
+              <span className="inline-block text-[9px] font-extrabold uppercase tracking-widest text-yellow-500 bg-yellow-400/10 px-2 py-0.5 rounded-full">
+                Super Saver
+              </span>
+              <h2 className="text-[17px] font-black leading-tight tracking-tight uppercase font-['Outfit'] text-slate-50">
+                <span className="text-yellow-400">Experience</span> A New <br />
+                Standard With <br />
+                <span className="text-yellow-400">Rydon 24</span>
+              </h2>
+              <p className="text-[11px] font-semibold text-slate-200 leading-snug">
+                A premier private hire service where luxury and reliability converge for an unrivaled journey.
+              </p>
+            </div>
+          </motion.div>
+
+          {isScheduledAcceptedRide && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => navigate(trackingPath, { state: currentRide })}
+              className={`block w-full overflow-hidden rounded-[32px] border p-6 text-left shadow-[0_24px_48px_rgba(0,0,0,0.15)] transition-all duration-300 ${
+                isDark 
+                  ? 'border-slate-800 bg-slate-900/90 text-white' 
+                  : 'border-emerald-100/50 bg-[linear-gradient(135deg,#ffffff_0%,#f0fdf4_100%)] text-slate-900 shadow-[0_24px_48px_rgba(16,185,129,0.12)]'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] ${
+                  isDark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-emerald-100/50 text-emerald-700'
+                }`}>
+                  <ShieldCheck size={12} strokeWidth={3} />
+                  Confirmed
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${isDark ? 'bg-yellow-400' : 'bg-emerald-500'}`} />
+                  <span className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                    isDark ? 'text-yellow-400' : 'text-emerald-600'
+                  }`}>Live Status</span>
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-end justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-[32px] font-semibold tracking-tight leading-none text-white dark:text-white light:text-slate-950">
+                    {scheduledCountdown}
+                  </h2>
+                  <p className="mt-2 text-[14px] font-medium opacity-60">
+                    {scheduledDateLabel}
+                  </p>
+                </div>
+                <div className="relative mb-1">
+                  <div className="absolute -inset-4 rounded-full bg-yellow-400/5 blur-xl animate-pulse" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 shadow-2xl shadow-slate-950/40 border border-slate-800">
+                    <img src={currentRideIcon} alt="" className="h-10 w-10 object-contain" />
+                  </div>
+                </div>
+              </div>
+
+              <div className={`mt-6 flex items-center justify-between rounded-2xl p-3 shadow-sm border ${
+                isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-white/60 border-white'
+              }`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center border ${
+                    isDark ? 'bg-slate-900 border-slate-800 text-yellow-400' : 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                  }`}>
+                    <User size={20} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-50 leading-none">Driver & Vehicle</p>
+                    <p className="mt-1 truncate text-[13px] font-semibold">{driverName} • {vehicleLabel}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] opacity-50 leading-none">Fare</p>
+                  <p className="mt-1 text-[13px] font-semibold">₹{Number(currentRide?.fare || 0).toFixed(0)}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-3 rounded-2xl bg-slate-950 px-4 py-3.5 text-white shadow-xl shadow-slate-950/20">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/40">Trip Route</p>
+                  <div className="mt-1 flex items-center gap-2 text-[12px] font-medium">
+                    <span className="truncate max-w-[100px] text-white/90">{(currentRide?.pickup || 'Pickup').split(',')[0]}</span>
+                    <ChevronRight size={12} className="text-white/30" />
+                    <span className="truncate max-w-[100px] text-yellow-400">{(currentRide?.drop || 'Drop').split(',')[0]}</span>
+                  </div>
+                </div>
+                <div className="h-8 w-8 shrink-0 rounded-full bg-white/10 flex items-center justify-center">
+                  <ChevronRight size={18} strokeWidth={3} className="text-white" />
+                </div>
+              </div>
+            </motion.button>
+          )}
+
+          <ServiceGrid />
+
+          {showDeferredSections ? (
+            <>
+              <ActionsSection />
+              <PromoBanners />
+              <ExplorerSection />
+            </>
+          ) : (
+            <div className="space-y-4 px-5 md:px-0">
+              <div className="h-[112px] animate-pulse rounded-[24px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
+              <div className="h-[160px] animate-pulse rounded-[24px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
+            </div>
+          )}
+        </div>
+
+        {/* Right Column (Map) */}
+        <div className="md:col-span-7 space-y-6 md:sticky md:top-6 self-start">
+          {showDeferredSections ? (
+            <LocationMapSection />
+          ) : (
+            <div className="h-[480px] animate-pulse rounded-[20px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
+          )}
+
+          {/* Desktop Branding Footer */}
+          <div className="hidden md:block pt-6">
+            <div className="flex flex-col items-start px-2 py-2">
+              <div className="text-[48px] font-semibold tracking-[-0.03em] text-[#FFB300] drop-shadow-[0_10px_30px_rgba(255,179,0,0.4)] leading-none">
+                Rydon <span className="text-slate-900 dark:text-white">24</span>
+              </div>
+              <div className="mt-2 text-[14px] font-sans italic font-medium tracking-[0.04em] text-slate-800 dark:text-slate-200">
+                Your Trusted Journey Partner
+              </div>
+              <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">
+                Made for Everyone, Crafted for You.
+                <img
+                  src="/flag-in.svg"
+                  alt="India"
+                  className="ml-0.5 inline-block h-[2.2em] w-[1.2em] align-[-0.88em]"
+                  draggable={false}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Floating Active Trip HUD (above bottom navigation bar) */}
       <AnimatePresence>
         {currentRide && (
           <motion.button
@@ -873,8 +1226,6 @@ const Home = () => {
           </motion.button>
         )}
       </AnimatePresence>
-
-
 
       <BottomNavbar />
     </div>

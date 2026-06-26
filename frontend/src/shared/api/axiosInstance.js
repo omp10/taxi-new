@@ -137,7 +137,14 @@ const getTokenPayload = (token) => {
       return null;
     }
 
-    return JSON.parse(atob(decodeBase64Url(payload)));
+    const decoded = JSON.parse(atob(decodeBase64Url(payload)));
+    if (decoded && typeof decoded.exp === 'number') {
+      const isExpired = Date.now() / 1000 >= decoded.exp;
+      if (isExpired) {
+        return null;
+      }
+    }
+    return decoded;
   } catch {
     return null;
   }
@@ -388,13 +395,21 @@ api.interceptors.response.use(
       const authHeader = error.config?.headers?.Authorization || error.config?.headers?.authorization || '';
       const token = String(authHeader).startsWith('Bearer ') ? String(authHeader).slice(7) : '';
       const tokenRole = normalizeAuthRole(getTokenPayload(token)?.role || '');
-      const isAuthStatus = error.response.status === 401 || error.response.status === 403;
-      const shouldClearAuth =
+      
+      const is401 = error.response.status === 401;
+      const is403 = error.response.status === 403;
+      const isStaleMessage = isStaleAuthMessage(serverMessage);
+      const isDeactivatedOrDeleted =
         serverMessage === 'Authenticated account no longer exists' ||
-        (tokenRole === 'user' && serverMessage === 'User account is not active') ||
-        isStaleAuthMessage(serverMessage);
+        (tokenRole === 'user' && serverMessage === 'User account is not active');
 
-      if ((isAuthStatus || isStaleAuthMessage(serverMessage)) && shouldClearAuth) {
+      const shouldClearAuth =
+        (is401 ||
+        isStaleMessage ||
+        (is403 && isDeactivatedOrDeleted)) &&
+        Boolean(token);
+
+      if (shouldClearAuth) {
         clearStaleAuthState(tokenRole, token);
         window.dispatchEvent(new CustomEvent('app:auth-stale', {
           detail: { role: tokenRole || null, message: serverMessage, token },

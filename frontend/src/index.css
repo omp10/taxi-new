@@ -298,47 +298,40 @@ body {
    ========================================================================== */
 
 /* 1. Global Font and Typography for User App */
+/* 1. Global Font and Typography for User App */
 .user-app-theme,
 .user-app-theme * {
-  font-family: 'Poppins', 'Inter', 'Outfit', system-ui, -apple-system, sans-serif !important;
+  font-family: 'Plus Jakarta Sans', 'Inter', 'Outfit', system-ui, -apple-system, sans-serif !important;
 }
 
 /* 2. Color Schemes for Dark Mode (Default) */
 .user-app-theme.dark {
-  --bg-app: #020617;
-  --bg-card: #0f172a;
-  --bg-card-hover: #1e293b;
-  --bg-input: #1e293b;
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
-  --border-color: #334155;
-  --border-color-hover: #475569;
-  --accent: #ffffff; /* White Accent */
-  --accent-hover: #e2e8f0;
-  --shadow-color: rgba(0, 0, 0, 0.8);
-  --card-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7);
+  --user-bg: #07111f;
+  --user-card-bg: #0f1b2d;
+  --user-card-soft: #162238;
+  --user-text-primary: #ffffff;
+  --user-text-secondary: #b8c2d6;
+  --user-text-muted: #7d8aa5;
+  --user-border: rgba(255,255,255,0.12);
+  --user-accent: #ffc400;
 }
 
 /* 3. Color Schemes for Light Mode */
 .user-app-theme.light {
-  --bg-app: #ffffff;
-  --bg-card: #f8fafc;
-  --bg-card-hover: #f1f5f9;
-  --bg-input: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --border-color: #e2e8f0;
-  --border-color-hover: #cbd5e1;
-  --accent: #0f172a; /* Black Accent */
-  --accent-hover: #1e293b;
-  --shadow-color: rgba(15, 23, 42, 0.08);
-  --card-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.08);
+  --user-bg: #f6f7fb;
+  --user-card-bg: #ffffff;
+  --user-card-soft: #f1f3f8;
+  --user-text-primary: #0b1220;
+  --user-text-secondary: #334155;
+  --user-text-muted: #64748b;
+  --user-border: rgba(15,23,42,0.12);
+  --user-accent: #ffc400;
 }
 
 /* 4. Adaptive Utility Class Mappings inside User App */
 .user-app-theme {
-  background-color: var(--bg-app) !important;
-  color: var(--text-primary) !important;
+  background-color: var(--user-bg) !important;
+  color: var(--user-text-primary) !important;
 }
 
 .user-app-theme .bg-white,
@@ -351,37 +344,74 @@ body {
 .user-app-theme .bg-white\/95,
 .user-app-theme .bg-slate-50,
 .user-app-theme .bg-gray-50,
-.user-app-theme .bg-gray-50\/50 {
-  background-color: var(--bg-card) !important;
+.user-app-theme .bg-gray-50\/50,
+.user-app-theme .bg-slate-900,
+.user-app-theme .bg-slate-950,
+.user-app-theme .bg-zinc-950,
+.user-app-theme .bg-neutral-950,
+.user-app-theme .bg-slate-900\/90,
+.user-app-theme .bg-slate-900\/95,
+.user-app-theme .bg-slate-900\/80,
+.user-app-theme .bg-black\/60,
+.user-app-theme .bg-slate-950\/70,
+.user-app-theme .bg-slate-950\/85,
+.user-app-theme .bg-slate-950\/80,
+.user-app-theme .bg-zinc-900,
+.user-app-theme .bg-zinc-900\/80 {
+  background-color: var(--user-card-bg) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
 }
 
+/* Text Primary overrides */
+.user-app-theme .text-slate-950,
 .user-app-theme .text-slate-900,
 .user-app-theme .text-slate-800,
 .user-app-theme .text-gray-900,
 .user-app-theme .text-gray-800,
-.user-app-theme .text-slate-950,
-.user-app-theme .text-black {
-  color: var(--text-primary) !important;
+.user-app-theme .text-black,
+.user-app-theme .text-white,
+.user-app-theme .text-zinc-100 {
+  color: var(--user-text-primary) !important;
 }
 
-.user-app-theme .text-slate-500,
+/* Text Secondary overrides */
+.user-app-theme .text-slate-700,
+.user-app-theme .text-slate-600,
 .user-app-theme .text-slate-400,
-.user-app-theme .text-gray-500,
-.user-app-theme .text-gray-400 {
-  color: var(--text-secondary) !important;
+.user-app-theme .text-gray-700,
+.user-app-theme .text-gray-600,
+.user-app-theme .text-gray-400,
+.user-app-theme .text-zinc-400,
+.user-app-theme .text-slate-300 {
+  color: var(--user-text-secondary) !important;
 }
 
+/* Text Muted overrides */
+.user-app-theme .text-slate-500,
+.user-app-theme .text-gray-500,
+.user-app-theme .text-zinc-500 {
+  color: var(--user-text-muted) !important;
+}
+
+/* Border overrides */
 .user-app-theme .border-white,
+.user-app-theme .border-white\/10,
 .user-app-theme .border-white\/80,
 .user-app-theme .border-slate-100,
 .user-app-theme .border-slate-200,
 .user-app-theme .border-slate-200\/40,
 .user-app-theme .border-slate-50,
+.user-app-theme .border-slate-800,
+.user-app-theme .border-slate-850,
+.user-app-theme .border-slate-800\/80,
+.user-app-theme .border-zinc-800,
+.user-app-theme .border-slate-300,
+.user-app-theme .border-slate-350,
 .user-app-theme .border-gray-100,
-.user-app-theme .border-gray-200 {
-  border-color: var(--border-color) !important;
+.user-app-theme .border-gray-200,
+.user-app-theme .border-gray-300 {
+  border-color: var(--user-border) !important;
 }
 
 .user-app-theme .shadow-sm,
@@ -390,41 +420,35 @@ body {
 .user-app-theme .shadow-xl,
 .user-app-theme .shadow-2xl,
 .user-app-theme .shadow-premium {
-  box-shadow: var(--card-shadow) !important;
+  box-shadow: 0 12px 30px -10px rgba(0,0,0,0.15) !important;
 }
 
 /* Accent overrides */
 .user-app-theme .text-primary,
 .user-app-theme .text-amber-500,
-.user-app-theme .text-orange-500 {
-  color: var(--accent) !important;
+.user-app-theme .text-orange-500,
+.user-app-theme .text-\[\#FFB300\],
+.user-app-theme .text-yellow-400,
+.user-app-theme .text-yellow-500 {
+  color: var(--user-accent) !important;
 }
 
-.user-app-theme.dark .bg-primary,
-.user-app-theme.dark .bg-orange-500,
-.user-app-theme.dark .bg-amber-500 {
-  background-color: var(--accent) !important;
-  color: #020617 !important;
-}
-
-.user-app-theme.light .bg-primary,
-.user-app-theme.light .bg-orange-500,
-.user-app-theme.light .bg-amber-500 {
-  background-color: var(--accent) !important;
-  color: #ffffff !important;
-}
-
-.user-app-theme .bg-slate-900,
-.user-app-theme .bg-slate-950 {
-  background-color: var(--bg-card) !important;
+.user-app-theme .bg-primary,
+.user-app-theme .bg-orange-500,
+.user-app-theme .bg-amber-500,
+.user-app-theme .bg-\[\#FFB300\],
+.user-app-theme .bg-yellow-400,
+.user-app-theme .bg-yellow-500 {
+  background-color: var(--user-accent) !important;
+  color: #0b1220 !important;
 }
 
 /* Glassmorphism custom components */
 .user-glass-card {
-  background: var(--bg-card) !important;
+  background: var(--user-card-bg) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid var(--border-color) !important;
+  border: 1px solid var(--user-border) !important;
   border-radius: 24px !important;
 }
 
@@ -432,87 +456,340 @@ body {
 .user-app-theme input,
 .user-app-theme select,
 .user-app-theme textarea {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border-color) !important;
+  background-color: var(--user-card-soft) !important;
+  color: var(--user-text-primary) !important;
+  border-color: var(--user-border) !important;
 }
 
 .user-app-theme input:focus,
 .user-app-theme select:focus,
 .user-app-theme textarea:focus {
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 1px var(--accent) !important;
+  border-color: var(--user-accent) !important;
+  box-shadow: 0 0 0 1px var(--user-accent) !important;
 }
 
-/* ==========================================================================
-   GLOBAL RESPONSIVE OVERRIDES FOR ARBITRARY CLASSES (LIGHT/DARK THEME)
-   ========================================================================== */
-
-/* 1. Arbitrary inline gradients */
-.user-app-theme.dark [class*="bg-\[linear-gradient"],
-.user-app-theme.dark[class*="bg-\[linear-gradient"] {
-  background: var(--bg-app) !important;
+/* Lighter grey badges, card inner sections, and alerts map to card-soft */
+.user-app-theme .bg-slate-100,
+.user-app-theme .bg-gray-100,
+.user-app-theme .bg-slate-200,
+.user-app-theme .bg-gray-200,
+.user-app-theme .bg-slate-300,
+.user-app-theme .bg-gray-300,
+.user-app-theme .bg-slate-50\/50,
+.user-app-theme .bg-slate-100\/40,
+.user-app-theme .bg-slate-100\/70,
+.user-app-theme .bg-white\/10,
+.user-app-theme .bg-slate-200\/50,
+.user-app-theme .bg-emerald-50\/30,
+.user-app-theme .bg-emerald-50\/50,
+.user-app-theme .bg-indigo-50\/70,
+.user-app-theme .bg-rose-50,
+.user-app-theme .bg-slate-900\/60,
+.user-app-theme .bg-slate-950\/60,
+.user-app-theme .bg-slate-950\/75,
+.user-app-theme .bg-zinc-800 {
+  background-color: var(--user-card-soft) !important;
 }
 
-.user-app-theme.light [class*="bg-\[linear-gradient"],
-.user-app-theme.light[class*="bg-\[linear-gradient"] {
-  background: linear-gradient(180deg, #F8FAFC 0%, #F3F4F6 38%, #EEF2F7 100%) !important;
-}
-
-/* 2. Light grey/slate page-level backgrounds */
-.user-app-theme.dark .bg-slate-100,
-.user-app-theme.dark .bg-gray-100,
-.user-app-theme.dark .bg-slate-200,
-.user-app-theme.dark .bg-gray-200,
-.user-app-theme.dark .bg-slate-300,
-.user-app-theme.dark .bg-gray-300,
-.user-app-theme.dark .bg-slate-50\/50,
-.user-app-theme.dark .bg-slate-100\/40,
-.user-app-theme.dark .bg-\[\#f5f7fb\],
-.user-app-theme.dark .bg-\[\#f3f4f6\],
-.user-app-theme.dark .bg-\[\#f9f9f9\] {
-  background-color: var(--bg-app) !important;
-}
-
-/* 3. Lighter grey badges, card inner sections, and alerts map to input bg in dark mode */
-.user-app-theme.dark .bg-slate-100\/70,
-.user-app-theme.dark .bg-white\/10,
-.user-app-theme.dark .bg-slate-200\/50,
-.user-app-theme.dark .bg-emerald-50\/30,
-.user-app-theme.dark .bg-emerald-50\/50,
-.user-app-theme.dark .bg-indigo-50\/70,
-.user-app-theme.dark .bg-rose-50 {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
-}
-
-/* 4. Ensure secondary grays are readable */
-.user-app-theme.dark .text-slate-700,
-.user-app-theme.dark .text-slate-600,
-.user-app-theme.dark .text-gray-700,
-.user-app-theme.dark .text-gray-600 {
-  color: var(--text-secondary) !important;
-}
-
-/* 5. Dropdown options adjustments */
 .user-app-theme select option {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
+  background-color: var(--user-card-bg) !important;
+  color: var(--user-text-primary) !important;
 }
 
-/* 6. Buttons with bg-slate-900 or bg-black in dark mode should turn to yellow accent to stand out */
-.user-app-theme.dark button.bg-slate-900,
-.user-app-theme.dark button.bg-black,
-.user-app-theme.dark a.bg-slate-900,
-.user-app-theme.dark a.bg-black {
-  background-color: var(--accent) !important;
-  color: #090D16 !important;
+.user-app-theme button.bg-slate-900,
+.user-app-theme button.bg-black,
+.user-app-theme a.bg-slate-900,
+.user-app-theme a.bg-black {
+  background-color: var(--user-accent) !important;
+  color: #0b1220 !important;
 }
 
-/* 7. Extra border colors mapping */
-.user-app-theme .border-slate-350,
-.user-app-theme .border-gray-300,
-.user-app-theme .border-slate-300 {
-  border-color: var(--border-color) !important;
+@media (min-width: 768px) {
+  /* Let the main container and user pages expand on desktop for a spacious web-app feel */
+  main.max-w-lg,
+  div.max-w-lg {
+    max-width: 72rem !important; /* 1152px */
+  }
+
+  /* Keep the bottom navigation bar and float overlays centered and compact */
+  nav.max-w-lg,
+  .fixed.max-w-lg,
+  .fixed.left-1\/2 {
+    max-width: 32rem !important; /* 512px */
+  }
 }
+
+/* Custom page container background overrides to support dynamic light/dark mode */
+.user-app-theme,
+.user-app-theme main,
+.user-app-theme .min-h-screen {
+  background-color: var(--user-bg) !important;
+}
+
+.user-app-theme [class*="bg-[linear-gradient"],
+.user-app-theme [class*="bg-[#FAFBFF]"],
+.user-app-theme [class*="bg-[#FDFDFD]"],
+.user-app-theme [class*="bg-[#F8FAFC]"],
+.user-app-theme [class*="bg-[#E7F5E8]"],
+.user-app-theme [class*="bg-[#f5f7fb]"] {
+  background: var(--user-bg) !important;
+  background-image: none !important;
+}
+
+/* User App login page Redesign CSS */
+.login-page {
+  min-height: 100dvh;
+  background: var(--user-bg) !important;
+  color: var(--user-text-primary) !important;
+  overflow: hidden;
+  font-family: "Outfit", "Plus Jakarta Sans", "Inter", sans-serif !important;
+}
+
+.login-hero {
+  position: relative;
+  height: 58dvh;
+  overflow: hidden;
+}
+
+.login-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.login-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(8, 7, 22, 0.05) 0%,
+    rgba(8, 7, 22, 0.25) 45%,
+    var(--user-bg) 100%
+  ) !important;
+  z-index: 1;
+}
+
+.login-logo {
+  position: absolute;
+  top: 28px;
+  left: 26px;
+  z-index: 10;
+}
+
+.login-hero-text {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 55px;
+  z-index: 2;
+}
+
+.login-card {
+  position: relative;
+  z-index: 3;
+  margin-top: -35px;
+  min-height: 45dvh;
+  background: var(--user-card-bg) !important;
+  border-radius: 32px 32px 0 0;
+  padding: 28px;
+  border-top: 1px solid var(--user-border);
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+.login-primary-text {
+  color: var(--user-text-primary) !important;
+}
+
+.login-accent-text {
+  color: var(--user-accent) !important;
+}
+
+.login-subtitle {
+  color: var(--user-text-secondary) !important;
+}
+
+.login-button {
+  width: 100%;
+  height: 58px;
+  background: var(--user-accent) !important;
+  color: #080716 !important;
+  border-radius: 14px;
+  font-weight: 800;
+  margin-top: 40px;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 24px rgba(255, 196, 0, 0.2) !important;
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(255, 196, 0, 0.35) !important;
+  background: #ffc400 !important;
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+.login-page input {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.login-page input:focus {
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Shake Animation */
+@keyframes otpShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.shake-animation {
+  animation: otpShake 0.4s ease-in-out;
+}
+
+/* Custom OTP Input Style */
+.otp-input-field {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--user-card-soft) !important;
+  border: 2px solid var(--user-border) !important;
+  color: var(--user-text-primary) !important;
+}
+
+.otp-input-field:focus {
+  border-color: var(--user-accent) !important;
+  background-color: var(--user-card-bg) !important;
+  box-shadow: 0 0 12px rgba(255, 196, 0, 0.2) !important;
+}
+
+/* Theme Toggle Button Style */
+.theme-toggle-floating {
+  position: absolute;
+  top: 28px;
+  right: 26px;
+  z-index: 10;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.theme-toggle-floating:hover {
+  transform: scale(1.08);
+  background: rgba(0, 0, 0, 0.45) !important;
+}
+
+.theme-toggle-floating:active {
+  transform: scale(0.95);
+}
+
+.user-app-theme.light .theme-toggle-floating {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  color: #0b1220 !important;
+}
+
+.user-app-theme.light .theme-toggle-floating:hover {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Custom Search Button Overrides to bypass global button overrides */
+.user-app-theme .search-button-dark {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(63, 63, 70, 0.8) !important;
+}
+
+/* User Theme Custom Variables */
+:root {
+  --user-bg: #0f172a;
+  --user-card-bg: #111827;
+  --user-text-primary: #ffffff;
+  --user-text-secondary: #cbd5e1;
+  --user-border: rgba(255,255,255,0.12);
+  --user-accent: #ffc400;
+}
+
+.user-app-theme.light,
+.user-app-theme .light,
+.user-app-theme[class*="light"] {
+  --user-bg: #ffffff;
+  --user-card-bg: #f7f8fb;
+  --user-text-primary: #0b1220;
+  --user-text-secondary: #5b6473;
+  --user-border: rgba(15,23,42,0.12);
+  --user-accent: #ffc400;
+}
+
+.user-app-theme.dark,
+.user-app-theme .dark,
+.user-app-theme[class*="dark"] {
+  --user-bg: #0f172a;
+  --user-card-bg: #111827;
+  --user-text-primary: #ffffff;
+  --user-text-secondary: #cbd5e1;
+  --user-border: rgba(255,255,255,0.12);
+  --user-accent: #ffc400;
+}
+
+/* Theme variable mapping utilities */
+.user-app-theme {
+  background-color: var(--user-bg) !important;
+  color: var(--user-text-primary) !important;
+}
+
+/* Shortcut image background blob */
+.shortcut-image-bg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  width: 60px;
+  height: 60px;
+  padding: 10px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.user-app-theme.light .shortcut-image-bg,
+.user-app-theme .light .shortcut-image-bg,
+.user-app-theme[class*="light"] .shortcut-image-bg {
+  background: linear-gradient(135deg, #fff7cc, #eef4ff);
+}
+
+.user-app-theme.dark .shortcut-image-bg,
+.user-app-theme .dark .shortcut-image-bg,
+.user-app-theme[class*="dark"] .shortcut-image-bg {
+  background: linear-gradient(135deg, rgba(255,196,0,0.18), rgba(255,255,255,0.08));
+}
+
+
+
+
 

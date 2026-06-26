@@ -153,6 +153,7 @@ const AnimatedVehicleMarker = React.memo(({ driver, iconUrl, isMapInteracting = 
             draggable={false}
             className="object-contain drop-shadow-[0_6px_8px_rgba(15,23,42,0.34)] will-change-transform"
             style={{ width: markerDimensions.icon, height: markerDimensions.icon }}
+            onError={(e) => { e.target.onerror = null; e.target.src = CarIcon; }}
           />
         </motion.div>
       </div>
@@ -2275,7 +2276,7 @@ const SelectVehicle = () => {
                   >
                     <div className="flex w-[52px] shrink-0 flex-col items-center">
                       <div className="flex h-9 w-full items-center justify-center">
-                        <img src={v.icon} alt={v.name} className="h-8 w-12 object-contain" draggable={false} />
+                        <img src={v.icon} alt={v.name} className="h-8 w-12 object-contain" draggable={false} onError={(e) => { e.target.onerror = null; e.target.src = CarIcon; }} />
                       </div>
                       <span className="mt-1 text-[10px] font-medium text-slate-500">{compactEta} min</span>
                     </div>
@@ -2480,7 +2481,7 @@ const SelectVehicle = () => {
                   </p>
                 </div>
                 <div className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-slate-50">
-                  <img src={previewVehicle.icon} alt={previewVehicle.name} className="h-12 w-14 object-contain" draggable={false} />
+                  <img src={previewVehicle.icon} alt={previewVehicle.name} className="h-12 w-14 object-contain" draggable={false} onError={(e) => { e.target.onerror = null; e.target.src = CarIcon; }} />
                 </div>
               </div>
 

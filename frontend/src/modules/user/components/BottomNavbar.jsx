@@ -37,7 +37,10 @@ const BottomNavbar = () => {
 
   if (showNavSkeleton) {
     return (
-      <nav className="fixed bottom-0 left-0 right-0 z-[100] mx-auto w-full max-w-lg px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-2 pointer-events-none">
+      <nav 
+        style={{ position: 'fixed', bottom: '16px', left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}
+        className="w-full max-w-lg px-4 pointer-events-none"
+      >
         <div className="flex items-center justify-around overflow-visible rounded-[32px] border border-white/40 bg-white/85 px-2 py-2 shadow-[0_20px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl pointer-events-auto relative">
           {Array.from({ length: 5 }).map((_, index) => (
             <div key={index} className="flex flex-1 flex-col items-center justify-center py-1.5">
@@ -51,8 +54,11 @@ const BottomNavbar = () => {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] mx-auto w-full max-w-lg px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-2 pointer-events-none">
-      <div className="flex items-center justify-around overflow-visible rounded-[32px] border border-white/40 bg-white/85 px-2 py-2 shadow-[0_20px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl pointer-events-auto relative">
+    <nav
+      style={{ position: 'fixed', bottom: '16px', left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}
+      className="w-full max-w-lg px-4 pointer-events-none"
+    >
+      <div className="flex items-center justify-around overflow-visible rounded-[32px] border border-white/10 dark:border-white/5 bg-slate-900/80 dark:bg-slate-950/70 px-2 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl pointer-events-auto relative">
         {navItems.map(({ icon: Icon, imageIcon, label, path }) => {
           const isActive =
             path === '/taxi/user'
@@ -64,7 +70,7 @@ const BottomNavbar = () => {
               key={label}
               type="button"
               onClick={() => navigate(path)}
-              className="flex-1 flex flex-col items-center justify-center py-1.5 relative z-10 outline-none tap-highlight-transparent group"
+              className="flex-1 flex flex-col items-center justify-center py-1 relative z-10 outline-none tap-highlight-transparent group"
             >
               <div className="relative flex flex-col items-center">
                 {/* Active Sliding Background Pill */}
@@ -78,7 +84,7 @@ const BottomNavbar = () => {
                         damping: 32,
                         mass: 1
                       }}
-                      className="absolute -inset-y-2 -inset-x-4 bg-yellow-400 dark:bg-yellow-500 rounded-[20px] shadow-[0_8px_20px_rgba(234,179,8,0.3)]"
+                      className="absolute -inset-y-2 -inset-x-4 bg-[#FFB300] rounded-[20px] shadow-[0_8px_20px_rgba(255,179,0,0.35)]"
                     />
                   )}
                 </AnimatePresence>
@@ -105,9 +111,9 @@ const BottomNavbar = () => {
                     />
                   ) : (
                     <Icon
-                      size={21}
+                      size={20}
                       strokeWidth={isActive ? 2.8 : 2}
-                      className={`transition-colors duration-300 ${isActive ? 'text-slate-950 dark:text-slate-950 font-extrabold' : 'text-slate-400 group-hover:text-slate-600'}`}
+                      className={`transition-colors duration-300 ${isActive ? 'text-slate-950 font-extrabold' : 'text-zinc-400 group-hover:text-zinc-200'}`}
                     />
                   )}
                 </motion.div>
@@ -115,15 +121,15 @@ const BottomNavbar = () => {
                 {/* Label with Transition */}
                 <motion.span 
                   animate={{ 
-                    opacity: isActive ? 1 : 0.5,
+                    opacity: isActive ? 1 : 0.6,
                     y: isActive ? 2 : 1,
                     scale: isActive ? 1 : 0.95
                   }}
                   transition={{
                     duration: 0.2
                   }}
-                  className={`relative z-20 mt-1 font-['Outfit'] text-[10px] font-bold uppercase tracking-[0.12em] transition-colors duration-300 ${
-                    isActive ? 'text-slate-950 dark:text-slate-950' : 'text-slate-500'
+                  className={`relative z-20 mt-1 font-['Outfit'] text-[9.5px] font-extrabold uppercase tracking-[0.14em] transition-colors duration-300 ${
+                    isActive ? 'text-slate-950' : 'text-zinc-400 group-hover:text-zinc-200'
                   }`}
                 >
                   {label}
@@ -138,7 +144,7 @@ const BottomNavbar = () => {
                       stiffness: 400,
                       damping: 32
                     }}
-                    className="absolute -bottom-2 w-4 h-1 bg-slate-950/20 rounded-full blur-[2px]"
+                    className="absolute -bottom-2.5 w-4 h-1.5 bg-slate-950/20 rounded-full blur-[2px]"
                   />
                 )}
               </div>

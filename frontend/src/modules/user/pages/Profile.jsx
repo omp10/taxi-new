@@ -348,7 +348,7 @@ const Profile = () => {
           ))}
 
           {/* Dangerous Zone */}
-          <motion.div variants={itemVariants} className="pt-4 pb-12 space-y-4">
+          <motion.div variants={itemVariants} className="pt-4 pb-36 space-y-4">
              <MotionButton
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}

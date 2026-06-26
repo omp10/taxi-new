@@ -18,7 +18,14 @@ const getTokenPayload = (token) => {
       return null;
     }
 
-    return JSON.parse(atob(decodeBase64Url(payload)));
+    const decoded = JSON.parse(atob(decodeBase64Url(payload)));
+    if (decoded && typeof decoded.exp === 'number') {
+      const isExpired = Date.now() / 1000 >= decoded.exp;
+      if (isExpired) {
+        return null;
+      }
+    }
+    return decoded;
   } catch {
     return null;
   }
@@ -33,14 +40,20 @@ const readLocalUserToken = () =>
 export const getLocalUserToken = readLocalUserToken;
 
 export const clearLocalUserSession = () => {
-  const token = readLocalUserToken();
-  const fallbackToken = localStorage.getItem('token');
-
   localStorage.removeItem('userToken');
   localStorage.removeItem('userInfo');
 
-  if (token && fallbackToken === token) {
-    localStorage.removeItem('token');
+  const fallbackToken = localStorage.getItem('token');
+  if (fallbackToken) {
+    try {
+      const payload = fallbackToken.split('.')[1];
+      const decoded = payload ? JSON.parse(atob(decodeBase64Url(payload))) : null;
+      if (!decoded?.role || decoded.role === 'user') {
+        localStorage.removeItem('token');
+      }
+    } catch {
+      localStorage.removeItem('token');
+    }
   }
 
   if (String(localStorage.getItem('role') || '').toLowerCase() === 'user') {

@@ -122,15 +122,15 @@ const PromoBanners = () => {
               Savings
             </div>
 
-            <h3 className="mt-3 text-[20px] font-black leading-tight tracking-tight text-white">
+            <h3 className="mt-3 text-[20px] font-black leading-tight tracking-tight text-slate-50">
               Better savings on your next ride.
             </h3>
-            <p className="mt-1.5 text-[11px] font-bold leading-relaxed text-white/70">Book quickly and save more.</p>
+            <p className="mt-1.5 text-[11px] font-bold leading-relaxed text-slate-200/80">Book quickly and save more.</p>
 
             <motion.button
               type="button"
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(`${routePrefix}/ride/select-category`)}
+              onClick={() => navigate(`${routePrefix}/ride/select-location`)}
               className="mt-4 inline-flex items-center gap-2 rounded-full bg-yellow-400 px-4 py-2 text-[12px] font-black text-slate-950 shadow-lg shadow-black/15 active:scale-95"
             >
               Ride Now

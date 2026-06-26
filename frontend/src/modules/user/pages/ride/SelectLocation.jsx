@@ -161,6 +161,34 @@ const findMatchingZone = (coords, zones = []) => {
   }) || null;
 };
 
+const saveRecentLocation = (address, coords) => {
+  if (!address || address.trim().length === 0) return;
+  try {
+    const key = 'rydon24:recentLocations';
+    let list = [];
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      list = JSON.parse(saved);
+    }
+    if (!Array.isArray(list)) list = [];
+    list = list.filter(item => item.address.toLowerCase() !== address.toLowerCase());
+    const name = address.split(',')[0].trim();
+    list.unshift({
+      name: name,
+      address: address,
+      lat: coords ? coords[1] : null,
+      lon: coords ? coords[0] : null,
+      distance: coords ? 'Recent' : '',
+    });
+    list = list.slice(0, 5);
+    localStorage.setItem(key, JSON.stringify(list));
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('rydon24:recent-locations-updated'));
+  } catch (e) {
+    console.error('Error saving recent location:', e);
+  }
+};
+
 const SelectLocation = () => {
   const location = useLocation();
   const routeState = location.state || {};
@@ -776,6 +804,9 @@ const SelectLocation = () => {
       lon: resolvedPickupCoords[0],
     });
 
+    saveRecentLocation(finalPickup, resolvedPickupCoords);
+    saveRecentLocation(finalDrop, resolvedDropCoords);
+
     const matchedPickupZone = findMatchingZone(resolvedPickupCoords, zones);
     const nextServiceLocationId = getZoneServiceLocationId(matchedPickupZone) || '';
     const nextZoneId = getZoneId(matchedPickupZone) || '';
@@ -857,6 +888,7 @@ const SelectLocation = () => {
         lat: selectedCoords[1],
         lon: selectedCoords[0],
       });
+      saveRecentLocation(finalAddress, selectedCoords);
       setActiveInput('drop');
     } else if (activeInput === 'drop') {
       if (isParcelFlow) {
@@ -865,10 +897,12 @@ const SelectLocation = () => {
       }
       setDrop(finalAddress);
       setDropCoords(selectedCoords);
+      saveRecentLocation(finalAddress, selectedCoords);
       // Auto-navigate if it's the destination
       handleConfirmNavigate(finalAddress, selectedCoords);
     } else if (typeof activeInput === 'number') {
       updateStop(activeInput, finalAddress);
+      saveRecentLocation(finalAddress, selectedCoords);
     }
     setShowMapPicker(false);
   };
@@ -970,6 +1004,7 @@ const SelectLocation = () => {
         lat: resolvedCoords[1],
         lon: resolvedCoords[0],
       });
+      saveRecentLocation(finalTitle, resolvedCoords);
       setActiveInput('drop');
     } else if (activeInput === 'drop') {
       if (isParcelFlow) {
@@ -978,9 +1013,11 @@ const SelectLocation = () => {
       }
       setDrop(finalTitle);
       setDropCoords(resolvedCoords);
+      saveRecentLocation(finalTitle, resolvedCoords);
       handleConfirmNavigate(finalTitle, resolvedCoords);
     } else if (typeof activeInput === 'number') {
       updateStop(activeInput, finalTitle);
+      saveRecentLocation(finalTitle, resolvedCoords);
       // Move to next stop or drop
       if (activeInput < stops.length - 1) {
         setActiveInput(activeInput + 1);

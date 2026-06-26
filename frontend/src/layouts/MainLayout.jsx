@@ -32,7 +32,7 @@ const MainLayout = ({ children }) => {
     location.pathname.startsWith('/driver-import') ||
     location.pathname.startsWith('/owner');
 
-  const isUserPath = location.pathname.startsWith('/taxi/user');
+  const isUserPath = !isAdminPath && !isStaticPath;
 
   const content = isAdminPath ? (
     <div className="redigo-admin-root h-screen bg-gray-50 overflow-hidden">{children}</div>
