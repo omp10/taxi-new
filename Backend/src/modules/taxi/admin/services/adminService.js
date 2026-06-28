@@ -10998,6 +10998,7 @@ export const buildDriverDutyReport = async (query = {}) => {
     'transport-ride': 'transport_ride',
     'bid-ride': 'bid_ride',
     general: 'general',
+    'user-home-management': 'user_home_settings',
   };
 
   const appSettingsCategoryMap = {

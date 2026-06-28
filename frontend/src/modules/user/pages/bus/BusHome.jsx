@@ -15,9 +15,9 @@ import {
   Ticket,
   X,
 } from 'lucide-react';
-import { useSettings } from '../../../../shared/context/SettingsContext';
 import userBusService from '../../services/busService';
-import BottomNavbar from '../../components/BottomNavbar';
+import { useSettings } from '../../../../shared/context/SettingsContext';
+// ... removed BottomNavbar import ...
 
 const isEnabledFlag = (value) => {
   if (typeof value === 'boolean') return value;
@@ -639,8 +639,6 @@ const BusHome = () => {
           </motion.div>
         </div>
       )}
-
-      <BottomNavbar />
     </div>
   );
 };

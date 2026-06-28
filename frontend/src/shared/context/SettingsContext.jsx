@@ -40,6 +40,7 @@ const DEFAULT_SETTINGS_CONTEXT = {
       user_fare_increase_wait_minutes: '2',
     },
     paymentGateway: null,
+    userHomeSettings: {},
   },
   loading: true,
   hasBootstrapSettings: false,
@@ -166,6 +167,7 @@ const buildSettingsState = (payload = {}) => ({
   transportRide: normalizeTransportRideSettings(payload?.transportRide || {}),
   bidRide: payload?.bidRide || DEFAULT_SETTINGS_CONTEXT.settings.bidRide,
   paymentGateway: payload?.paymentGateway || null,
+  userHomeSettings: payload?.userHomeSettings || {},
 });
 
 const readCachedSettings = () => {
@@ -220,6 +222,7 @@ export const SettingsProvider = ({ children }) => {
         transportRide: data.settings?.transportRide || {},
         bidRide: data.settings?.bidRide || DEFAULT_SETTINGS_CONTEXT.settings.bidRide,
         paymentGateway: data.settings?.paymentGateway || null,
+        userHomeSettings: data.settings?.userHomeSettings || {},
       });
 
       setSettings(nextSettings);
@@ -244,10 +247,12 @@ export const SettingsProvider = ({ children }) => {
 
     window.addEventListener('pageshow', refreshOnResume);
     window.addEventListener('online', refreshOnResume);
+    window.addEventListener('focus', refreshOnResume);
 
     return () => {
       window.removeEventListener('pageshow', refreshOnResume);
       window.removeEventListener('online', refreshOnResume);
+      window.removeEventListener('focus', refreshOnResume);
     };
   }, []);
 

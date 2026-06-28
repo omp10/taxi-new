@@ -1018,6 +1018,19 @@ const AdminLayout = () => {
             ],
           },
           {
+            icon: Layers,
+            label: 'User App Management',
+            permission: 'settings.view',
+            subItems: [
+              { label: 'Home Sections', path: '/admin/settings/user-app/home-sections', permission: 'settings.view' },
+              { label: 'Everything In Minutes', path: '/admin/settings/user-app/everything-in-minutes', permission: 'settings.view' },
+              { label: 'Explore Cards', path: '/admin/settings/user-app/explore-cards', permission: 'settings.view' },
+              { label: 'Promo Banners', path: '/admin/settings/user-app/promo-banners', permission: 'settings.view' },
+              { label: 'Go Places', path: '/admin/settings/user-app/go-places', permission: 'settings.view' },
+              { label: 'Footer Content', path: '/admin/settings/user-app/footer-content', permission: 'settings.view' },
+            ],
+          },
+          {
             icon: Settings2,
             label: 'Third-party Settings',
             permission: 'settings.view',

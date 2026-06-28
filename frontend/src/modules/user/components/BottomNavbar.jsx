@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Clock, Map, User } from 'lucide-react';
 import { useSettings, normalizeAssetUrl } from '../../../shared/context/SettingsContext';
+import { useUserTheme } from '../../../shared/context/UserThemeContext';
 import busIcon from '../../../assets/3d images/AutoCab/bus.png';
 
 const isEnabledFlag = (value) => {
@@ -22,6 +23,8 @@ const BottomNavbar = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { settings, modules, loading, hasBootstrapSettings } = useSettings();
+  const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
   const showBusService = isEnabledFlag(settings.transportRide?.enable_bus_service);
   const busModule = (modules || []).find(m => m.service_type === 'bus' || m.name.toLowerCase() === 'bus');
   const dynamicBusIcon = busModule?.mobile_menu_icon ? normalizeAssetUrl(busModule.mobile_menu_icon) : busIcon;
@@ -37,15 +40,14 @@ const BottomNavbar = () => {
 
   if (showNavSkeleton) {
     return (
-      <nav 
-        style={{ position: 'fixed', bottom: '16px', left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}
-        className="w-full max-w-lg px-4 pointer-events-none"
-      >
-        <div className="flex items-center justify-around overflow-visible rounded-[32px] border border-white/40 bg-white/85 px-2 py-2 shadow-[0_20px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl pointer-events-auto relative">
+      <nav className="user-bottom-nav pointer-events-none">
+        <div className={`flex items-center justify-around overflow-visible rounded-[32px] border px-2 py-2 shadow-[0_20px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl pointer-events-auto relative ${
+          isDark ? 'border-white/10 bg-slate-950/80' : 'border-slate-200 bg-white/80'
+        }`}>
           {Array.from({ length: 5 }).map((_, index) => (
             <div key={index} className="flex flex-1 flex-col items-center justify-center py-1.5">
-              <div className="h-[21px] w-[21px] animate-pulse rounded-full bg-slate-200" />
-              <div className="mt-2 h-2.5 w-10 animate-pulse rounded-full bg-slate-200" />
+              <div className={`h-[21px] w-[21px] animate-pulse rounded-full ${isDark ? 'bg-zinc-800' : 'bg-slate-200'}`} />
+              <div className={`mt-2 h-2.5 w-10 animate-pulse rounded-full ${isDark ? 'bg-zinc-800' : 'bg-slate-200'}`} />
             </div>
           ))}
         </div>
@@ -54,11 +56,12 @@ const BottomNavbar = () => {
   }
 
   return (
-    <nav
-      style={{ position: 'fixed', bottom: '16px', left: '50%', transform: 'translateX(-50%)', zIndex: 100 }}
-      className="w-full max-w-lg px-4 pointer-events-none"
-    >
-      <div className="flex items-center justify-around overflow-visible rounded-[32px] border border-white/10 dark:border-white/5 bg-slate-900/80 dark:bg-slate-950/70 px-2 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-xl pointer-events-auto relative">
+    <nav className="user-bottom-nav pointer-events-none">
+      <div className={`flex items-center justify-around overflow-visible rounded-[32px] border px-2 py-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl pointer-events-auto relative ${
+        isDark
+          ? 'border-white/10 bg-slate-950/80 shadow-[0_20px_50px_rgba(0,0,0,0.55)]'
+          : 'border-slate-200/80 bg-white/80 shadow-[0_12px_40px_rgba(15,23,42,0.08)]'
+      }`}>
         {navItems.map(({ icon: Icon, imageIcon, label, path }) => {
           const isActive =
             path === '/taxi/user'
@@ -84,7 +87,7 @@ const BottomNavbar = () => {
                         damping: 32,
                         mass: 1
                       }}
-                      className="absolute -inset-y-2 -inset-x-4 bg-[#FFB300] rounded-[20px] shadow-[0_8px_20px_rgba(255,179,0,0.35)]"
+                      className="absolute -inset-y-2 -inset-x-4 bg-[#FFC400] rounded-[20px] shadow-[0_8px_20px_rgba(255,196,0,0.35)]"
                     />
                   )}
                 </AnimatePresence>
@@ -113,7 +116,13 @@ const BottomNavbar = () => {
                     <Icon
                       size={20}
                       strokeWidth={isActive ? 2.8 : 2}
-                      className={`transition-colors duration-300 ${isActive ? 'text-slate-950 font-extrabold' : 'text-zinc-400 group-hover:text-zinc-200'}`}
+                      className={`transition-colors duration-300 ${
+                        isActive 
+                          ? 'text-slate-950 font-extrabold' 
+                          : isDark
+                            ? 'text-zinc-400 group-hover:text-zinc-200' 
+                            : 'text-slate-500 group-hover:text-slate-700'
+                      }`}
                     />
                   )}
                 </motion.div>
@@ -129,7 +138,11 @@ const BottomNavbar = () => {
                     duration: 0.2
                   }}
                   className={`relative z-20 mt-1 font-['Outfit'] text-[9.5px] font-extrabold uppercase tracking-[0.14em] transition-colors duration-300 ${
-                    isActive ? 'text-slate-950' : 'text-zinc-400 group-hover:text-zinc-200'
+                    isActive 
+                      ? 'text-slate-950' 
+                      : isDark
+                        ? 'text-zinc-400 group-hover:text-zinc-200' 
+                        : 'text-slate-500 group-hover:text-slate-700'
                   }`}
                 >
                   {label}

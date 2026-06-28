@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, CheckCircle2, Copy, Gift, Loader2, Share2 } from 'lucide-react';
-import BottomNavbar from '../components/BottomNavbar';
+// ... removed BottomNavbar import ...
 import { userAuthService } from '../services/authService';
 import {
   getReferralSettingsContent,
@@ -324,8 +324,6 @@ const Referral = () => {
           </motion.div>
         ) : null}
       </AnimatePresence>
-
-      <BottomNavbar />
     </div>
   );
 };

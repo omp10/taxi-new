@@ -127,7 +127,58 @@ const RentalConfirmed = () => {
   const state = location.state || {};
   const [clockNow, setClockNow] = useState(() => Date.now());
 
-  const activeRentalRide = state?.serviceType === 'rental' && state?.rideId ? state : null;
+  const [activeRentalRide, setActiveRentalRide] = useState(() => {
+    return state?.serviceType === 'rental' && state?.rideId ? state : null;
+  });
+  const [fetchingActive, setFetchingActive] = useState(false);
+
+  useEffect(() => {
+    if (activeRentalRide) return;
+
+    let mounted = true;
+    const fetchActive = async () => {
+      try {
+        setFetchingActive(true);
+        const response = await userService.getActiveRentalBooking();
+        const payload = response?.data?.data || response?.data || null;
+        if (mounted && payload) {
+          const assignedVehicle = payload.assignedVehicle || {};
+          const vehicleName = assignedVehicle?.name || payload.vehicleName || 'Assigned Vehicle';
+          const vehicleImage = assignedVehicle?.image || payload.vehicleImage || '';
+          const vehicleCategory = assignedVehicle?.vehicleCategory || payload.vehicleCategory || 'Rental';
+          const nextRide = {
+            ...payload,
+            rideId: payload.id || payload.rideId,
+            serviceType: 'rental',
+            liveStatus: payload.status || payload.liveStatus || 'assigned',
+            vehicleName,
+            vehicleImage,
+            vehicleCategory,
+            vehicle: {
+              name: vehicleName,
+              image: vehicleImage,
+              vehicleIconUrl: vehicleImage,
+            },
+            driver: {
+              name: vehicleName,
+              vehicle: vehicleCategory,
+              vehicleType: vehicleCategory,
+              vehicleIconUrl: vehicleImage,
+            },
+            vehicleIconUrl: vehicleImage,
+          };
+          setActiveRentalRide(nextRide);
+        }
+      } catch (err) {
+        console.error('Failed to fetch active rental booking:', err);
+      } finally {
+        if (mounted) setFetchingActive(false);
+      }
+    };
+    fetchActive();
+    return () => { mounted = false; };
+  }, [activeRentalRide]);
+
   const isCompletedRentalRide = Boolean(activeRentalRide?.completedAt || state?.summaryMode === 'completed');
   
   useEffect(() => {
@@ -290,6 +341,17 @@ const RentalConfirmed = () => {
     return liveCharge;
   }, [completedCharge, isCompletedRentalRide, liveCharge]);
 
+  if (fetchingActive) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-bold text-slate-550 uppercase tracking-widest animate-pulse">Loading Booking Details...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (!state.vehicle && !activeRentalRide) {
     navigate('/rental');
     return null;
@@ -347,6 +409,11 @@ const RentalConfirmed = () => {
               <h1 className="text-[22px] font-extrabold text-slate-950 tracking-tight mt-0.5">
                 {isCompletedRentalRide ? 'Final rental total' : isEndRequestPending ? 'Awaiting admin confirmation' : 'Vehicle assigned'}
               </h1>
+              {isEndRequestPending && (
+                <p className="text-[13px] font-bold text-orange-600 mt-1">
+                  Your ride end request is under admin review.
+                </p>
+              )}
               <p className="text-[12px] font-bold text-slate-400 mt-1">
                 Booking ID: <span className="text-slate-700 font-bold">{activeRentalRide.bookingReference || bookingId}</span>
               </p>
@@ -448,7 +515,7 @@ const RentalConfirmed = () => {
           {isCompletedRentalRide || isEndRequestPending ? (
             <motion.button
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate('/user')}
+              onClick={() => navigate('/taxi/user')}
               className="pointer-events-auto w-full bg-slate-900 py-4 rounded-[18px] text-[15px] font-black text-white shadow-[0_8px_24px_rgba(15,23,42,0.18)] flex items-center justify-center gap-2"
             >
               <Home size={16} strokeWidth={2.5} /> {isCompletedRentalRide ? 'Back to Home' : 'Track from Home'}

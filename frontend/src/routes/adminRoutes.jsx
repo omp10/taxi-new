@@ -136,6 +136,7 @@ import {
   AdminWithdrawalRequestOwnerDetail,
   AdminWithdrawalRequestOwners,
   AdminZoneManagement,
+  AdminUserAppManagement,
 } from './lazyPages';
 
 const AdminReportPlaceholder = ({ title }) => (
@@ -391,6 +392,13 @@ const adminRoutes = (
       <Route path="settings/app/tip" element={<AdminTipSettings />} />
       <Route path="settings/app/country" element={<AdminCountryManagement />} />
       <Route path="settings/app/onboard" element={<AdminOnboardingScreens />} />
+
+      <Route path="settings/user-app/home-sections" element={<AdminUserAppManagement tab="home-sections" />} />
+      <Route path="settings/user-app/everything-in-minutes" element={<AdminUserAppManagement tab="everything" />} />
+      <Route path="settings/user-app/explore-cards" element={<AdminUserAppManagement tab="explore" />} />
+      <Route path="settings/user-app/promo-banners" element={<AdminUserAppManagement tab="promos" />} />
+      <Route path="settings/user-app/go-places" element={<AdminUserAppManagement tab="go-places" />} />
+      <Route path="settings/user-app/footer-content" element={<AdminUserAppManagement tab="footer" />} />
 
       <Route path="settings/business/*" element={<AdminGeneralSettings />} />
       <Route path="settings/app/*" element={<AdminGeneralSettings />} />

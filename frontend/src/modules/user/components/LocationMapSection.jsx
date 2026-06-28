@@ -98,9 +98,18 @@ const darkMapStyle = [
 
 const LocationMapSection = () => {
   const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
   const [coords, setCoords] = useState(null);
   const [centerCoords, setCenterCoords] = useState(DEFAULT_CENTER);
-  const [status, setStatus] = useState('idle');
+  const [status, setStatusState] = useState('idle');
+  const setStatus = (newStatus) => {
+    setStatusState(newStatus);
+    try {
+      window.dispatchEvent(new CustomEvent('rydon24:location-status', { detail: newStatus }));
+    } catch (e) {
+      console.error(e);
+    }
+  };
   const [isDragging, setIsDragging] = useState(false);
   const [map, setMap] = useState(null);
   const isDraggingRef = useRef(false);
@@ -110,7 +119,14 @@ const LocationMapSection = () => {
 
   useEffect(() => {
     const handleUpdate = () => {
-      setAddress(getSavedLocation()?.address || '');
+      const saved = getSavedLocation();
+      setAddress(saved?.address || '');
+      if (saved && typeof saved.lat === 'number' && typeof saved.lon === 'number') {
+        const nextCoords = { lat: saved.lat, lon: saved.lon };
+        setCoords(nextCoords);
+        setCenterCoords(nextCoords);
+        setStatus('ready');
+      }
     };
     window.addEventListener(LOCATION_UPDATED_EVENT, handleUpdate);
     window.addEventListener('storage', handleUpdate);
@@ -305,13 +321,13 @@ const LocationMapSection = () => {
           }}
         />
 
-        <div className="relative z-10 overflow-hidden md:rounded-[19px] border-b md:border border-white/5 md:border-white/70 bg-slate-950 md:bg-white/85">
-          <div className="relative h-[50dvh] md:h-[480px] w-full">
+        <div className={`relative z-10 overflow-hidden md:rounded-[19px] border-b md:border ${isDark ? 'border-zinc-800 bg-[#0f172a]' : 'border-slate-200 bg-[#F7F8FB]'}`}>
+          <div className="relative h-[220px] md:h-[480px] w-full">
             {!HAS_VALID_GOOGLE_MAPS_KEY && (
               <div className="flex h-full w-full items-center justify-center px-5 text-center">
                 <div>
-                  <p className="text-[12px] font-semibold text-slate-900">Google Maps key missing</p>
-                  <p className="mt-1 text-[11px] font-medium text-slate-500">Add `VITE_GOOGLE_MAPS_API_KEY` in `frontend/.env`.</p>
+                  <p className={`text-[12px] font-semibold ${isDark ? 'text-white' : 'text-[#0B1220]'}`}>Google Maps key missing</p>
+                  <p className={`mt-1 text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-[#64748B]'}`}>Add `VITE_GOOGLE_MAPS_API_KEY` in `frontend/.env`.</p>
                 </div>
               </div>
             )}
@@ -319,17 +335,17 @@ const LocationMapSection = () => {
             {HAS_VALID_GOOGLE_MAPS_KEY && loadError && (
               <div className="flex h-full w-full items-center justify-center px-5 text-center">
                 <div>
-                  <p className="text-[12px] font-semibold text-slate-900">Map failed to load</p>
-                  <p className="mt-1 text-[11px] font-medium text-slate-500">Check your Google Maps browser key restrictions.</p>
+                  <p className={`text-[12px] font-semibold ${isDark ? 'text-white' : 'text-[#0B1220]'}`}>Map failed to load</p>
+                  <p className={`mt-1 text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-[#64748B]'}`}>Check your Google Maps browser key restrictions.</p>
                 </div>
               </div>
             )}
 
             {HAS_VALID_GOOGLE_MAPS_KEY && !loadError && !isLoaded && (
               <div className="flex h-full w-full items-center justify-center">
-                <div className="flex items-center gap-2 rounded-[16px] bg-white/90 px-4 py-3 shadow-sm">
+                <div className={`flex items-center gap-2 rounded-[16px] px-4 py-3 shadow-sm ${isDark ? 'bg-zinc-900/90 text-white' : 'bg-white/90 text-slate-800'}`}>
                   <LoaderCircle size={18} className="animate-spin text-slate-500" />
-                  <span className="text-[12px] font-medium text-slate-700">Loading map</span>
+                  <span className={`text-[12px] font-medium ${isDark ? 'text-zinc-200' : 'text-slate-700'}`}>Loading map</span>
                 </div>
               </div>
             )}
@@ -432,17 +448,6 @@ const LocationMapSection = () => {
               </motion.div>
             </div>
 
-            {/* Floating geocoded address pill (Mobile only, above bottom sheet) */}
-            {address && (
-              <div className="block md:hidden absolute bottom-14 left-4 right-4 z-20 mx-auto max-w-sm rounded-[16px] bg-slate-950/80 border border-white/10 px-4 py-2.5 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
-                  <span className="truncate text-[11px] font-bold text-white/90">
-                    {address}
-                  </span>
-                </div>
-              </div>
-            )}
 
             {/* Floating locator target button (Mobile only) */}
             <button

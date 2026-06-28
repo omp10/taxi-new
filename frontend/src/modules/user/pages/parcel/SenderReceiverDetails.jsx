@@ -1796,16 +1796,16 @@ const SenderReceiverDetails = () => {
       <div className="absolute top-64 left-[-60px] h-56 w-56 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
       <div className="absolute bottom-32 right-[-40px] h-48 w-48 rounded-full bg-indigo-100/50 blur-3xl pointer-events-none" />
 
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md px-5 py-4 border-b border-slate-100/80 flex items-center gap-3">
+      <header className="sticky top-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md px-5 py-4 border-b border-slate-100/80 dark:border-zinc-800/80 flex items-center gap-3">
         <button 
           onClick={() => navigate(-1)} 
-          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-800 hover:bg-slate-50 border border-slate-200/60 bg-white shadow-sm active:scale-95 transition-all"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-slate-800 dark:text-zinc-100 hover:bg-slate-50 dark:hover:bg-zinc-800 border border-slate-200/60 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm active:scale-95 transition-all"
         >
-          <ArrowLeft size={20} className="text-slate-900" strokeWidth={2.5} />
+          <ArrowLeft size={20} className="text-slate-900 dark:text-white" strokeWidth={2.5} />
         </button>
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Parcel Delivery</p>
-          <h1 className="mt-0.5 text-[18px] font-bold text-slate-900 tracking-tight leading-none truncate">Details & Address</h1>
+          <h1 className="mt-0.5 text-[18px] font-bold text-slate-900 dark:text-white tracking-tight leading-none truncate">Details & Address</h1>
         </div>
       </header>
 
@@ -1813,7 +1813,7 @@ const SenderReceiverDetails = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[32px] bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-50 relative"
+          className="rounded-[32px] bg-white dark:bg-[#111827] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-50 dark:border-zinc-850 relative"
         >
           <div className="space-y-3">
             {/* Pickup Row */}
@@ -1824,9 +1824,9 @@ const SenderReceiverDetails = () => {
                 </div>
               </div>
               <div
-                className={`flex-1 flex bg-slate-50/70 border rounded-2xl px-4 py-2.5 transition-all cursor-pointer items-center ${
-                  activeInput === 'pickup' ? 'border-blue-600 ring-4 ring-blue-50 bg-white' : 'border-slate-100 hover:bg-slate-100/50'
-                } ${errors.pickup ? 'border-red-400 bg-red-50/30' : ''}`}
+                className={`flex-1 flex bg-transparent border rounded-2xl px-4 py-2.5 transition-all cursor-pointer items-center ${
+                  activeInput === 'pickup' ? 'border-blue-600 ring-2 ring-blue-500/10 text-slate-800 dark:text-white' : 'border-slate-100 dark:border-zinc-800/60 hover:bg-slate-100/50 dark:hover:bg-zinc-800/50'
+                } ${errors.pickup ? 'border-red-400' : ''}`}
                 onClick={() => setActiveInput('pickup')}
               >
                 <div className="flex-1 min-w-0">
@@ -1840,7 +1840,7 @@ const SenderReceiverDetails = () => {
                     }}
                     onFocus={() => setActiveInput('pickup')}
                     placeholder="Search pickup location..."
-                    className="w-full bg-transparent border-none text-[14px] font-bold text-slate-800 focus:outline-none placeholder:text-slate-300 mt-0.5"
+                    className="w-full bg-transparent border-none text-[14px] font-bold text-slate-800 dark:text-slate-100 focus:outline-none placeholder:text-slate-450 mt-0.5"
                   />
                 </div>
                 {pickup.length > 0 && activeInput === 'pickup' && (
@@ -1858,7 +1858,7 @@ const SenderReceiverDetails = () => {
             </div>
 
             {/* Dotted connector */}
-            <div className="ml-[9px] h-2 w-[1.5px] border-l-[1.5px] border-dotted border-slate-300/70" />
+            <div className="ml-[9px] h-2 w-[1.5px] border-l-[1.5px] border-dotted border-slate-300/70 dark:border-zinc-800/60" />
 
             {/* Drop Row */}
             <div className="flex items-center gap-3">
@@ -1868,9 +1868,9 @@ const SenderReceiverDetails = () => {
                 </div>
               </div>
               <div
-                className={`flex-1 flex bg-slate-50/70 border rounded-2xl px-4 py-2.5 transition-all cursor-pointer items-center ${
-                  activeInput === 'drop' ? 'border-blue-600 ring-4 ring-blue-50 bg-white' : 'border-slate-100 hover:bg-slate-100/50'
-                } ${errors.drop ? 'border-red-400 bg-red-50/30' : ''}`}
+                className={`flex-1 flex bg-transparent border rounded-2xl px-4 py-2.5 transition-all cursor-pointer items-center ${
+                  activeInput === 'drop' ? 'border-blue-600 ring-2 ring-blue-500/10 text-slate-800 dark:text-white' : 'border-slate-100 dark:border-zinc-800/60 hover:bg-slate-100/50 dark:hover:bg-zinc-800/50'
+                } ${errors.drop ? 'border-red-400' : ''}`}
                 onClick={() => setActiveInput('drop')}
               >
                 <div className="flex-1 min-w-0">
@@ -1886,7 +1886,7 @@ const SenderReceiverDetails = () => {
                       clearError('drop');
                     }}
                     placeholder="Search drop location..."
-                    className="w-full bg-transparent border-none text-[14px] font-bold text-slate-800 focus:outline-none placeholder:text-slate-300 mt-0.5"
+                    className="w-full bg-transparent border-none text-[14px] font-bold text-slate-800 dark:text-slate-100 focus:outline-none placeholder:text-slate-450 mt-0.5"
                   />
                 </div>
                 {drop.length > 0 && activeInput === 'drop' && (

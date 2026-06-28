@@ -16,7 +16,7 @@ const rotatingCards = [
     description: 'Auto for shorter wait times.',
     actionClass: 'bg-yellow-400 text-slate-950',
     path: '/taxi/user/ride/select-location',
-    state: { selectedCategory: 'auto' },
+    state: { selectedCategory: 'auto', activeInput: 'drop', flow: 'ride' },
     images: [
       { src: bikeImg, alt: 'Bike' },
     ],
@@ -28,7 +28,7 @@ const rotatingCards = [
     description: 'Cab for luggage or comfort.',
     actionClass: 'bg-yellow-400 text-slate-950',
     path: '/taxi/user/ride/select-location',
-    state: { selectedCategory: 'car' },
+    state: { selectedCategory: 'car', activeInput: 'drop', flow: 'ride' },
     images: [
       { src: taxiImg, alt: 'Taxi' },
     ],
@@ -130,7 +130,7 @@ const PromoBanners = () => {
             <motion.button
               type="button"
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(`${routePrefix}/ride/select-location`)}
+              onClick={() => navigate(`${routePrefix}/ride/select-location`, { state: { activeInput: 'drop', flow: 'ride' } })}
               className="mt-4 inline-flex items-center gap-2 rounded-full bg-yellow-400 px-4 py-2 text-[12px] font-black text-slate-950 shadow-lg shadow-black/15 active:scale-95"
             >
               Ride Now

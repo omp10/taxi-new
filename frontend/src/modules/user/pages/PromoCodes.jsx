@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Tag, CheckCircle2, X, ChevronRight, Ticket } from 'lucide-react';
-import BottomNavbar from '../components/BottomNavbar';
+// ... removed BottomNavbar import ...
 import { useUserTheme } from '../../../shared/context/UserThemeContext';
 
 const MOCK_PROMOS = [
@@ -202,8 +202,6 @@ const PromoCodes = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <BottomNavbar />
     </div>
   );
 };

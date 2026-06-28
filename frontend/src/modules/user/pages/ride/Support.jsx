@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MessageCircle, Phone, HelpCircle, AlertCircle, XCircle, ShieldCheck, ChevronRight, Siren } from 'lucide-react';
-import BottomNavbar from '../../components/BottomNavbar';
+// ... removed BottomNavbar import ...
 import { SUPPORT_INFO } from '../../../shared/content/supportInfo';
 
 const Support = () => {
@@ -135,8 +135,6 @@ const Support = () => {
           </div>
         </div>
       </div>
-
-      <BottomNavbar />
     </div>
   );
 };

@@ -108,7 +108,7 @@ const HeaderGreeting = ({ floating = false, hideSearch = false }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, delay: 0.03, ease: 'easeOut' }}
                 whileTap={{ scale: 0.99 }}
-                onClick={() => navigate(`${routePrefix}/ride/select-location`)}
+                onClick={() => navigate(`${routePrefix}/ride/select-location`, { state: { activeInput: 'pickup', flow: 'ride' } })}
                 className="group flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-transparent px-0 py-0 text-left transition-opacity active:opacity-80"
               >
                 <MapPin size={16} className="text-slate-500 transition-colors group-hover:text-slate-700" strokeWidth={2.5} />
@@ -186,7 +186,7 @@ const HeaderGreeting = ({ floating = false, hideSearch = false }) => {
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.99 }}
-                onClick={() => navigate(`${routePrefix}/ride/select-location`)}
+                onClick={() => navigate(`${routePrefix}/ride/select-location`, { state: { activeInput: 'drop', flow: 'ride' } })}
                 className={`flex w-full items-center gap-3 rounded-full text-left shadow-[0_12px_26px_rgba(15,23,42,0.06)] transition-all ${
                   theme === 'dark' 
                     ? 'search-button-dark' 

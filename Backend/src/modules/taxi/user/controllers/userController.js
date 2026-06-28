@@ -4264,9 +4264,19 @@ export const endMyActiveRentalRide = async (req, res) => {
   const completionRequestedAt = new Date();
   const metrics = computeRentalRideMetrics(item, completionRequestedAt);
 
-  item.status = 'end_requested';
-  item.completionRequestedAt = completionRequestedAt;
-  item.completedAt = null;
+  const transportSettings = await getTransportRideSettings();
+  const requireApproval = String(transportSettings.require_admin_approval_to_end_rental || '0') === '1';
+
+  if (requireApproval) {
+    item.status = 'end_requested';
+    item.completionRequestedAt = completionRequestedAt;
+    item.completedAt = null;
+  } else {
+    item.status = 'completed';
+    item.completionRequestedAt = null;
+    item.completedAt = completionRequestedAt;
+  }
+
   item.finalCharge = metrics.currentCharge;
   item.finalElapsedMinutes = metrics.elapsedMinutes;
 
@@ -4275,13 +4285,15 @@ export const endMyActiveRentalRide = async (req, res) => {
   return res.status(200).json({
     success: true,
     data: {
-      ...buildRentalBookingResponse(item.toObject(), completionRequestedAt),
+      ...buildRentalBookingResponse(item.toObject(), requireApproval ? completionRequestedAt : null),
       rideMetrics: {
         ...metrics,
         currentCharge: item.finalCharge,
       },
     },
-    message: 'Rental ride end request sent for admin review',
+    message: requireApproval 
+      ? 'Rental ride end request sent for admin review'
+      : 'Rental ride ended successfully',
   });
 };
 

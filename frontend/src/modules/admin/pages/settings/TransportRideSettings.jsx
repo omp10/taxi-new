@@ -136,6 +136,18 @@ const TransportRideSettings = () => {
                     onChange={handleChange} 
                     type="number" 
                  />
+
+                 <div className="space-y-1.5">
+                    <label className="text-[13px] font-bold text-slate-700 block ml-0.5">Require Admin Approval to End Rental</label>
+                    <select 
+                     value={settings.require_admin_approval_to_end_rental || '0'} 
+                     onChange={(e) => handleChange('require_admin_approval_to_end_rental', e.target.value)}
+                     className="w-full bg-white border border-slate-200 rounded-lg py-3 px-4 text-[14px] text-slate-700 focus:border-indigo-500 transition-all outline-none"
+                    >
+                       <option value="0">No (Auto-complete ride)</option>
+                       <option value="1">Yes (Awaiting confirmation)</option>
+                    </select>
+                 </div>
               </div>
            </div>
 

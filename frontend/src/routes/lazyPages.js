@@ -260,3 +260,5 @@ export const AdminLanguages = lazy(() => import('../modules/admin/pages/masters/
 export const AdminPreferences = lazy(() => import('../modules/admin/pages/masters/Preferences'));
 export const AdminAdmins = lazy(() => import('../modules/admin/pages/management/Admins'));
 export const AdminAdminCreate = lazy(() => import('../modules/admin/pages/management/AdminCreate'));
+export const AdminUserAppManagement = lazy(() => import('../modules/admin/pages/settings/AdminUserAppManagement'));
+export const UserAppLayout = lazy(() => import('../modules/user/components/UserAppLayout'));

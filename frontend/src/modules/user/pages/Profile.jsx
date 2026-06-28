@@ -6,7 +6,7 @@ import {
   MapPin, Star, Package, Wrench, Gift, Trash2, Check, BusFront, 
   Settings, CreditCard, Heart, Map, MessageSquare, History, Phone, Sun, Moon
 } from 'lucide-react';
-import BottomNavbar from '../components/BottomNavbar';
+// ... removed BottomNavbar import ...
 
 import { clearLocalUserSession, getLocalUserToken, userAuthService } from '../services/authService';
 import { clearCurrentRide } from '../services/currentRideService';
@@ -214,25 +214,39 @@ const Profile = () => {
   };
 
   return (
-    <div className={`min-h-screen max-w-lg mx-auto pb-28 relative overflow-x-hidden font-['Inter'] transition-colors duration-300 ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+    <div className="min-h-screen max-w-lg mx-auto pb-[130px] relative overflow-x-hidden font-['Inter'] transition-colors duration-300 user-app-theme">
       {/* Premium Header Background */}
-      <div className={`absolute top-0 inset-x-0 h-80 overflow-hidden transition-colors duration-300 ${isDark ? 'bg-slate-950' : 'bg-slate-900'}`}>
-        <div className={`absolute inset-0 bg-gradient-to-br via-slate-900 to-slate-900 ${isDark ? 'from-yellow-500/10' : 'from-indigo-600/30'}`} />
-        <div className={`absolute top-[-20%] right-[-10%] h-64 w-64 rounded-full blur-3xl ${isDark ? 'bg-yellow-500/5' : 'bg-indigo-500/10'}`} />
-        <div className={`absolute bottom-0 left-[-5%] h-40 w-40 rounded-full blur-2xl ${isDark ? 'bg-yellow-500/5' : 'bg-emerald-500/5'}`} />
+      <div 
+        style={{
+          background: 'var(--user-profile-header-bg)',
+          borderBottom: '1px solid var(--user-border)'
+        }}
+        className="absolute top-0 inset-x-0 h-80 overflow-hidden transition-all duration-300"
+      >
+        <div 
+          style={{ background: 'var(--user-profile-header-gradient)' }}
+          className="absolute inset-0 transition-all duration-300" 
+        />
+        <div className="absolute top-[-20%] right-[-10%] h-64 w-64 rounded-full blur-3xl bg-indigo-500/10 opacity-60 pointer-events-none" />
+        <div className="absolute bottom-0 left-[-5%] h-40 w-40 rounded-full blur-2xl bg-emerald-500/5 opacity-60 pointer-events-none" />
       </div>
 
       <div className="relative z-10">
         {/* Header Section */}
         <div className="px-6 pt-12 pb-8">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="font-['Outfit'] text-2xl font-extrabold text-white tracking-tight">Profile</h1>
+            <h1 className="font-['Outfit'] text-2xl font-extrabold text-[var(--user-text-primary)] tracking-tight">Profile</h1>
             <div className="flex items-center gap-3">
               <MotionButton
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleTheme}
-                className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white cursor-pointer"
+                className="h-10 w-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors duration-300 border shadow-sm"
+                style={{
+                  backgroundColor: 'var(--user-card-bg)',
+                  borderColor: 'var(--user-border)',
+                  color: 'var(--user-text-primary)'
+                }}
               >
                 {isDark ? <Sun size={20} className="text-yellow-400 fill-yellow-400" /> : <Moon size={20} />}
               </MotionButton>
@@ -240,7 +254,12 @@ const Profile = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => navigate('/taxi/user/profile/settings')}
-                className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center text-white cursor-pointer"
+                className="h-10 w-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors duration-300 border shadow-sm"
+                style={{
+                  backgroundColor: 'var(--user-card-bg)',
+                  borderColor: 'var(--user-border)',
+                  color: 'var(--user-text-primary)'
+                }}
               >
                 <Settings size={20} />
               </MotionButton>
@@ -251,13 +270,19 @@ const Profile = () => {
           <MotionDiv
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`rounded-[32px] p-6 shadow-2xl transition-all duration-300 ${
-              isDark ? 'bg-slate-900 border border-slate-800 text-white shadow-black/40' : 'bg-white text-slate-900 shadow-slate-900/20'
-            }`}
+            className="rounded-[32px] p-6 shadow-md border transition-all duration-300 animate-fade-in"
+            style={{
+              backgroundColor: 'var(--user-card-bg)',
+              borderColor: 'var(--user-border)',
+              color: 'var(--user-text-primary)'
+            }}
           >
             <div className="flex items-center gap-5">
               <div className="relative">
-                <div className="w-20 h-20 rounded-[28px] bg-slate-950 flex items-center justify-center shadow-lg overflow-hidden border-2 border-white/20">
+                <div 
+                  style={{ borderColor: 'var(--user-border)' }}
+                  className="w-20 h-20 rounded-[28px] bg-slate-950 flex items-center justify-center shadow-lg overflow-hidden border-2"
+                >
                   {profile.profileImage ? (
                     <img 
                       src={profile.profileImage} 
@@ -276,29 +301,58 @@ const Profile = () => {
                 <h2 className="font-['Outfit'] text-[22px] font-extrabold truncate capitalize leading-tight">
                   {profile.name}
                 </h2>
-                <p className="text-[14px] font-bold opacity-60 mt-1 flex items-center gap-1.5">
-                   <Phone size={14} className="opacity-40" />
+                <p 
+                  style={{ color: 'var(--user-text-secondary)' }}
+                  className="text-[14px] font-bold mt-1 flex items-center gap-1.5"
+                >
+                   <Phone size={14} className="opacity-60" />
                    {profile.phone ? `+91 ${profile.phone}` : 'Account Active'}
                 </p>
               </div>
             </div>
 
             {/* Quick Stats Row */}
-            <div className={`grid grid-cols-3 gap-3 mt-8 pt-6 border-t ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+            <div 
+              style={{ borderColor: 'var(--user-border)' }}
+              className="grid grid-cols-3 gap-3 mt-8 pt-6 border-t"
+            >
               <div className="text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] opacity-40">Total Trips</p>
+                <p 
+                  style={{ color: 'var(--user-text-secondary)' }}
+                  className="text-[10px] font-black uppercase tracking-[0.15em]"
+                >
+                  Total Trips
+                </p>
                 <p className="font-['Outfit'] text-[18px] font-extrabold mt-1">{profile.stats.trips}</p>
               </div>
-              <div className={`text-center border-x ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] opacity-40">Rating</p>
+              <div 
+                style={{ borderColor: 'var(--user-border)' }}
+                className="text-center border-x"
+              >
+                <p 
+                  style={{ color: 'var(--user-text-secondary)' }}
+                  className="text-[10px] font-black uppercase tracking-[0.15em]"
+                >
+                  Rating
+                </p>
                 <div className="flex items-center justify-center gap-1 mt-1">
                   <Star size={14} className="text-yellow-400 fill-yellow-400" />
                   <p className="font-['Outfit'] text-[18px] font-extrabold mt-1">{profile.stats.rating}</p>
                 </div>
               </div>
               <div className="text-center">
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] opacity-40">Credits</p>
-                <p className={`font-['Outfit'] text-[18px] font-extrabold mt-1 ${isDark ? 'text-yellow-400' : 'text-indigo-650'}`}>₹{profile.stats.wallet}</p>
+                <p 
+                  style={{ color: 'var(--user-text-secondary)' }}
+                  className="text-[10px] font-black uppercase tracking-[0.15em]"
+                >
+                  Credits
+                </p>
+                <p 
+                  style={{ color: 'var(--user-accent)' }}
+                  className="font-['Outfit'] text-[18px] font-extrabold mt-1"
+                >
+                  ₹{profile.stats.wallet}
+                </p>
               </div>
             </div>
           </MotionDiv>
@@ -313,13 +367,20 @@ const Profile = () => {
         >
           {menuSections.map((section, sIdx) => (
             <motion.div key={sIdx} variants={itemVariants} className="space-y-4">
-              <h3 className="font-['Outfit'] text-[12px] font-black text-slate-400 uppercase tracking-[0.25em] ml-1">
+              <h3 
+                style={{ color: 'var(--user-text-secondary)' }}
+                className="font-['Outfit'] text-[12px] font-black uppercase tracking-[0.25em] ml-1"
+              >
                 {section.title}
               </h3>
               
-              <div className={`rounded-[32px] border shadow-premium overflow-hidden divide-y transition-colors duration-300 ${
-                isDark ? 'bg-slate-900 border-slate-800 divide-slate-800/60' : 'bg-white border-slate-100 divide-slate-50'
-              }`}>
+              <div 
+                style={{
+                  backgroundColor: 'var(--user-card-bg)',
+                  borderColor: 'var(--user-border)',
+                }}
+                className="rounded-[32px] border shadow-sm overflow-hidden divide-y divide-slate-200/50 dark:divide-zinc-800/60 transition-colors duration-300"
+              >
                 {section.items.map((item, iIdx) => (
                   <MotionButton
                     key={iIdx}
@@ -334,11 +395,20 @@ const Profile = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-[15px] font-bold leading-tight tracking-tight">{item.title}</p>
-                      <p className="text-[12px] font-semibold opacity-60 mt-1">{item.sub}</p>
+                      <p 
+                        style={{ color: 'var(--user-text-secondary)' }}
+                        className="text-[12px] font-semibold mt-0.5"
+                      >
+                        {item.sub}
+                      </p>
                     </div>
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                      isDark ? 'bg-slate-950 text-slate-500' : 'bg-slate-50 text-slate-200'
-                    }`}>
+                    <div 
+                      style={{
+                        backgroundColor: 'var(--user-bg)',
+                        color: 'var(--user-text-secondary)'
+                      }}
+                      className="h-8 w-8 rounded-full flex items-center justify-center transition-colors duration-300"
+                    >
                       <ChevronRight size={18} strokeWidth={3} />
                     </div>
                   </MotionButton>
@@ -354,12 +424,10 @@ const Profile = () => {
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate('/taxi/user/profile/delete-account')}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-[24px] border transition-colors cursor-pointer ${
-                isDark ? 'bg-slate-900 border-red-950/40 text-red-400 hover:bg-red-950/20' : 'border-red-50 text-red-500 hover:bg-red-50'
+                isDark ? 'bg-slate-900 border-red-900/30 text-red-400 hover:bg-red-950/20' : 'bg-white border-red-100 text-red-650 hover:bg-red-50/50'
               }`}
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                isDark ? 'bg-red-950/20' : 'bg-red-50'
-              }`}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-red-500/10 text-red-500 border border-red-500/10">
                 <Trash2 size={18} strokeWidth={2.5} />
               </div>
               <p className="text-[14px] font-bold">Delete account</p>
@@ -369,8 +437,10 @@ const Profile = () => {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleLogout}
-              className={`w-full h-16 rounded-[24px] flex items-center justify-center gap-3 text-[15px] font-black shadow-xl transition-all duration-300 cursor-pointer ${
-                isDark ? 'bg-yellow-400 hover:bg-yellow-500 text-slate-950 shadow-yellow-400/10' : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/10'
+              className={`w-full h-16 rounded-[24px] flex items-center justify-center gap-3 text-[15px] font-black transition-all duration-300 cursor-pointer border ${
+                isDark
+                  ? 'bg-yellow-400 hover:bg-yellow-500 text-slate-950 border-yellow-400 shadow-lg shadow-yellow-400/5'
+                  : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900 shadow-md shadow-slate-900/10'
               }`}
             >
               <LogOut size={18} strokeWidth={3} />
@@ -385,10 +455,6 @@ const Profile = () => {
           </motion.div>
         </motion.div>
       </div>
-
-
-
-      <BottomNavbar />
     </div>
   );
 };

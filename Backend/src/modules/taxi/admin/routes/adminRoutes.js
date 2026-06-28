@@ -502,6 +502,7 @@ adminRouter.patch('/admin/integration-settings/recharge-api', updateRechargeApiS
 adminRouter.post('/admin/integration-settings/recharge-api/generate-token', generateRechargeApiToken);
 adminRouter.post('/admin/integration-settings/recharge-api/test', runRechargeApiTest);
 
+adminRouter.get('/admin/general-settings/:category', getGeneralSettingsCategory);
 adminRouter.patch('/admin/general-settings/:category', updateGeneralSettingsCategory);
 
 adminRouter.get('/on-boarding', getUserOnboarding);

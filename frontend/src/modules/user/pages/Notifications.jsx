@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Bell, Trash2, Tag, ShieldCheck, Star, AlertCircle, RefreshCw, Megaphone, CheckCircle2 } from 'lucide-react';
-import BottomNavbar from '../components/BottomNavbar';
+// ... removed BottomNavbar import ...
 import { userAuthService } from '../services/authService';
 import { useUserTheme } from '../../../shared/context/UserThemeContext';
 import {
@@ -258,8 +258,6 @@ const Notifications = () => {
           })}
         </AnimatePresence>
       </div>
-
-      <BottomNavbar />
     </div>
   );
 };

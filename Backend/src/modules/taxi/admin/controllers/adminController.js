@@ -1627,6 +1627,10 @@ export const downloadFleetFinanceReport = asyncHandler(async (req, res) => {
 export const getGeneralSettingsCategory = asyncHandler(async (req, res) =>
   ok(res, await adminService.getGeneralSettings(req.params.category)),
 );
+export const getUserHomeManagement = asyncHandler(async (req, res) => {
+  const result = await adminService.getGeneralSettings('user-home-management');
+  ok(res, result.settings || {});
+});
 export const updateGeneralSettingsCategory = asyncHandler(async (req, res) =>
   ok(
     res,
@@ -1638,12 +1642,13 @@ export const getTransportTypes = asyncHandler(async (_req, res) =>
 );
 
 export const getAppBootstrap = asyncHandler(async (_req, res) => {
-  const [modules, general, transportRide, customize, paymentGateway] = await Promise.all([
+  const [modules, general, transportRide, customize, paymentGateway, userHomeSettings] = await Promise.all([
     adminService.listAppModules(),
     adminService.getGeneralSettings('general'),
     adminService.getGeneralSettings('transport-ride'),
     adminService.getGeneralSettings('customize'),
     getPublicActivePaymentGateway(),
+    adminService.getGeneralSettings('user-home-management'),
   ]);
 
   ok(res, {
@@ -1653,6 +1658,7 @@ export const getAppBootstrap = asyncHandler(async (_req, res) => {
       transportRide: transportRide.settings || {},
       customization: customize.settings || {},
       paymentGateway: paymentGateway?.activeGateway || null,
+      userHomeSettings: userHomeSettings.settings || {},
     }
   });
 });

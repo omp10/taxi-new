@@ -70,6 +70,7 @@ import {
   Wallet,
   PhonePeStatusPage,
   Chat,
+  UserAppLayout,
 } from './lazyPages';
 
 const publicRoutes = (
@@ -96,9 +97,21 @@ const publicRoutes = (
     <Route path="/onboarding" element={<Onboarding />} />
     <Route path="/verify-otp" element={<VerifyOTP />} />
     <Route path="/signup" element={<Signup />} />
-    <Route path="/user" element={<UserHomeRoute />} />
+    <Route element={<UserAppLayout />}>
+      <Route path="/user" element={<UserHomeRoute />} />
+    </Route>
 
     <Route element={<UserProtectedRoute />}>
+      <Route element={<UserAppLayout />}>
+        <Route path="/activity" element={<Activity />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/referral" element={<UserReferral />} />
+        <Route path="/promo" element={<PromoCodes />} />
+        <Route path="/notifications" element={<UserNotifications />} />
+        <Route path="/bus" element={<BusHome />} />
+        <Route path="/ride/support" element={<Support />} />
+      </Route>
+
       <Route path="/ride/select-category" element={<SelectCategory />} />
       <Route path="/ride/select-location" element={<SelectLocation />} />
       <Route path="/ride/select-vehicle" element={<SelectVehicle />} />
@@ -106,7 +119,6 @@ const publicRoutes = (
       <Route path="/ride/tracking" element={<RideTracking />} />
       <Route path="/ride/complete" element={<RideComplete />} />
       <Route path="/ride/chat" element={<Chat />} />
-      <Route path="/ride/support" element={<Support />} />
       <Route path="/ride/detail/:id" element={<RideDetail />} />
 
       <Route path="/parcel/type" element={<ParcelType />} />
@@ -136,19 +148,13 @@ const publicRoutes = (
       <Route path="/cab/spiritual" element={<SpiritualTrip />} />
       <Route path="/cab/spiritual-vehicle" element={<SpiritualTripVehicle />} />
       <Route path="/cab/spiritual-confirm" element={<SpiritualTripConfirm />} />
-      <Route path="/bus" element={<BusHome />} />
       <Route path="/bus/list" element={<BusList />} />
       <Route path="/bus/seats" element={<BusSeats />} />
       <Route path="/bus/details" element={<BusDetails />} />
       <Route path="/bus/confirm" element={<BusConfirm />} />
       <Route path="/tours" element={<ComingSoon />} />
 
-      <Route path="/activity" element={<Activity />} />
-      <Route path="/profile" element={<Profile />} />
       <Route path="/wallet" element={<Wallet />} />
-      <Route path="/notifications" element={<UserNotifications />} />
-      <Route path="/promo" element={<PromoCodes />} />
-      <Route path="/referral" element={<UserReferral />} />
 
       <Route path="/profile/settings" element={<ProfileSettings />} />
       <Route path="/profile/payments" element={<PaymentSettings />} />

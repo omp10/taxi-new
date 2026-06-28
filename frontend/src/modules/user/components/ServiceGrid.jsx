@@ -1,8 +1,32 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSettings, normalizeAssetUrl } from '../../../shared/context/SettingsContext';
 import { useUserTheme } from '../../../shared/context/UserThemeContext';
+import { BACKEND_ORIGIN } from '../../../shared/api/runtimeConfig';
+
+const getDynamicImageSrc = (item = {}, fallbackImage) => {
+  const rawImage = item.uploadedImage || item.imageUrl || item.image || item.thumbnail || item.icon || null;
+  
+  if (!rawImage) {
+    return fallbackImage;
+  }
+
+  let imageUrl = rawImage;
+  if (!rawImage.startsWith('http') && !rawImage.startsWith('data:')) {
+    const origin = (typeof BACKEND_ORIGIN !== 'undefined' ? BACKEND_ORIGIN : 'http://localhost:5000').replace('/api/v1', '');
+    const cleanPath = rawImage.startsWith('/') ? rawImage : `/${rawImage}`;
+    imageUrl = `${origin}${cleanPath}`;
+  }
+
+  if (item.updatedAt) {
+    const separator = imageUrl.includes('?') ? '&' : '?';
+    imageUrl = `${imageUrl}${separator}v=${item.updatedAt}`;
+  }
+
+  return imageUrl;
+};
 import { userService } from '../services/userService';
 import { X, LayoutGrid } from 'lucide-react';
 
@@ -86,7 +110,7 @@ const getPinnedModuleOrder = (module = {}) => {
 
 const Motion = motion;
 
-const ServiceCard = ({ icon, label, description, path, loading, isDark, onClick }) => {
+export const ServiceCard = React.memo(({ icon, label, description, path, loading, isDark, onClick }) => {
   const navigate = useNavigate();
   const [imgSrc, setImgSrc] = useState(icon);
 
@@ -167,6 +191,7 @@ const ServiceCard = ({ icon, label, description, path, loading, isDark, onClick 
         <img
           src={imgSrc}
           alt={label}
+          loading="lazy"
           onError={() => {
             const cleanLabel = String(label || '').toLowerCase();
             if (cleanLabel.includes('bus')) {
@@ -186,9 +211,9 @@ const ServiceCard = ({ icon, label, description, path, loading, isDark, onClick 
       </div>
     </motion.button>
   );
-};
+});
 
-const ViewAllCard = ({ isDark, onClick }) => {
+const ViewAllCard = React.memo(({ isDark, onClick }) => {
   return (
     <motion.button
       type="button"
@@ -223,9 +248,9 @@ const ViewAllCard = ({ isDark, onClick }) => {
       </div>
     </motion.button>
   );
-};
+});
 
-const ServiceCardStretched = ({ subtitle, title, icon, path, onClick, heightClass, isDark, alignImage = 'right', isAllServices = false }) => {
+const ServiceCardStretched = React.memo(({ subtitle, title, icon, path, onClick, isDark, image, uploadedImage, item }) => {
   const navigate = useNavigate();
   const [imgSrc, setImgSrc] = useState(icon);
 
@@ -250,76 +275,256 @@ const ServiceCardStretched = ({ subtitle, title, icon, path, onClick, heightClas
     return fallbackCar;
   };
 
-  return (
-    <motion.button
-      type="button"
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={handleCardClick}
-      className={`relative overflow-hidden w-full ${heightClass} flex rounded-[24px] border text-left transition-all duration-300 group shadow-sm bg-[var(--user-card-bg)] border-[var(--user-border)] text-[var(--user-text-primary)] hover:shadow-md ${
-        alignImage === 'bottom-right' ? 'flex-col justify-between p-4' : 'flex-row justify-between items-center p-4'
-      }`}
-      style={{
-        boxShadow: '0 4px 16px rgba(15,23,42,0.04), 0 0 0 1px var(--user-border)',
-      }}
-    >
-      {/* Small yellow accent glow */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[var(--user-accent)]/5 to-[var(--user-accent)]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-      <div className={`flex flex-col ${alignImage === 'bottom-right' ? '' : 'max-w-[62%]'}`}>
-        {subtitle && (
-          <span className="text-[10px] sm:text-[11px] font-bold leading-snug opacity-75 uppercase tracking-wide text-[var(--user-text-secondary)]">
-            {subtitle}
-          </span>
-        )}
-        <span className="font-[900] tracking-tight leading-tight uppercase text-[var(--user-text-primary)] mt-1.5">
-          {title === 'All Services' ? (
-            <>
-              All<br />Services
-            </>
-          ) : title === 'Parcel' ? (
-            <>
-              Send<br />anything<br /><span className="text-[var(--user-accent)] font-black">Parcel</span>
-            </>
-          ) : title === 'Bike Taxi' ? (
-            <>
-              Beat the traffic<br /><span className="text-[var(--user-accent)] font-black">Bike Taxi</span>
-            </>
-          ) : title === 'Book now' ? (
-            <>
-              Your everyday rides<br /><span className="text-[var(--user-accent)] font-black">Book now</span>
-            </>
-          ) : (
-            title
-          )}
-        </span>
+  const renderAllServicesIcon = () => (
+    <div className={`h-11 w-11 rounded-[14px] flex items-center justify-center shrink-0 ${
+      isDark ? 'bg-zinc-800/80 border border-zinc-700/50' : 'bg-slate-200/50 border border-slate-300/30'
+    }`}>
+      <div className="grid grid-cols-2 gap-1 w-5.5 h-5.5">
+        <div className="w-[9px] h-[9px] rounded-[2.5px] bg-[#FFC400]" />
+        <div className="w-[9px] h-[9px] rounded-[2.5px] bg-slate-400 dark:bg-white" />
+        <div className="w-[9px] h-[9px] rounded-[2.5px] bg-slate-400 dark:bg-white" />
+        <div className="w-[9px] h-[9px] rounded-[2.5px] bg-slate-300 dark:bg-zinc-650" />
       </div>
-
-      <div className={`relative flex-shrink-0 flex items-center justify-center shortcut-image-bg ${
-        alignImage === 'bottom-right' ? 'self-end mt-1' : ''
-      }`}>
-        {isAllServices ? (
-          <LayoutGrid size={24} className="text-slate-950 dark:text-yellow-400" strokeWidth={3} />
-        ) : (
-          <img
-            src={imgSrc || getFallbackIcon()}
-            alt={title}
-            onError={() => {
-              setImgSrc(getFallbackIcon());
-            }}
-            className="h-[80%] w-[80%] object-contain transition-transform duration-300 group-hover:scale-110"
-          />
-        )}
-      </div>
-    </motion.button>
+    </div>
   );
+
+  const isAllServices = title === 'All Services' || String(title || '').toLowerCase().includes('all services');
+  const imageSrc = getDynamicImageSrc(item || { uploadedImage, image }, imgSrc || getFallbackIcon());
+
+  const [currentImageSrc, setCurrentImageSrc] = useState(imageSrc);
+
+  useEffect(() => {
+    setCurrentImageSrc(imageSrc);
+  }, [imageSrc]);
+
+  const imageMode = item?.imageMode || item?.imageDisplayMode || 'illustration';
+  const isFallback = !item?.uploadedImage && !item?.image;
+
+  return (
+    <>
+      <style>{`
+        .everything-card {
+          position: relative;
+          height: 130px;
+          border-radius: 22px;
+          overflow: hidden;
+          background: #121821 !important;
+          border: 1px solid rgba(63, 63, 70, 0.4);
+          width: 100%;
+          text-align: left;
+          display: block;
+          transition: all 0.2s ease;
+          z-index: 10 !important;
+          pointer-events: auto !important;
+          cursor: pointer !important;
+        }
+
+        .everything-card::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          background: linear-gradient(
+            90deg,
+            #121821 0%,
+            #121821 52%,
+            transparent 72%
+          );
+          pointer-events: none;
+        }
+
+        .everything-card:active {
+          transform: scale(0.98);
+        }
+
+        .everything-card-image-wrap {
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          width: 70%;
+          height: 100%;
+          overflow: hidden;
+          z-index: 1;
+        }
+
+        .everything-card-image {
+          width: 190% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          object-position: right center !important;
+          opacity: 1 !important;
+          filter: none !important;
+          mix-blend-mode: normal !important;
+        }
+
+        .everything-card-content {
+          position: relative;
+          z-index: 4;
+          width: 48%;
+          padding: 14px;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          justify-content: flex-start;
+          pointer-events: none;
+        }
+
+        .everything-card-content span {
+          display: block;
+          font-size: 10px;
+          font-weight: 750;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #94A3B8 !important;
+        }
+
+        .everything-card-content h3 {
+          margin-top: 6px;
+          font-size: 14px;
+          font-weight: 900;
+          line-height: 1.25;
+          color: #ffffff !important;
+        }
+
+        .everything-card-icon-wrap {
+          position: absolute;
+          right: 8px;
+          bottom: 8px;
+          width: 72px;
+          height: 72px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1;
+          pointer-events: none;
+        }
+      `}</style>
+
+      <button
+        type="button"
+        onClick={handleCardClick}
+        className="everything-card group"
+      >
+        <div className="everything-card-content">
+          {String(subtitle || '').toLowerCase() !== String(title || '').toLowerCase() && (
+            <span>{subtitle}</span>
+          )}
+          <h3>{title}</h3>
+        </div>
+
+        {isAllServices ? (
+          <div className="everything-card-icon-wrap">
+            {renderAllServicesIcon()}
+          </div>
+        ) : (
+          <div className="everything-card-image-wrap">
+            <img 
+              src={currentImageSrc} 
+              alt={title} 
+              className="everything-card-image"
+              loading="lazy"
+              onError={() => {
+                setCurrentImageSrc(imgSrc || getFallbackIcon());
+              }}
+            />
+          </div>
+        )}
+      </button>
+    </>
+  );
+});
+
+const defaultSettings = {
+  everything: [
+    { id: '1', title: 'Parcel', subtitle: 'Send anything', image: '', route: '/taxi/user/parcel/type', order: 1, status: 'active' },
+    { id: '2', title: 'Bike Taxi', subtitle: 'Beat the traffic', image: '', route: '/taxi/user/ride/select-location', order: 2, status: 'active' },
+    { id: '3', title: 'Book now', subtitle: 'Your everyday rides', image: '', route: '/taxi/user/ride/select-location', order: 3, status: 'active' },
+    { id: '4', title: 'All Services', subtitle: 'All Services', image: '', route: '', order: 4, status: 'active' }
+  ]
 };
 
-const ServiceGrid = () => {
+const ServiceGrid = ({ 
+  showAllModal: parentShowAllModal, 
+  setShowAllModal: parentSetShowAllModal,
+  isAllServicesOpen,
+  setIsAllServicesOpen,
+  onLoadServices
+}) => {
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAllModal, setShowAllModal] = useState(false);
+  const [localShowAllModal, localSetShowAllModal] = useState(false);
+
+  const showAllModal = isAllServicesOpen !== undefined 
+    ? isAllServicesOpen 
+    : (parentShowAllModal !== undefined ? parentShowAllModal : localShowAllModal);
+    
+  const setShowAllModal = setIsAllServicesOpen !== undefined 
+    ? setIsAllServicesOpen 
+    : (parentSetShowAllModal !== undefined ? parentSetShowAllModal : localSetShowAllModal);
+
+  const [uiSettings, setUiSettings] = useState(() => {
+    try {
+      if (settings?.userHomeSettings && Object.keys(settings.userHomeSettings).length > 0) {
+        return settings.userHomeSettings;
+      }
+      const saved = window.localStorage.getItem('rydon24:admin:user-app-settings');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (settings?.userHomeSettings && Object.keys(settings.userHomeSettings).length > 0) {
+      setUiSettings(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(settings.userHomeSettings)) {
+          return prev;
+        }
+        return settings.userHomeSettings;
+      });
+    }
+  }, [settings?.userHomeSettings]);
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      try {
+        const saved = window.localStorage.getItem('rydon24:admin:user-app-settings');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setUiSettings(prev => {
+            if (JSON.stringify(prev) === JSON.stringify(parsed)) {
+              return prev;
+            }
+            return parsed;
+          });
+        } else {
+          if (settings?.userHomeSettings && Object.keys(settings.userHomeSettings).length > 0) {
+            setUiSettings(prev => {
+              if (JSON.stringify(prev) === JSON.stringify(settings.userHomeSettings)) {
+                return prev;
+              }
+              return settings.userHomeSettings;
+            });
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [settings?.userHomeSettings]);
+
+  useEffect(() => {
+    const handleOpenModal = () => {
+      setShowAllModal(true);
+    };
+    window.addEventListener('rydon24:open-all-services-modal', handleOpenModal);
+    return () => window.removeEventListener('rydon24:open-all-services-modal', handleOpenModal);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -432,9 +637,11 @@ const ServiceGrid = () => {
     );
   };
 
-  const activeModules = (modules || []).filter(
-    (m) => m.active === 1 || m.active === true || String(m.active) === '1' || String(m.active) === 'true'
-  );
+  const activeModules = React.useMemo(() => {
+    return (modules || []).filter(
+      (m) => m.active === 1 || m.active === true || String(m.active) === '1' || String(m.active) === 'true'
+    );
+  }, [modules]);
 
   const parcelModule = activeModules.find(isParcelModule);
   const bikeModule = activeModules.find(isBikeModule);
@@ -445,50 +652,60 @@ const ServiceGrid = () => {
   const rideActive = !!rideModule;
   const showAsymmetricGrid = parcelActive && bikeActive && rideActive;
 
-  const sortedModules = activeModules
-    .slice()
-    .sort((a, b) => {
-      const pinnedA = getPinnedModuleOrder(a);
-      const pinnedB = getPinnedModuleOrder(b);
+  const sortedModules = React.useMemo(() => {
+    return activeModules
+      .slice()
+      .sort((a, b) => {
+        const pinnedA = getPinnedModuleOrder(a);
+        const pinnedB = getPinnedModuleOrder(b);
 
-      if (pinnedA !== null || pinnedB !== null) {
-        if (pinnedA === null) return 1;
-        if (pinnedB === null) return -1;
-        if (pinnedA !== pinnedB) return pinnedA - pinnedB;
-      }
+        if (pinnedA !== null || pinnedB !== null) {
+          if (pinnedA === null) return 1;
+          if (pinnedB === null) return -1;
+          if (pinnedA !== pinnedB) return pinnedA - pinnedB;
+        }
 
-      const orderA = Number(a?.order_by);
-      const orderB = Number(b?.order_by);
-      const hasOrderA = Number.isFinite(orderA);
-      const hasOrderB = Number.isFinite(orderB);
+        const orderA = Number(a?.order_by);
+        const orderB = Number(b?.order_by);
+        const hasOrderA = Number.isFinite(orderA);
+        const hasOrderB = Number.isFinite(orderB);
 
-      if (hasOrderA && hasOrderB && orderA !== orderB) {
-        return orderA - orderB;
-      }
+        if (hasOrderA && hasOrderB && orderA !== orderB) {
+          return orderA - orderB;
+        }
 
-      if (hasOrderA !== hasOrderB) {
-        return hasOrderA ? -1 : 1;
-      }
+        if (hasOrderA !== hasOrderB) {
+          return hasOrderA ? -1 : 1;
+        }
 
-      return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { sensitivity: 'base' });
+        return String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { sensitivity: 'base' });
+      });
+  }, [activeModules]);
+
+  const services = React.useMemo(() => {
+    return sortedModules.map((m, idx) => {
+      const apiIcon = normalizeAssetUrl(m.mobile_menu_icon);
+      const serviceTypeDisplay = String(m.service_type || '').toUpperCase();
+      const transportTypeDisplay = String(m.transport_type || '').toUpperCase();
+      const typeLabel = serviceTypeDisplay && transportTypeDisplay 
+        ? `${serviceTypeDisplay} • ${transportTypeDisplay}`
+        : serviceTypeDisplay || transportTypeDisplay || 'SERVICE';
+
+      return {
+        icon: apiIcon && apiIcon.trim() !== '' ? apiIcon : getFallbackIcon(m),
+        label: m.name,
+        description: typeLabel,
+        path: getPath(m),
+        accentClass: getAccent(idx),
+      };
     });
+  }, [sortedModules]);
 
-  const services = sortedModules.map((m, idx) => {
-    const apiIcon = normalizeAssetUrl(m.mobile_menu_icon);
-    const serviceTypeDisplay = String(m.service_type || '').toUpperCase();
-    const transportTypeDisplay = String(m.transport_type || '').toUpperCase();
-    const typeLabel = serviceTypeDisplay && transportTypeDisplay 
-      ? `${serviceTypeDisplay} • ${transportTypeDisplay}`
-      : serviceTypeDisplay || transportTypeDisplay || 'SERVICE';
-
-    return {
-      icon: apiIcon && apiIcon.trim() !== '' ? apiIcon : getFallbackIcon(m),
-      label: m.name,
-      description: typeLabel,
-      path: getPath(m),
-      accentClass: getAccent(idx),
-    };
-  });
+  useEffect(() => {
+    if (onLoadServices) {
+      onLoadServices(services);
+    }
+  }, [services, onLoadServices]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -518,7 +735,7 @@ const ServiceGrid = () => {
 
   return (
     <div className="w-full">
-      <Motion.section
+      <motion.section
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -533,147 +750,72 @@ const ServiceGrid = () => {
         {loading ? (
           <div className="grid grid-cols-2 gap-3">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className={`w-full animate-pulse rounded-[24px] ${
-                i === 1 ? 'h-[172px]' : i === 3 ? 'h-[60px]' : 'h-[116px]'
-              } ${isDark ? 'bg-zinc-900/60' : 'bg-slate-100/80'}`} />
+              <div key={i} className={`w-full animate-pulse rounded-[24px] h-[132px] ${isDark ? 'bg-zinc-900/60' : 'bg-slate-100/80'}`} />
             ))}
           </div>
-        ) : (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-2 gap-3"
-          >
-            {/* Left Column */}
-            <div className="flex flex-col gap-3">
-              <motion.div variants={itemVariants}>
-                <ServiceCardStretched
-                  title="Parcel"
-                  subtitle="Send anything"
-                  icon={parcelModule ? normalizeAssetUrl(parcelModule.mobile_menu_icon) : parcelFallback}
-                  onClick={() => {
-                    navigate('/taxi/user/parcel/type');
-                  }}
-                  heightClass="h-[116px]"
-                  isDark={isDark}
-                />
-              </motion.div>
+        ) : (() => {
+          const activeItems = (uiSettings?.everything || defaultSettings.everything)
+            .filter(item => item.status === 'active' || item.status === true)
+            .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
 
-              <motion.div variants={itemVariants}>
-                <ServiceCardStretched
-                  title="Book now"
-                  subtitle="Your everyday rides"
-                  icon={rideModule ? normalizeAssetUrl(rideModule.mobile_menu_icon) : taxiFallback}
-                  onClick={() => {
-                    navigate('/taxi/user/ride/select-location', { state: { selectedCategory: 'car' } });
-                  }}
-                  heightClass="h-[116px]"
-                  isDark={isDark}
-                />
-              </motion.div>
-            </div>
-
-            {/* Right Column */}
-            <div className="flex flex-col gap-3">
-              <motion.div variants={itemVariants}>
-                <ServiceCardStretched
-                  title="Bike Taxi"
-                  subtitle="Beat the traffic"
-                  icon={bikeModule ? normalizeAssetUrl(bikeModule.mobile_menu_icon) : bikeFallback}
-                  onClick={() => {
-                    navigate('/taxi/user/ride/select-location', { state: { selectedCategory: 'bike' } });
-                  }}
-                  heightClass="h-[172px]"
-                  isDark={isDark}
-                  alignImage="bottom-right"
-                />
-              </motion.div>
-
-              <motion.div variants={itemVariants}>
-                <ServiceCardStretched
-                  title="All Services"
-                  subtitle="All Services"
-                  icon={null}
-                  onClick={() => setShowAllModal(true)}
-                  heightClass="h-[60px]"
-                  isDark={isDark}
-                  isAllServices={true}
-                />
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </Motion.section>
-
-      <AnimatePresence>
-        {showAllModal && (
-          <>
+          return (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAllModal(false)}
-              className="fixed inset-0 z-[999] bg-black/60 backdrop-blur-sm flex items-end justify-center"
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-2 gap-3"
             >
-              <motion.div
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                onClick={(e) => e.stopPropagation()}
-                className={`w-full max-w-lg rounded-t-[32px] px-6 pt-3 pb-[max(env(safe-area-inset-bottom),24px)] border-t shadow-2xl flex flex-col max-h-[82vh] ${
-                  isDark
-                    ? 'bg-zinc-950 text-white border-zinc-850 shadow-[0_-12px_40px_rgba(0,0,0,0.8)]'
-                    : 'bg-white text-slate-900 border-slate-200/80 shadow-[0_-12px_30px_rgba(15,23,42,0.12)]'
-                }`}
-              >
-                <div className="w-full flex justify-center pb-3.5 cursor-pointer" onClick={() => setShowAllModal(false)}>
-                  <div className={`w-12 h-1 rounded-full ${isDark ? 'bg-zinc-800' : 'bg-slate-200'}`} />
-                </div>
+              {activeItems.map((item, idx) => {
+                const isAllServices = String(item.title || '').toLowerCase().includes('all services');
+                const isParcel = String(item.title || '').toLowerCase().includes('parcel');
+                const isBike = String(item.title || '').toLowerCase().includes('bike');
+                const isBook = String(item.title || '').toLowerCase().includes('book') || String(item.title || '').toLowerCase().includes('ride');
 
-                <div className={`flex items-center justify-between pb-4 border-b ${
-                  isDark ? 'border-zinc-800' : 'border-slate-100'
-                }`}>
-                  <span className={`text-[15px] font-black uppercase tracking-[0.18em] ${isDark ? 'text-zinc-300' : 'text-slate-900'}`}>
-                    ALL SERVICES
-                  </span>
-                  <button
-                    onClick={() => setShowAllModal(false)}
-                    className={`p-1.5 rounded-full transition-colors ${
-                      isDark ? 'bg-zinc-900 hover:bg-zinc-850 text-zinc-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
-                    }`}
-                  >
-                    <X size={18} strokeWidth={2.5} />
-                  </button>
-                </div>
+                const fallbackIcon = isParcel ? (parcelModule ? normalizeAssetUrl(parcelModule.mobile_menu_icon) : parcelFallback)
+                                     : isBike ? (bikeModule ? normalizeAssetUrl(bikeModule.mobile_menu_icon) : bikeFallback)
+                                     : isBook ? (rideModule ? normalizeAssetUrl(rideModule.mobile_menu_icon) : taxiFallback)
+                                     : taxiFallback;
 
-                <div className="flex-1 overflow-y-auto mt-4 pr-1 py-1">
-                  <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="show"
-                    className="grid grid-cols-2 gap-3.5"
-                  >
-                    {services.map((service, index) => (
-                      <motion.div key={getServiceKey(service, index) + '-modal'} variants={itemVariants}>
-                        <ServiceCard
-                          {...service}
-                          isDark={isDark}
-                          onClick={() => {
-                            setShowAllModal(false);
-                            navigate(service.path);
-                          }}
-                        />
-                      </motion.div>
-                    ))}
+                const clickHandler = () => {
+                  const clickRoute = item.actionRoute || item.route;
+                  if (clickRoute === "ALL_SERVICES_MODAL" || isAllServices) {
+                    setShowAllModal(true);
+                  } else if (clickRoute) {
+                    navigate(clickRoute);
+                  } else if (onServiceClick) {
+                    onServiceClick(item);
+                  } else {
+                    const fallbackRoute = isParcel ? '/taxi/user/parcel/type' : '/taxi/user/ride/select-location';
+                    const isSelectLocationRoute = fallbackRoute.includes('/ride/select-location');
+                    
+                    if (isSelectLocationRoute) {
+                      const category = isBike ? 'bike' : 'car';
+                      navigate(fallbackRoute, { state: { selectedCategory: category, flow: 'ride', activeInput: 'drop' } });
+                    } else {
+                      navigate(fallbackRoute);
+                    }
+                  }
+                };
+
+                return (
+                  <motion.div key={item.id || idx} variants={itemVariants} className="col-span-1">
+                    <ServiceCardStretched
+                      title={item.title}
+                      subtitle={item.subtitle}
+                      icon={fallbackIcon}
+                      onClick={clickHandler}
+                      isDark={isDark}
+                      image={item.image}
+                      uploadedImage={item.uploadedImage}
+                      item={item}
+                    />
                   </motion.div>
-                </div>
-              </motion.div>
+                );
+              })}
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+          );
+        })()}
+      </motion.section>
     </div>
   );
 };

@@ -538,20 +538,43 @@ const SelectLocation = () => {
     return allResults.slice(0, 6);
   }, [currentZone, serviceStores]);
 
+  const isInitialDefault = useMemo(() => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return false;
+    
+    if (activeInput === 'pickup') {
+      const defaultPickup = String(routeState.pickup || '').trim();
+      const currentSaved = String(savedPickupLabel || '').trim();
+      return trimmedQuery === defaultPickup || trimmedQuery === currentSaved;
+    }
+    
+    if (activeInput === 'drop') {
+      const defaultDrop = String(routeState.drop || '').trim();
+      return trimmedQuery === defaultDrop;
+    }
+    
+    if (typeof activeInput === 'number') {
+      const defaultStop = String(routeState.stops?.[activeInput] || '').trim();
+      return trimmedQuery === defaultStop;
+    }
+    
+    return false;
+  }, [query, activeInput, routeState.pickup, routeState.drop, routeState.stops, savedPickupLabel]);
+
   const localSearchResults = useMemo(
     () =>
-      query.trim().length >= 1
+      query.trim().length >= 1 && !isInitialDefault
         ? allResults.filter(
           (result) =>
             result.title.toLowerCase().includes(query.toLowerCase())
             || result.address.toLowerCase().includes(query.toLowerCase()),
         )
         : popularSuggestions,
-    [popularSuggestions, query],
+    [popularSuggestions, query, isInitialDefault],
   );
 
   useEffect(() => {
-    if (!query.trim() || query.trim().length < 3 || !HAS_VALID_GOOGLE_MAPS_KEY || !autocompleteServiceRef.current) {
+    if (isInitialDefault || !query.trim() || query.trim().length < 3 || !HAS_VALID_GOOGLE_MAPS_KEY || !autocompleteServiceRef.current) {
       setRemoteResults([]);
       setIsSearchingLocations(false);
       return;

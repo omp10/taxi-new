@@ -728,40 +728,49 @@ body {
 
 /* User Theme Custom Variables */
 :root {
-  --user-bg: #0f172a;
+  --user-bg: #0F172A;
   --user-card-bg: #111827;
-  --user-text-primary: #ffffff;
-  --user-text-secondary: #cbd5e1;
-  --user-border: rgba(255,255,255,0.12);
-  --user-accent: #ffc400;
+  --user-text-primary: #FFFFFF;
+  --user-text-secondary: #CBD5E1;
+  --user-border: rgba(255,255,255,0.10);
+  --user-accent: #FFC400;
+  --user-profile-header-bg: #090d16;
+  --user-profile-header-gradient: linear-gradient(180deg, rgba(255, 196, 0, 0.06) 0%, rgba(15, 23, 42, 1) 100%);
 }
 
 .user-app-theme.light,
 .user-app-theme .light,
 .user-app-theme[class*="light"] {
-  --user-bg: #ffffff;
-  --user-card-bg: #f7f8fb;
-  --user-text-primary: #0b1220;
-  --user-text-secondary: #5b6473;
-  --user-border: rgba(15,23,42,0.12);
-  --user-accent: #ffc400;
+  --user-bg: #F8FAFC;
+  --user-card-bg: #FFFFFF;
+  --user-text-primary: #0B1220;
+  --user-text-secondary: #64748B;
+  --user-border: rgba(15,23,42,0.10);
+  --user-accent: #FFC400;
+  --user-profile-header-bg: #FFFFFF;
+  --user-profile-header-gradient: linear-gradient(180deg, rgba(238, 242, 255, 0.5) 0%, rgba(248, 250, 252, 0) 100%);
 }
 
 .user-app-theme.dark,
 .user-app-theme .dark,
 .user-app-theme[class*="dark"] {
-  --user-bg: #0f172a;
-  --user-card-bg: #111827;
-  --user-text-primary: #ffffff;
-  --user-text-secondary: #cbd5e1;
+  --user-bg: #05070D;
+  --user-card-bg: #101827;
+  --user-text-primary: #FFFFFF;
+  --user-text-secondary: #CBD5E1;
   --user-border: rgba(255,255,255,0.12);
-  --user-accent: #ffc400;
+  --user-accent: #FFC400;
+  --user-profile-header-bg: #090d16;
+  --user-profile-header-gradient: linear-gradient(180deg, rgba(255, 196, 0, 0.06) 0%, rgba(5, 7, 13, 1) 100%);
 }
 
 /* Theme variable mapping utilities */
 .user-app-theme {
   background-color: var(--user-bg) !important;
   color: var(--user-text-primary) !important;
+  max-width: 430px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 /* Shortcut image background blob */
@@ -787,6 +796,108 @@ body {
 .user-app-theme .dark .shortcut-image-bg,
 .user-app-theme[class*="dark"] .shortcut-image-bg {
   background: linear-gradient(135deg, rgba(255,196,0,0.18), rgba(255,255,255,0.08));
+}
+
+.user-bottom-nav {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  transform: translateX(-50%) !important;
+  z-index: 9997 !important;
+  width: calc(100% - 32px) !important;
+  max-width: 390px !important;
+  pointer-events: auto !important;
+}
+
+.user-home-scroll {
+  padding-bottom: 140px;
+}
+
+/* HTML and Body scroll configurations */
+html, body, #root {
+  height: 100% !important;
+}
+
+.user-app,
+.user-home,
+.user-home-page {
+  min-height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Rapido layout styling */
+.user-home {
+  position: relative !important;
+  min-height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: var(--user-bg) !important;
+}
+
+.map-header {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 280px !important;
+  z-index: 1 !important;
+  overflow: hidden !important;
+}
+
+.map-header .google-map,
+.map-header iframe,
+.map-header .map-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.pickup-address-pill {
+  position: absolute !important;
+  left: 16px !important;
+  right: 16px !important;
+  bottom: 18px !important;
+  z-index: 20 !important;
+}
+
+.home-sheet {
+  position: relative !important;
+  z-index: 5 !important;
+  margin-top: 258px !important;
+  border-radius: 28px 28px 0 0 !important;
+  background: var(--user-bg) !important;
+  padding: 16px !important;
+  padding-bottom: 140px !important;
+}
+
+.user-search-bar {
+  position: sticky !important;
+  top: 10px !important;
+  z-index: 50 !important;
+}
+
+/* All Services Modal Overlay */
+.all-services-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  backdrop-blur: none !important;
+  z-index: 9998 !important;
+}
+
+.all-services-sheet {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 0 !important;
+  transform: translateX(-50%) !important;
+  width: 100% !important;
+  max-width: 430px !important;
+  height: 80vh !important;
+  background: var(--user-bg) !important;
+  border-radius: 28px 28px 0 0 !important;
+  z-index: 9999 !important;
+  overflow-y: auto !important;
+  padding: 20px !important;
 }
 
 
