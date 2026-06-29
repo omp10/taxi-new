@@ -154,6 +154,7 @@ const FooterBannerImage = ({ footerSettings, fallbackImage }) => {
           backgroundSize: 'auto 100%',
           backgroundPosition: '0px center',
           mixBlendMode: 'normal',
+          willChange: 'transform, background-position, opacity',
         }}
         initial={{ opacity: 0, scale: 1.05 }}
         animate={{
@@ -770,6 +771,14 @@ const Home = () => {
   };
 
   const handleServiceClick = (service) => {
+    // Scroll everything to top immediately upon clicking a service
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    if (document.documentElement) document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    if (document.body) document.body.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.querySelectorAll('.overflow-y-auto, [class*="overflow-y-auto"], .overflow-y-scroll, .no-scrollbar').forEach(el => {
+      el.scrollTop = 0;
+    });
+
     // Helper to map fallback routes to registered routes defensively
     const cleanRoute = (route) => {
       if (!route) return '/taxi/user/ride/select-location';
@@ -1923,6 +1932,23 @@ const AllServicesBottomSheet = ({ services, onClose, onServiceClick }) => {
   const { theme } = useUserTheme();
   const isDark = theme === 'dark';
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Reset window and body scroll positions when opening All Services bottom sheet
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    if (document.documentElement) {
+      document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+    if (document.body) {
+      document.body.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+    
+    // Reset parent/global user app scroll container scroll heights
+    const scrollables = document.querySelectorAll('.overflow-y-auto, [class*="overflow-y-auto"], .overflow-y-scroll, .no-scrollbar');
+    scrollables.forEach(el => {
+      el.scrollTop = 0;
+    });
+  }, []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
