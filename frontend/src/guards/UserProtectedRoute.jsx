@@ -30,13 +30,20 @@ export const UserHomeRoute = ({ taxiPrefixed = false }) => {
   const token = getLocalUserToken();
 
   useEffect(() => {
+    const splashSeen = sessionStorage.getItem('rydon24_splash_seen');
+    if (!splashSeen) {
+      navigate('/taxi/user/splash', { replace: true });
+      return;
+    }
+
     if (!token) {
       clearLocalUserSession();
       navigate(taxiPrefixed ? '/taxi/user/login' : '/login', { replace: true });
     }
   }, [token, navigate, taxiPrefixed]);
 
-  if (!token) {
+  const splashSeen = sessionStorage.getItem('rydon24_splash_seen');
+  if (!splashSeen || !token) {
     return null;
   }
 

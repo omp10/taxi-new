@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 
 export const UserHome = lazy(() => import('../modules/user/pages/Home'));
+export const SplashScreen = lazy(() => import('../modules/user/pages/SplashScreen'));
 export const Login = lazy(() => import('../modules/user/pages/auth/Login'));
 export const VerifyOTP = lazy(() => import('../modules/user/pages/auth/VerifyOTP'));
 export const Signup = lazy(() => import('../modules/user/pages/auth/Signup'));

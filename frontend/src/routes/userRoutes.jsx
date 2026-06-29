@@ -67,10 +67,12 @@ import {
   Wallet,
   Chat,
   UserAppLayout,
+  SplashScreen,
 } from './lazyPages';
 
 const userRoutes = (
   <>
+    <Route path="/taxi/user/splash" element={<SplashScreen />} />
     <Route path="/taxi/user/onboarding" element={<Onboarding />} />
     <Route path="/taxi/user/login" element={<Login />} />
     <Route path="/taxi/user/terms" element={<LegalPage />} />

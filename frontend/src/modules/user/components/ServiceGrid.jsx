@@ -763,7 +763,7 @@ const ServiceGrid = ({
               variants={containerVariants}
               initial="hidden"
               animate="show"
-              className="grid grid-cols-2 gap-3"
+              className="everything-grid grid grid-cols-2 gap-3"
             >
               {activeItems.map((item, idx) => {
                 const isAllServices = String(item.title || '').toLowerCase().includes('all services');

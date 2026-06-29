@@ -319,6 +319,7 @@ const ParcelType = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
+          onClick={() => navigate('/taxi/user/referral')}
           className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-amber-100 via-yellow-100 to-yellow-50 border border-yellow-200/60 p-5 mb-8 shadow-md group cursor-pointer"
         >
           {/* Decorative coin circles */}

@@ -303,6 +303,7 @@ body {
 .user-app-theme,
 .user-app-theme * {
   font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
+  box-sizing: border-box !important;
 }
 
 /* Explicitly map all Tailwind font-override utility classes in user app to Outfit */
@@ -786,9 +787,11 @@ body {
 .user-app-theme {
   background-color: var(--user-bg) !important;
   color: var(--user-text-primary) !important;
+  width: 100% !important;
   max-width: 430px !important;
   margin-left: auto !important;
   margin-right: auto !important;
+  box-sizing: border-box !important;
 }
 
 /* Shortcut image background blob */
@@ -848,9 +851,14 @@ html, body, #root {
 .user-home {
   position: relative !important;
   min-height: 100vh !important;
+  width: 100% !important;
+  max-width: 430px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   background: var(--user-bg) !important;
+  box-sizing: border-box !important;
 }
 
 .map-header {
@@ -884,8 +892,10 @@ html, body, #root {
   margin-top: 220px !important;
   border-radius: 28px 28px 0 0 !important;
   background: var(--user-bg) !important;
-  padding: 16px !important;
-  padding-bottom: 110px !important;
+  padding: 16px 16px 110px 16px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
   overflow-x: hidden !important;
 }
 
@@ -986,6 +996,72 @@ html, body, #root {
 .promo-dots button.active {
   width: 18px;
   background: #FFC400;
+}
+
+/* Home page spacing and layout alignment rules */
+.user-app,
+.mobile-app-shell {
+  width: 100% !important;
+  max-width: 430px !important;
+  overflow-x: hidden !important;
+}
+
+.home-section,
+.everything-section,
+.explore-section,
+.promo-section,
+.go-places-section,
+.go-appzeto-section {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.user-search-bar,
+.promo-carousel,
+.go-appzeto-banner {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.everything-grid {
+  width: 100% !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.everything-card {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.go-appzeto-banner {
+  position: relative !important;
+  text-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.go-appzeto-banner img,
+.go-appzeto-banner video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.go-appzeto-content {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 20px !important;
 }
 
 

@@ -103,7 +103,10 @@ const PromoBannerImage = ({ promo, fallbackImage }) => {
 const FooterBannerImage = ({ footerSettings, fallbackImage }) => {
   const { theme } = useUserTheme();
   const isDark = theme === 'dark';
-  const resolved = getDynamicImageSrc(footerSettings, fallbackImage);
+  
+  const hasCustomMedia = footerSettings?.uploadedImage || footerSettings?.imageUrl || footerSettings?.image;
+  const resolved = hasCustomMedia ? getDynamicImageSrc(footerSettings, fallbackImage) : fallbackImage;
+
   const [src, setSrc] = useState(resolved);
 
   useEffect(() => {
@@ -120,14 +123,16 @@ const FooterBannerImage = ({ footerSettings, fallbackImage }) => {
 
   if (isVideo) {
     return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div key={src} className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
         <video
+          key={src}
           src={src}
           autoPlay
           loop
           muted
           playsInline
-          className="w-full h-full object-cover"
+          preload="auto"
+          className={`w-full h-full object-cover ${isDark ? 'opacity-55' : 'opacity-100'}`}
         />
       </div>
     );
@@ -141,13 +146,29 @@ const FooterBannerImage = ({ footerSettings, fallbackImage }) => {
         style={{ display: 'none' }}
         onError={() => setSrc(fallbackImage)}
       />
-      <div
-        className={`absolute inset-0 pointer-events-none bg-repeat-x bg-cover animate-scroll-highway ${isDark ? 'opacity-40' : 'opacity-75'
-          }`}
+      <motion.div
+        key={src}
+        className="absolute inset-0 pointer-events-none bg-repeat-x"
         style={{
           backgroundImage: `url(${src})`,
-          backgroundSize: 'cover',
-          mixBlendMode: isDark ? 'overlay' : 'normal',
+          backgroundSize: 'auto 100%',
+          backgroundPosition: '0px center',
+          mixBlendMode: 'normal',
+        }}
+        initial={{ opacity: 0, scale: 1.05 }}
+        animate={{
+          opacity: isDark ? 0.6 : 0.8,
+          scale: 1,
+          backgroundPosition: ["0px center", "-2000px center"],
+        }}
+        transition={{
+          opacity: { duration: 1.2 },
+          scale: { duration: 1.5, ease: "easeOut" },
+          backgroundPosition: {
+            duration: 35,
+            repeat: Infinity,
+            ease: "linear",
+          }
         }}
       />
     </>
@@ -1452,62 +1473,113 @@ const Home = () => {
               background-position: -2000px 50%;
             }
           }
+          @keyframes kenBurns {
+            0% {
+              transform: scale(1) translate(0, 0);
+            }
+            50% {
+              transform: scale(1.08) translate(-1%, -0.5%);
+            }
+            100% {
+              transform: scale(1) translate(0, 0);
+            }
+          }
           .animate-scroll-highway {
             animation: scrollHighway 35s linear infinite;
           }
+          .animate-ken-burns {
+            animation: kenBurns 25s ease-in-out infinite;
+          }
         `}</style>
 
-        <div
-          className={`relative overflow-hidden min-h-[420px] pb-32 flex flex-col justify-center items-center text-center p-8 transition-all duration-300 border-t -mx-4 w-[calc(100%+32px)] ${isDark
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: 30 }}
+          whileInView={{ opacity: 1, scale: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ type: "spring", stiffness: 80, damping: 15 }}
+          className={`go-appzeto-banner relative overflow-hidden min-h-[420px] pb-32 flex flex-col justify-center items-center text-center p-8 transition-all duration-300 border-t w-full rounded-[24px] ${isDark
               ? 'border-zinc-800 bg-[#05070D] shadow-[0_-12px_36px_rgba(0,0,0,0.4)]'
               : 'border-slate-200 bg-[#F8FAFC] shadow-[0_-8px_24px_rgba(15,23,42,0.04)]'
             }`}
         >
           {/* Subtle neon glowing orb */}
-          <div className={`absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full blur-2xl pointer-events-none ${isDark ? 'bg-[#FFC400]/10' : 'bg-[#FFC400]/5'
-            }`} />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.25, 1],
+              opacity: [0.8, 1, 0.8]
+            }}
+            transition={{
+              duration: 5,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className={`absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full blur-2xl pointer-events-none ${isDark ? 'bg-[#FFC400]/20' : 'bg-[#FFC400]/10'
+            }`} 
+          />
 
           {/* City highway background mask with smooth scrolling animation */}
           <FooterBannerImage footerSettings={uiSettings?.footer || {}} fallbackImage={seamlessHighwayBg} />
 
-          {/* Dual-theme overlay for video/image contrast */}
-          <div
-            className={`absolute inset-0 pointer-events-none z-[1] ${isDark
-                ? 'bg-gradient-to-b from-[#05070D]/40 via-[#05070D]/20 to-[#05070D]/80'
-                : 'bg-gradient-to-b from-white/20 via-white/50 to-white/90'
-              }`}
+          {/* Light overlay optimized for dark text contrast in both themes */}
+          <motion.div
+            animate={{
+              opacity: [0.8, 0.9, 0.8]
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="absolute inset-0 pointer-events-none z-[1] bg-gradient-to-b from-white/15 via-white/45 to-white/80"
           />
 
-          <div className="relative z-10 space-y-2 py-2">
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="go-appzeto-content relative z-10 space-y-3 py-2 w-full max-w-sm"
+          >
             <motion.h3
-              animate={{ textShadow: isDark ? ["0 0 4px rgba(255,196,0,0.2)", "0 0 12px rgba(255,196,0,0.5)", "0 0 4px rgba(255,196,0,0.2)"] : [] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className={`text-[28px] font-[900] tracking-tight uppercase font-display leading-none ${isDark
-                  ? 'text-[#FFC400] bg-gradient-to-b from-[#FFF5CC] to-[#FFC400] bg-clip-text text-transparent'
-                  : 'text-[#0B1220]'
-                }`}
+              initial={{ opacity: 0, y: -15 }}
+              animate={{ 
+                opacity: 1, 
+                y: [0, -4, 0]
+              }}
+              transition={{ 
+                opacity: { duration: 0.8 },
+                y: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+              }}
+              className="text-[28px] font-[900] tracking-tight uppercase font-display leading-none text-[#0B1220]"
               style={{
-                textShadow: isDark
-                  ? '0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(255,196,0,0.4)'
-                  : 'none'
+                textShadow: 'none'
               }}
             >
               #GOAPPZETO
             </motion.h3>
-            <p className={`text-[13px] font-black uppercase tracking-widest font-sans flex items-center justify-center gap-1 ${isDark ? 'text-white/95' : 'text-[#0B1220]'
-              }`}
-              style={{ textShadow: isDark ? '0 1px 3px rgba(0,0,0,0.6)' : 'none' }}
+
+            {/* Holiday taxi inline image removed to show background image only */}
+
+            <motion.p 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-[13px] font-black uppercase tracking-widest font-sans flex items-center justify-center gap-1 text-[#0B1220]"
+              style={{ textShadow: 'none' }}
             >
               MADE FOR INDIA
-            </p>
-            <p className={`text-[10px] font-bold uppercase tracking-[0.16em] mt-1 ${isDark ? 'text-white/60' : 'text-[#64748B]'
-              }`}
-              style={{ textShadow: isDark ? '0 1px 2px rgba(0,0,0,0.6)' : 'none' }}
+            </motion.p>
+            <motion.p 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-[10px] font-bold uppercase tracking-[0.16em] mt-1 text-[#64748B]"
+              style={{ textShadow: 'none' }}
             >
               CRAFTED FOR RIDERS
-            </p>
-          </div>
-        </div>
+            </motion.p>
+          </motion.div>
+        </motion.div>
       </div>
     );
   };
@@ -1638,6 +1710,7 @@ const Home = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.16 }}
+                className="everything-section"
               >
                 <ServiceGrid
                   isAllServicesOpen={isAllServicesOpen}
@@ -1653,6 +1726,7 @@ const Home = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.2 }}
+                className="explore-section"
               >
                 {exploreSection}
               </motion.div>
@@ -1664,6 +1738,7 @@ const Home = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.24 }}
+                className="promo-section"
               >
                 {promoBanner}
               </motion.div>
@@ -1675,6 +1750,7 @@ const Home = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.28 }}
+                className="go-places-section"
               >
                 {goPlacesSection}
               </motion.div>
@@ -1686,6 +1762,7 @@ const Home = () => {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.32 }}
+                className="go-appzeto-section"
               >
                 {footerSection}
               </motion.div>

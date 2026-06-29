@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Fuel, Shield, ChevronRight, Star, Info, Car, Search, X, Bike } from 'lucide-react';
 import { userService } from '../../services/userService';
+import { useUserTheme } from '../../../../shared/context/UserThemeContext';
 const DURATION_TABS = ['Hourly', 'Half-Day', 'Daily'];
 const RENTAL_SELECTED_VEHICLE_STORAGE_KEY = 'selectedRentalVehicleDetail';
 const RENTAL_PAGE_SIZE = 10;
@@ -156,11 +157,11 @@ const normalizeRentalVehicle = (item = {}, index = 0) => {
   };
 };
 
-const RentalSkeleton = () => (
+const RentalSkeleton = ({ isDark }) => (
   <div className="space-y-4">
     {[1, 2, 3].map((i) => (
-      <div key={i} className="rounded-[24px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(15,23,42,0.06)] overflow-hidden">
-        <div className="px-4 pt-3.5 pb-3 flex items-center justify-between bg-slate-50/50">
+      <div key={i} className={`rounded-[24px] border overflow-hidden shadow-sm ${isDark ? 'border-zinc-800 bg-[#0f1b2d]' : 'border-white/80 bg-white/90'} overflow-hidden`}>
+        <div className={`px-4 pt-3.5 pb-3 flex items-center justify-between ${isDark ? 'bg-slate-900/40' : 'bg-slate-50/50'}`}>
           <div className="flex-1 space-y-2">
             <div className="h-3 w-16 skeleton rounded-full" />
             <div className="h-5 w-32 skeleton rounded-md" />
@@ -192,6 +193,8 @@ const RentalSkeleton = () => (
 );
 
 const BikeRentalHome = () => {
+  const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
   const [selectedDuration, setSelectedDuration] = useState('Hourly');
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -425,12 +428,15 @@ const BikeRentalHome = () => {
           <div className="relative group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <Search size={18} className="text-slate-400 group-focus-within:text-slate-900 transition-colors" strokeWidth={2.5} />
-            </div>
-            <input
+            </div>            <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search by vehicle, category or brand..."
-              className="w-full bg-slate-100/50 border border-slate-200/60 focus:border-slate-900/10 focus:bg-white rounded-[20px] pl-11 pr-11 py-3.5 text-[14px] font-bold text-slate-950 placeholder:text-slate-400/80 focus:outline-none focus:shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition-all"
+              className={`w-full border rounded-[20px] pl-11 pr-11 py-3.5 text-[14px] font-bold placeholder:text-slate-400/80 focus:outline-none transition-all ${
+                isDark
+                  ? 'bg-[#0f1b2d] border-zinc-800 text-white focus:bg-[#162238] focus:border-[#FFC400]/40'
+                  : 'bg-slate-100/50 border-slate-200/60 text-slate-950 focus:border-slate-900/10 focus:bg-white'
+              }`}
             />
             {searchQuery && (
               <button
@@ -438,7 +444,9 @@ const BikeRentalHome = () => {
                 onClick={() => setSearchQuery('')}
                 className="absolute inset-y-0 right-3 flex items-center pr-1"
               >
-                <div className="h-7 w-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 transition-colors">
+                <div className={`h-7 w-7 flex items-center justify-center rounded-full transition-colors ${
+                  isDark ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'
+                }`}>
                   <X size={14} strokeWidth={3} />
                 </div>
               </button>
@@ -456,7 +464,11 @@ const BikeRentalHome = () => {
                   key={suggestion}
                   type="button"
                   onClick={() => setSearchQuery(suggestion)}
-                  className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 shadow-sm hover:border-slate-300 transition-colors"
+                  className={`shrink-0 rounded-full border px-4 py-2 text-[10px] font-bold uppercase tracking-wider shadow-sm transition-colors ${
+                    isDark
+                      ? 'border-zinc-800 bg-[#0f1b2d] text-zinc-300 hover:border-zinc-700'
+                      : 'border-slate-200 bg-white text-slate-500 hover:border-slate-305 transition-colors'
+                  }`}
                 >
                   {suggestion}
                 </button>
@@ -474,12 +486,18 @@ const BikeRentalHome = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="flex items-center gap-3 rounded-[20px] border border-white/80 bg-white/60 backdrop-blur-md px-4 py-3.5 shadow-[0_8px_20px_rgba(15,23,42,0.04)]"
+            className={`flex items-center gap-3 rounded-[20px] border backdrop-blur-md px-4 py-3.5 shadow-[0_8px_20px_rgba(15,23,42,0.04)] ${
+              isDark ? 'border-zinc-800/80 bg-[#0f1b2d]/80' : 'border-white/80 bg-white/60'
+            }`}
           >
-            <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 shadow-sm">
-              <Info size={16} className="text-blue-500" strokeWidth={2.5} />
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+              isDark ? 'bg-blue-950/40 text-blue-400' : 'bg-blue-50 text-blue-500'
+            }`}>
+              <Info size={16} strokeWidth={2.5} />
             </div>
-            <p className="text-[13px] font-[700] text-slate-700 tracking-tight leading-tight">
+            <p className={`text-[13px] font-[700] tracking-tight leading-tight ${
+              isDark ? 'text-zinc-300' : 'text-slate-700'
+            }`}>
               {infoBanner[selectedDuration]}
             </p>
           </motion.div>
@@ -498,7 +516,7 @@ const BikeRentalHome = () => {
               </motion.span>
             )}
           </div>
-          <h2 className="text-[20px] font-[900] tracking-tight text-slate-900">Explore Fleet</h2>
+          <h2 className={`text-[20px] font-[900] tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Explore Fleet</h2>
         </div>
 
         <div className="space-y-3">
@@ -514,19 +532,35 @@ const BikeRentalHome = () => {
                   onClick={() => setSelectedCategoryFilter(id)}
                   className={`shrink-0 rounded-[18px] border px-3.5 py-2.5 transition-all ${
                     isActive
-                      ? 'border-slate-900 bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]'
-                      : 'border-white/90 bg-white/75 text-slate-600 shadow-[0_8px_20px_rgba(15,23,42,0.05)]'
+                      ? isDark
+                        ? 'border-[#FFC400] bg-[#FFC400] text-[#05070D] shadow-[0_10px_24px_rgba(255,196,0,0.2)]'
+                        : 'border-slate-900 bg-slate-900 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]'
+                      : isDark
+                        ? 'border-zinc-800 bg-[#0f1b2d] text-zinc-300 shadow-sm'
+                        : 'border-white/90 bg-white/75 text-slate-600 shadow-[0_8px_20px_rgba(15,23,42,0.05)]'
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-[12px] ${isActive ? 'bg-white/12' : 'bg-slate-100 text-slate-500'}`}>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-[12px] ${
+                      isActive 
+                        ? isDark ? 'bg-[#05070D]/10 text-[#05070D]' : 'bg-white/12' 
+                        : isDark ? 'bg-slate-900 text-zinc-400' : 'bg-slate-100 text-slate-500'
+                    }`}>
                       <Icon size={15} strokeWidth={2.4} />
                     </div>
                     <div className="text-left">
-                      <p className={`text-[11px] font-black uppercase tracking-[0.16em] ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                      <p className={`text-[11px] font-black uppercase tracking-[0.16em] ${
+                        isActive 
+                          ? isDark ? 'text-[#05070D]' : 'text-white' 
+                          : isDark ? 'text-zinc-400' : 'text-slate-500'
+                      }`}>
                         {label}
                       </p>
-                      <p className={`text-[12px] font-bold ${isActive ? 'text-white/80' : 'text-slate-700'}`}>
+                      <p className={`text-[12px] font-bold ${
+                        isActive 
+                          ? isDark ? 'text-[#05070D]/80' : 'text-white/80' 
+                          : isDark ? 'text-zinc-300' : 'text-slate-700'
+                      }`}>
                         {count} available
                       </p>
                     </div>
@@ -537,17 +571,27 @@ const BikeRentalHome = () => {
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-[18px] border border-white/80 bg-white/70 px-3 py-3 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+            <div className={`rounded-[18px] border px-3 py-3 shadow-sm ${
+              isDark ? 'border-zinc-800 bg-[#0f1b2d]' : 'border-white/80 bg-white/70'
+            }`}>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Fleet</p>
-              <p className="mt-1 text-[17px] font-black text-slate-900">{categoryCounts.all}</p>
+              <p className={`mt-1 text-[17px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{categoryCounts.all}</p>
             </div>
-            <div className="rounded-[18px] border border-orange-100 bg-gradient-to-br from-orange-50 to-white px-3 py-3 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+            <div className={`rounded-[18px] border px-3 py-3 shadow-sm ${
+              isDark 
+                ? 'border-orange-950/30 bg-gradient-to-br from-orange-950/20 to-[#0f1b2d]' 
+                : 'border-orange-100 bg-gradient-to-br from-orange-50 to-white'
+            }`}>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-400">Cars</p>
-              <p className="mt-1 text-[17px] font-black text-slate-900">{categoryCounts.car}</p>
+              <p className={`mt-1 text-[17px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{categoryCounts.car}</p>
             </div>
-            <div className="rounded-[18px] border border-sky-100 bg-gradient-to-br from-sky-50 to-white px-3 py-3 shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
+            <div className={`rounded-[18px] border px-3 py-3 shadow-sm ${
+              isDark 
+                ? 'border-sky-950/30 bg-gradient-to-br from-sky-950/20 to-[#0f1b2d]' 
+                : 'border-sky-100 bg-gradient-to-br from-sky-50 to-white'
+            }`}>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-sky-500">Bikes</p>
-              <p className="mt-1 text-[17px] font-black text-slate-900">{categoryCounts.bike}</p>
+              <p className={`mt-1 text-[17px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{categoryCounts.bike}</p>
             </div>
           </div>
         </div>
@@ -563,7 +607,7 @@ const BikeRentalHome = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <RentalSkeleton />
+              <RentalSkeleton isDark={isDark} />
             </motion.div>
           ) : errorMessage ? (
             <motion.div
@@ -571,7 +615,9 @@ const BikeRentalHome = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="rounded-[24px] border border-rose-100 bg-rose-50/90 p-5 text-[13px] font-bold text-rose-500 shadow-[0_8px_24px_rgba(15,23,42,0.04)]"
+              className={`rounded-[24px] border p-5 text-[13px] font-bold shadow-md ${
+                isDark ? 'border-red-950 bg-red-950/20 text-red-400' : 'border-rose-100 bg-rose-50/90 text-rose-500'
+              }`}
             >
               {errorMessage}
             </motion.div>
@@ -581,13 +627,17 @@ const BikeRentalHome = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="rounded-[24px] border border-white/80 bg-white/90 p-6 text-center shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+              className={`rounded-[24px] border p-6 text-center shadow-md ${
+                isDark ? 'border-zinc-800 bg-[#0f1b2d]' : 'border-white/80 bg-white/90'
+              }`}
             >
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-slate-100 text-slate-400">
+              <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] ${
+                isDark ? 'bg-slate-900 text-zinc-550' : 'bg-slate-100 text-slate-400'
+              }`}>
                 <Car size={22} />
               </div>
-              <p className="mt-4 text-[15px] font-black text-slate-900">No rental vehicles available</p>
-              <p className="mt-1 text-[12px] font-bold text-slate-400">Admin has not published any active rental vehicles yet.</p>
+              <p className={`mt-4 text-[15px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>No rental vehicles available</p>
+              <p className="mt-1 text-[12px] font-bold text-slate-450">Admin has not published any active rental vehicles yet.</p>
             </motion.div>
           ) : filteredVehicles.length === 0 ? (
             <motion.div
@@ -595,13 +645,17 @@ const BikeRentalHome = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="rounded-[24px] border border-white/80 bg-white/90 p-6 text-center shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+              className={`rounded-[24px] border p-6 text-center shadow-md ${
+                isDark ? 'border-zinc-800 bg-[#0f1b2d]' : 'border-white/80 bg-white/90'
+              }`}
             >
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-slate-100 text-slate-400">
+              <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] ${
+                isDark ? 'bg-slate-900 text-zinc-550' : 'bg-slate-100 text-slate-400'
+              }`}>
                 <Search size={22} />
               </div>
-              <p className="mt-4 text-[15px] font-black text-slate-900">No rentals matched your search</p>
-              <p className="mt-1 text-[12px] font-bold text-slate-400">Try another vehicle name, category, amenity, or switch the car and bike filter.</p>
+              <p className={`mt-4 text-[15px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>No rentals matched your search</p>
+              <p className="mt-1 text-[12px] font-bold text-slate-450">Try another vehicle name, category, amenity, or switch the car and bike filter.</p>
             </motion.div>
           ) : (
           paginatedVehicles.map((v, idx) => (
@@ -610,39 +664,41 @@ const BikeRentalHome = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.38, delay: idx * 0.07, ease: 'easeOut' }}
-              className="rounded-[24px] border border-white/80 bg-white/90 shadow-[0_8px_24px_rgba(15,23,42,0.06)] overflow-hidden"
+              className={`rounded-[24px] border overflow-hidden shadow-sm ${
+                isDark ? 'border-zinc-800 bg-[#0f1b2d]' : 'border-white/80 bg-white/90'
+              }`}
             >
               <div
                 className="px-4 pt-3.5 pb-3 flex items-center justify-between"
-                style={{ background: `linear-gradient(135deg, ${v.gradientFrom} 0%, ${v.gradientTo} 100%)` }}
+                style={isDark ? { background: 'linear-gradient(135deg, #111c2a 0%, #0f1b2d 100%)' } : { background: `linear-gradient(135deg, ${v.gradientFrom} 0%, ${v.gradientTo} 100%)` }}
               >
                 <div className="flex-1 min-w-0 pr-2 space-y-1">
                   <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full border ${v.tagBg} ${v.tagColor}`}>
                     {v.tag}
                   </span>
-                  <h3 className="text-[16px] font-extrabold text-slate-950 leading-tight tracking-tight">{v.name}</h3>
+                  <h3 className={`text-[16px] font-extrabold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-slate-950'}`}>{v.name}</h3>
                   {v.shortDescription ? (
-                    <p className="text-[11px] font-medium text-slate-500/80">{v.shortDescription}</p>
+                    <p className={`text-[11px] font-medium ${isDark ? 'text-zinc-400' : 'text-slate-500/80'}`}>{v.shortDescription}</p>
                   ) : null}
                   <div className="flex items-center gap-1">
                     <Star size={10} className="text-yellow-500 fill-yellow-400" />
-                    <span className="text-[11px] font-bold text-slate-700">{v.rating}</span>
-                    <span className="text-[10px] font-medium text-slate-400">· {v.kmLimit[selectedDuration]} limit</span>
+                    <span className={`text-[11px] font-bold ${isDark ? 'text-zinc-350' : 'text-slate-700'}`}>{v.rating}</span>
+                    <span className={`text-[10px] font-medium ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>· {v.kmLimit[selectedDuration]} limit</span>
                   </div>
                 </div>
                 {v.image ? (
                   <img src={v.image} alt={v.name} className="h-20 w-24 object-contain drop-shadow-lg shrink-0 -mt-2 -mb-2" />
                 ) : (
-                  <div className="flex h-20 w-24 items-center justify-center rounded-[20px] bg-white/60 text-slate-300 shadow-sm shrink-0">
+                  <div className={`flex h-20 w-24 items-center justify-center rounded-[20px] shadow-sm shrink-0 ${isDark ? 'bg-slate-950/60 text-slate-700' : 'bg-white/60 text-slate-300'}`}>
                     <Car size={28} />
                   </div>
                 )}
               </div>
 
-              <div className="px-4 pb-4 pt-3 space-y-2.5 border-t border-slate-50">
+              <div className={`px-4 pb-4 pt-3 space-y-2.5 border-t ${isDark ? 'border-zinc-800/60' : 'border-slate-50'}`}>
                 <div className="flex flex-wrap gap-1">
                   {v.features.map((feature) => (
-                    <span key={feature} className="text-[9px] font-bold bg-slate-50 text-slate-500 px-2 py-0.5 rounded-full border border-slate-100">
+                    <span key={feature} className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${isDark ? 'bg-slate-900 text-zinc-300 border-zinc-800/80' : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
                       {feature}
                     </span>
                   ))}
@@ -650,21 +706,21 @@ const BikeRentalHome = () => {
 
                 <div className="flex items-center gap-1.5">
                   <Fuel size={11} className="text-slate-300 shrink-0" />
-                  <span className="text-[11px] font-bold text-slate-400">{v.fuel}</span>
+                  <span className={`text-[11px] font-bold ${isDark ? 'text-zinc-400' : 'text-slate-400'}`}>{v.fuel}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.15em] block">Price</span>
                     <div className="flex items-baseline gap-0.5">
-                      <span className="text-[24px] font-extrabold text-slate-950 tracking-tighter leading-none">₹{v.prices[selectedDuration]}</span>
-                      <span className="text-[11px] font-bold text-slate-400/80 ml-0.5">{durationSuffix[selectedDuration]}</span>
+                      <span className={`text-[24px] font-extrabold tracking-tighter leading-none ${isDark ? 'text-white' : 'text-slate-955'}`}>₹{v.prices[selectedDuration]}</span>
+                      <span className={`text-[11px] font-bold ml-0.5 ${isDark ? 'text-zinc-400' : 'text-slate-400/80'}`}>{durationSuffix[selectedDuration]}</span>
                     </div>
                   </div>
                   <motion.button
                     whileTap={{ scale: 0.96 }}
                     onClick={() => openVehicleDetail(v)}
-                    className="bg-slate-950 text-white px-4 py-2.5 rounded-[12px] text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-[0_6px_16px_rgba(15,23,42,0.15)] active:bg-black transition-all"
+                    className={`px-4 py-2.5 rounded-[12px] text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all ${isDark ? 'bg-[#FFC400] text-[#05070D] hover:bg-[#FFD54F]' : 'bg-slate-950 text-white hover:bg-black'}`}
                   >
                     Book Now <ChevronRight size={13} strokeWidth={3} className="opacity-60" />
                   </motion.button>
@@ -676,33 +732,33 @@ const BikeRentalHome = () => {
         </AnimatePresence>
 
         {!loading && !errorMessage && filteredVehicles.length > RENTAL_PAGE_SIZE ? (
-          <div className="flex items-center justify-between gap-3 rounded-[20px] border border-white/80 bg-white/90 px-4 py-3.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
+          <div className={`flex items-center justify-between gap-3 rounded-[20px] border px-4 py-3.5 shadow-sm ${isDark ? 'border-zinc-800 bg-[#0f1b2d]' : 'border-white/80 bg-white/90'}`}>
             <button
               type="button"
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
               disabled={currentPage === 1}
-              className="rounded-[12px] border border-slate-200 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-600 disabled:opacity-40"
+              className={`rounded-[12px] border px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] disabled:opacity-40 transition-colors ${isDark ? 'border-zinc-800 bg-slate-900 text-zinc-300' : 'border-slate-200 bg-white text-slate-600'}`}
             >
               Previous
             </button>
             <div className="text-center">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Page</p>
-              <p className="mt-1 text-[13px] font-black text-slate-900">{currentPage} / {totalPages}</p>
+              <p className={`mt-1 text-[13px] font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{currentPage} / {totalPages}</p>
             </div>
             <button
               type="button"
               onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
               disabled={currentPage === totalPages}
-              className="rounded-[12px] border border-slate-200 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-600 disabled:opacity-40"
+              className={`rounded-[12px] border px-4 py-2 text-[11px] font-bold uppercase tracking-widest disabled:opacity-40 transition-colors ${isDark ? 'border-zinc-800 bg-slate-900 text-zinc-300' : 'border-slate-200 bg-white text-slate-600'}`}
             >
               Next
             </button>
           </div>
         ) : null}
 
-        <div className="flex items-center gap-3 rounded-[16px] border border-white/80 bg-white/90 px-4 py-3.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)]">
-          <div className="w-8 h-8 rounded-[10px] bg-slate-50 flex items-center justify-center shrink-0">
-            <Shield size={15} className="text-slate-400" strokeWidth={2} />
+        <div className={`flex items-center gap-3 rounded-[16px] border px-4 py-3.5 shadow-sm ${isDark ? 'border-zinc-800 bg-[#0f1b2d]' : 'border-white/80 bg-white/90'}`}>
+          <div className={`w-8 h-8 rounded-[10px] flex items-center justify-center shrink-0 ${isDark ? 'bg-slate-900 text-zinc-500' : 'bg-slate-50 text-slate-400'}`}>
+            <Shield size={15} strokeWidth={2} />
           </div>
           <p className="text-[11px] font-bold text-slate-400 leading-relaxed">
             All rental vehicles shown here come from the admin catalog. Valid driving license and verification are required before pickup.
