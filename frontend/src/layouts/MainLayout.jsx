@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import RentalLocationTracker from '../modules/user/components/RentalLocationTracker';
 import ScrollToTop from '../components/app/ScrollToTop';
 import UserAccountInvalidationListener from '../components/app/UserAccountInvalidationListener';
@@ -42,8 +43,19 @@ const MainLayout = ({ children }) => {
     </div>
   ) : (
     <div className={`redigo-app min-h-screen transition-colors duration-300 ${isUserPath ? (theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900') : 'bg-gray-50/50'} ${isUserPath ? 'user-app-theme ' + theme : ''}`}>
-      <main className={`max-w-lg mx-auto shadow-2xl min-h-screen relative overflow-x-hidden transition-colors duration-300 ${isUserPath ? (theme === 'dark' ? 'bg-slate-900 text-white border-x border-slate-800/80' : 'bg-white text-slate-900 border-x border-slate-200') : 'bg-white'}`}>
-        {children}
+      <main className={`w-full max-w-lg mx-auto shadow-2xl min-h-screen relative overflow-x-hidden transition-colors duration-300 ${isUserPath ? (theme === 'dark' ? 'bg-slate-900 text-white border-x border-slate-800/80' : 'bg-white text-slate-900 border-x border-slate-200') : 'bg-white'}`}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.28, ease: [0.21, 1.02, 0.43, 1.01] }}
+            className="w-full min-h-screen flex flex-col"
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );

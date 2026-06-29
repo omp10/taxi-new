@@ -30,7 +30,7 @@ import { useUserTheme } from '../../../shared/context/UserThemeContext';
 import { BACKEND_ORIGIN } from '../../../shared/api/runtimeConfig';
 
 const getDynamicImageSrc = (item = {}, fallbackImage) => {
-  const rawImage = item.uploadedImage || item.imageUrl || item.image || item.thumbnail || item.icon || null;
+  const rawImage = item.uploadedImage || item.imageUrl || item.image || item.bannerImage || item.thumbnail || item.url || item.icon || null;
 
   if (!rawImage) {
     return fallbackImage;
@@ -226,7 +226,8 @@ const defaultSettings = {
     { id: '4', title: 'Bike', image: '', route: '/taxi/user/ride/select-location', order: 4, status: 'active' }
   ],
   promos: [
-    { id: '1', title: 'Experience A New Standard With Appzeto', subtitle: 'A premier private hire service where luxury and reliability converge.', image: '', route: '/taxi/user/ride/select-location', order: 1, status: 'active' }
+    { id: '1', title: 'Experience A New Standard With Appzeto', subtitle: 'A premier private hire service where luxury and reliability converge.', image: '', route: '/taxi/user/ride/select-location', order: 1, status: 'active' },
+    { id: '2', title: 'Need to Send Packages? Try Parcel!', subtitle: 'Fast and secure delivery across Indore at affordable prices.', image: '', route: '/taxi/user/parcel/type', order: 2, status: 'active' }
   ],
   goPlaces: [
     { id: '1', title: 'Hassle-Free Airport Rides', image: '', route: '/taxi/user/ride/select-location', order: 1, status: 'active' },
@@ -650,6 +651,13 @@ const Home = () => {
   const [endingRide, setEndingRide] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
   const [currentPromoIndex, setCurrentPromoIndex] = useState(0);
+  const [isHoveringPromo, setIsHoveringPromo] = useState(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const [isProgrammaticScrolling, setIsProgrammaticScrolling] = useState(false);
+  const promoScrollRef = useRef(null);
+  const isProgrammaticScrollRef = useRef(false);
+  const programmaticScrollTimeoutRef = useRef(null);
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
   const currentRideRef = useRef(currentRide);
   const lastSyncAtRef = useRef(0);
@@ -679,23 +687,37 @@ const Home = () => {
     lastRideSignatureRef.current = getCurrentRideSignature(currentRide);
   }, [currentRide]);
 
-  const promosList = uiSettings?.promos || defaultSettings.promos;
+  const rawBanners = uiSettings?.promos || defaultSettings.promos;
+  const promoBanners = useMemo(() => {
+    if (!Array.isArray(rawBanners)) return [];
+    return rawBanners.filter(b => {
+      const imageSrc = b.uploadedImage || b.imageUrl || b.image || b.bannerImage || b.thumbnail || b.url;
+      return b.status !== false && b.status !== 'inactive' && imageSrc;
+    });
+  }, [rawBanners]);
+
   useEffect(() => {
-    if (!promosList || promosList.length <= 1) {
-      setCurrentPromoIndex(0);
-      return;
-    }
+    setCurrentPromoIndex(0);
+  }, [promoBanners.length]);
+
+  useEffect(() => {
+    if (!promoBanners || promoBanners.length <= 1) return;
+    if (isHoveringPromo) return;
+
     const interval = setInterval(() => {
-      setCurrentPromoIndex((prev) => (prev + 1) % promosList.length);
-    }, 2500);
+      setCurrentPromoIndex(prev => (prev + 1) % promoBanners.length);
+    }, 3000);
+
     return () => clearInterval(interval);
-  }, [promosList]);
+  }, [promoBanners.length, isHoveringPromo]);
+
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
       const container = document.querySelector('.user-home') || document.querySelector('.user-app') || document.querySelector('.user-home-page');
       if (container) {
-        container.scrollTop = 258;
+        container.scrollTop = 220;
       }
     }, 300);
     return () => clearTimeout(timer);
@@ -727,6 +749,17 @@ const Home = () => {
   };
 
   const handleServiceClick = (service) => {
+    // Helper to map fallback routes to registered routes defensively
+    const cleanRoute = (route) => {
+      if (!route) return '/taxi/user/ride/select-location';
+      if (route === '/delivery') return '/taxi/user/parcel/type';
+      if (route === '/rental') return '/taxi/user/rental';
+      if (route === '/bus') return '/taxi/user/bus';
+      if (route === '/truck') return '/taxi/user/ride/select-location';
+      if (route === '/self-drive') return '/taxi/user/rental';
+      return route;
+    };
+
     const targetRoute = service.actionRoute || service.route;
 
     if (targetRoute === "ALL_SERVICES_MODAL") {
@@ -736,7 +769,7 @@ const Home = () => {
 
     if (targetRoute && targetRoute.trim() !== '') {
       setIsAllServicesOpen(false);
-      navigate(targetRoute);
+      navigate(cleanRoute(targetRoute));
       return;
     }
 
@@ -749,7 +782,7 @@ const Home = () => {
 
     const definedPath = service.path;
     if (definedPath && definedPath.trim() !== '') {
-      navigate(definedPath);
+      navigate(cleanRoute(definedPath));
       return;
     }
 
@@ -758,7 +791,7 @@ const Home = () => {
       return;
     }
 
-    if (name.includes("rental") || serviceType.includes("rental")) {
+    if (name.includes("rental") || serviceType.includes("rental") || name.includes("self-drive")) {
       navigate("/taxi/user/rental");
       return;
     }
@@ -775,6 +808,11 @@ const Home = () => {
 
     if (name.includes("outstation") || name.includes("intercity") || serviceType.includes("intercity")) {
       navigate("/taxi/user/intercity");
+      return;
+    }
+
+    if (name.includes("truck")) {
+      navigate("/taxi/user/ride/select-location");
       return;
     }
 
@@ -1120,15 +1158,15 @@ const Home = () => {
     };
 
     return (
-      <div className="pt-2">
-        <div className="mb-3 ml-1 flex items-center justify-between">
-          <h2 className={`text-[16px] font-[900] tracking-tight leading-none uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+      <div className="pt-1">
+        <div className="mb-2.5 ml-1 flex items-center justify-between">
+          <h2 className={`text-[19px] font-[900] tracking-tight leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Explore
           </h2>
           <button
             type="button"
             onClick={() => setIsAllServicesOpen(true)}
-            className="text-[11px] font-black uppercase text-[#FFC400] tracking-wider flex items-center gap-0.5"
+            className="text-[13px] font-black uppercase text-[#FFC400] tracking-wider flex items-center gap-0.5"
             style={{ pointerEvents: 'auto', zIndex: 100, position: 'relative' }}
           >
             View All <ChevronRight size={12} strokeWidth={3} />
@@ -1156,7 +1194,7 @@ const Home = () => {
                   className="w-8 h-8 object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)] group-hover:scale-105 transition-transform"
                 />
               </div>
-              <span className={`text-[10px] font-black leading-tight mt-2 uppercase tracking-tight text-center line-clamp-2 ${isDark ? 'text-zinc-300 group-hover:text-yellow-400' : 'text-[#0B1220] group-hover:text-[#FFC400]'
+              <span className={`text-[12px] font-black leading-tight mt-2 tracking-tight text-center line-clamp-2 ${isDark ? 'text-zinc-300 group-hover:text-yellow-400' : 'text-[#0B1220] group-hover:text-[#FFC400]'
                 }`}>
                 {card.title}
               </span>
@@ -1166,7 +1204,6 @@ const Home = () => {
       </div>
     );
   };
-
   const renderPromoBanner = () => {
     if (settingsLoading) {
       return (
@@ -1179,77 +1216,126 @@ const Home = () => {
       return null;
     }
 
-    const promos = uiSettings?.promos || defaultSettings.promos;
-    if (!promos || promos.length === 0) return null;
+    if (!promoBanners || promoBanners.length === 0) return null;
 
-    const safeIndex = currentPromoIndex % promos.length;
-    const promo = promos[safeIndex];
+    const fallbackImages = [yellowTaxiImg, seamlessHighwayBg];
+
+    const handleTouchStart = (e) => {
+      touchStartX.current = e.targetTouches[0].clientX;
+      setIsHoveringPromo(true);
+    };
+
+    const handleTouchMove = (e) => {
+      touchEndX.current = e.targetTouches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+      setIsHoveringPromo(false);
+      const diffX = touchStartX.current - touchEndX.current;
+      if (Math.abs(diffX) > 50) {
+        if (diffX > 0) {
+          // Swiped left -> next banner
+          setCurrentPromoIndex((prev) => (prev + 1) % promoBanners.length);
+        } else {
+          // Swiped right -> prev banner
+          setCurrentPromoIndex((prev) => (prev - 1 + promoBanners.length) % promoBanners.length);
+        }
+      }
+    };
 
     return (
-      <div className="pt-2 relative">
-        <div className={`relative overflow-hidden rounded-[26px] h-[140px] w-full border shadow-md bg-[#0B1220] ${isDark ? 'border-zinc-800' : 'border-slate-200/50'}`}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={safeIndex}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.18, ease: "easeInOut" }}
-              onClick={() => {
-                if (promo.route) {
-                  const targetRoute = promo.route;
-                  const isSelectLocationRoute = targetRoute.includes('/ride/select-location');
-                  if (isSelectLocationRoute) {
-                    navigate(targetRoute, { state: { activeInput: 'drop', flow: 'ride' } });
-                  } else {
-                    navigate(targetRoute);
-                  }
-                } else {
-                  navigate(`${routePrefix}/ride/select-location`, { state: { activeInput: 'drop', flow: 'ride' } });
-                }
-              }}
-              className="absolute inset-0 flex items-center p-5 cursor-pointer group"
-            >
-              <PromoBannerImage promo={promo} fallbackImage={yellowTaxiImg} />
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-transparent z-10" />
-
-              <div className="relative z-20 max-w-[85%] space-y-1.5 text-left">
-                <span className="inline-block text-[8px] font-extrabold uppercase tracking-widest text-[#FFC400] bg-[#FFC400]/10 px-2 py-0.5 rounded-full">
-                  Super Saver
-                </span>
-                <h2 className="text-[15px] font-black leading-tight tracking-tight uppercase text-slate-50">
-                  <span className="text-[#FFC400]">{promo.title.split(' ')[0]}</span> {promo.title.split(' ').slice(1).join(' ')}
-                </h2>
-                {promo.subtitle && (
-                  <p className="text-[10px] font-semibold text-slate-200 leading-snug">
-                    {promo.subtitle}
-                  </p>
-                )}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Page Indicators */}
-        {promos.length > 1 && (
-          <div className="absolute bottom-3 right-5 z-30 flex gap-1.5">
-            {promos.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentPromoIndex(idx);
-                }}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                  safeIndex === idx
-                    ? 'w-4 bg-[#FFC400]'
-                    : 'bg-white/40 hover:bg-white/70'
-                }`}
-              />
-            ))}
+      <div 
+        className="pt-2 relative w-full overflow-hidden"
+        onMouseEnter={() => setIsHoveringPromo(true)}
+        onMouseLeave={() => setIsHoveringPromo(false)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="promo-carousel border border-slate-200/60 dark:border-zinc-800 shadow-md bg-[#0B1220] transition-colors duration-300">
+          <div 
+            className="promo-track"
+            style={{ transform: `translateX(-${currentPromoIndex * 100}%)` }}
+          >
+            {promoBanners.map((item, idx) => {
+              const fallback = fallbackImages[idx % fallbackImages.length];
+              const resolvedImgSrc = getDynamicImageSrc(item, fallback);
+              return (
+                <div 
+                  key={item.id || item._id} 
+                  className="promo-slide cursor-pointer" 
+                  onClick={() => {
+                    if (item.route) {
+                      const targetRoute = item.route;
+                      const isSelectLocationRoute = targetRoute.includes('/ride/select-location');
+                      if (isSelectLocationRoute) {
+                        navigate(targetRoute, { state: { activeInput: 'drop', flow: 'ride' } });
+                      } else {
+                        navigate(targetRoute);
+                      }
+                    } else {
+                      navigate(`${routePrefix}/ride/select-location`, { state: { activeInput: 'drop', flow: 'ride' } });
+                    }
+                  }}
+                >
+                  <img 
+                    src={resolvedImgSrc} 
+                    alt={item.title || "Promo"} 
+                    className="w-full h-[150px] object-cover rounded-[22px] block"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10 rounded-[22px]" />
+                  <div className="absolute inset-0 flex items-center p-6 z-20">
+                    <div className="max-w-[80%] space-y-1 text-left">
+                      <span className="inline-block text-[10px] font-black uppercase tracking-widest text-[#FFC400] bg-[#FFC400]/10 px-2.5 py-0.5 rounded-full mb-1">
+                        Super Saver
+                      </span>
+                      <h2 className="text-[17px] sm:text-[19px] font-black leading-tight tracking-normal uppercase text-slate-50 whitespace-normal break-words">
+                        <span className="text-[#FFC400]">{item.title ? item.title.split(' ')[0] : ''}</span>
+                        {' '}
+                        {item.title ? item.title.split(' ').slice(1).join(' ') : ''}
+                      </h2>
+                      {item.subtitle && (
+                        <p className="text-[11px] sm:text-[12px] font-semibold text-slate-200/90 leading-snug line-clamp-2">
+                          {item.subtitle}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {/* Autoplay Linear Progress Bar */}
+          {promoBanners.length > 1 && (
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/10 z-30 overflow-hidden">
+              <motion.div
+                key={currentPromoIndex}
+                initial={{ width: '0%' }}
+                animate={isHoveringPromo ? { width: '0%' } : { width: '100%' }}
+                transition={{ duration: 3, ease: 'linear' }}
+                className="h-full bg-[#FFC400]"
+              />
+            </div>
+          )}
+
+          {/* Page Indicators */}
+          {promoBanners.length > 1 && (
+            <div className="promo-dots">
+              {promoBanners.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentPromoIndex(idx);
+                  }}
+                  className={idx === currentPromoIndex ? "active" : ""}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -1286,12 +1372,12 @@ const Home = () => {
     };
 
     return (
-      <div className="pt-2">
-        <div className="mb-3 ml-1">
-          <h2 className={`text-[16px] font-[900] tracking-tight leading-none uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
+      <div className="pt-1">
+        <div className="mb-2.5 ml-1">
+          <h2 className={`text-[19px] font-[900] tracking-tight leading-none ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Go Places with Appzeto
           </h2>
-          <p className={`text-[9px] font-[900] uppercase tracking-[0.14em] mt-1.5 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>
+          <p className={`text-[11px] font-[900] tracking-[0.14em] mt-1.5 ${isDark ? 'text-zinc-500' : 'text-slate-400'}`}>
             Fast bookings to key transit hubs
           </p>
         </div>
@@ -1315,7 +1401,7 @@ const Home = () => {
                 }`}
             >
               {/* Header Image Area with subtle gradient */}
-              <div className={`h-[90px] w-full flex items-center justify-center p-3 relative overflow-hidden ${isDark ? 'bg-zinc-900/50' : 'bg-slate-200/30'
+              <div className={`h-[80px] w-full flex items-center justify-center p-3 relative overflow-hidden ${isDark ? 'bg-zinc-900/50' : 'bg-slate-200/30'
                 }`}>
                 {/* Yellow glow blob */}
                 <div className="absolute w-12 h-12 rounded-full bg-[#FFC400]/10 blur-md pointer-events-none group-hover:bg-[#FFC400]/20 transition-all" />
@@ -1328,11 +1414,11 @@ const Home = () => {
 
               {/* Title & Slogan */}
               <div className="p-3 flex-1 flex flex-col justify-between">
-                <h4 className={`text-[12px] font-black leading-tight tracking-tight uppercase line-clamp-2 ${isDark ? 'text-zinc-100 group-hover:text-yellow-400' : 'text-slate-800 group-hover:text-[#FFC400]'
+                <h4 className={`text-[14px] font-black leading-tight tracking-tight line-clamp-2 ${isDark ? 'text-zinc-100 group-hover:text-yellow-400' : 'text-slate-800 group-hover:text-[#FFC400]'
                   }`}>
                   {card.title}
                 </h4>
-                <div className="mt-2.5 flex items-center gap-0.5 text-[9px] font-[900] uppercase text-[#FFC400] tracking-wider leading-none">
+                <div className="mt-2.5 flex items-center gap-0.5 text-[11px] font-[900] text-[#FFC400] tracking-wider leading-none">
                   Book Now <ChevronRight size={10} strokeWidth={3} className="mt-0.5" />
                 </div>
               </div>
@@ -1432,7 +1518,7 @@ const Home = () => {
 
   const promoBanner = useMemo(() => {
     return renderPromoBanner();
-  }, [uiSettings?.promos, uiSettings?.homeSections?.enablePromo, isDark, settingsLoading]);
+  }, [promoBanners, currentPromoIndex, isHoveringPromo, uiSettings?.homeSections?.enablePromo, isDark, settingsLoading]);
 
   const goPlacesSection = useMemo(() => {
     return renderGoPlacesSection();
@@ -1443,7 +1529,7 @@ const Home = () => {
   }, [uiSettings?.footer, uiSettings?.homeSections?.enableFooter, isDark, settingsLoading]);
 
   return (
-    <div className="min-h-screen max-w-[430px] mx-auto relative font-sans no-scrollbar transition-colors duration-300 user-app-theme shadow-2xl">
+    <div className="min-h-screen max-w-[430px] mx-auto relative font-sans no-scrollbar overflow-x-hidden transition-colors duration-300 user-app-theme shadow-2xl">
       <div className={`absolute -top-16 right-[-40px] h-44 w-44 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-orange-100/60'}`} />
       <div className={`absolute top-52 left-[-60px] h-52 w-52 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-emerald-100/60'}`} />
       <div className={`absolute bottom-28 right-[-40px] h-40 w-40 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-blue-100/60'}`} />
@@ -1479,11 +1565,15 @@ const Home = () => {
               </span>
             </div>
           </div>
-
           {/* Content Sheet overlaying the sticky map */}
-          <div className="home-sheet space-y-4">
+          <div className="home-sheet space-y-3">
             {/* Sticky Search Bar */}
-            <div className="user-search-bar">
+            <motion.div 
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.05 }}
+              className="user-search-bar"
+            >
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.99 }}
@@ -1498,16 +1588,25 @@ const Home = () => {
                   Where do you want to go?
                 </span>
               </motion.button>
-            </div>
+            </motion.div>
 
             {/* Recent Locations List */}
-            <div>
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.08 }}
+            >
               <RecentLocationsList routePrefix={routePrefix} />
-            </div>
+            </motion.div>
 
             {/* Compact Active Ride/Booking Banner */}
             {currentRide && String(currentRide?.status || '').toLowerCase() !== 'end_requested' && (
-              <div className="pt-1">
+              <motion.div 
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.12 }}
+                className="pt-1"
+              >
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.99 }}
@@ -1530,31 +1629,67 @@ const Home = () => {
                     View details <ChevronRight size={14} className="mt-0.5" />
                   </span>
                 </motion.button>
-              </div>
+              </motion.div>
             )}
 
             {/* Everything In Minutes Grid */}
             {(!uiSettings?.homeSections || uiSettings.homeSections.enableEverything !== false) && (
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.16 }}
+              >
                 <ServiceGrid
                   isAllServicesOpen={isAllServicesOpen}
                   setIsAllServicesOpen={setIsAllServicesOpen}
                   onLoadServices={setActiveServices}
                 />
-              </div>
+              </motion.div>
             )}
 
             {/* Explore Horizontal List */}
-            {exploreSection}
+            {exploreSection && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.2 }}
+              >
+                {exploreSection}
+              </motion.div>
+            )}
 
             {/* Promo Banner */}
-            {promoBanner}
+            {promoBanner && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.24 }}
+              >
+                {promoBanner}
+              </motion.div>
+            )}
 
             {/* Go Places */}
-            {goPlacesSection}
+            {goPlacesSection && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.28 }}
+              >
+                {goPlacesSection}
+              </motion.div>
+            )}
 
             {/* Footer Branding Illustration */}
-            {footerSection}
+            {footerSection && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.32 }}
+              >
+                {footerSection}
+              </motion.div>
+            )}
 
             {/* Active Scheduled Ride Tracker */}
             {isScheduledAcceptedRide && (
@@ -1717,20 +1852,20 @@ const AllServicesBottomSheet = ({ services, onClose, onServiceClick }) => {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05,
+        staggerChildren: 0.03,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
+    hidden: { opacity: 0, scale: 0.85 },
     show: {
       opacity: 1,
-      y: 0,
+      scale: 1,
       transition: {
         type: 'spring',
-        stiffness: 280,
-        damping: 24,
+        stiffness: 300,
+        damping: 20,
       },
     },
   };
@@ -1741,50 +1876,74 @@ const AllServicesBottomSheet = ({ services, onClose, onServiceClick }) => {
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+        transition={{ type: 'spring', damping: 26, stiffness: 240 }}
         onClick={(e) => e.stopPropagation()}
         className={`all-services-sheet border-t shadow-2xl flex flex-col ${isDark
-            ? 'text-white border-zinc-800 shadow-[0_-12px_40px_rgba(0,0,0,0.8)]'
-            : 'text-slate-900 border-slate-200/80 shadow-[0_-12px_30px_rgba(15,23,42,0.12)]'
+            ? 'bg-[#0B1220] text-white border-zinc-800 shadow-[0_-12px_40px_rgba(0,0,0,0.8)]'
+            : 'bg-white text-slate-900 border-slate-200/80 shadow-[0_-12px_30px_rgba(15,23,42,0.12)]'
           }`}
       >
         {/* Pull Indicator */}
-        <div className="w-full flex justify-center pb-3.5 cursor-pointer" onClick={onClose}>
-          <div className={`w-12 h-1 rounded-full ${isDark ? 'bg-zinc-800' : 'bg-slate-200'}`} />
+        <div className="w-full flex justify-center pb-3 cursor-pointer" onClick={onClose}>
+          <div className={`w-12 h-1 rounded-full ${isDark ? 'bg-zinc-800' : 'bg-slate-250'}`} />
         </div>
 
         {/* Header Title & Close Button */}
-        <div className={`flex items-center justify-between pb-4 border-b ${isDark ? 'border-zinc-800' : 'border-slate-100'
-          }`}>
-          <span className={`text-[15px] font-black uppercase tracking-[0.18em] ${isDark ? 'text-zinc-300' : 'text-[#0B1220]'}`}>
-            ALL SERVICES
+        <div className={`flex items-center justify-between pb-3 border-b ${isDark ? 'border-zinc-800/85' : 'border-slate-100'}`}>
+          <span className={`text-[19px] font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            All Services
           </span>
           <button
             onClick={onClose}
-            className={`p-1.5 rounded-full transition-colors ${isDark ? 'bg-zinc-900 hover:bg-zinc-850 text-zinc-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'
-              }`}
+            className={`p-1.5 rounded-full transition-all active:scale-95 ${isDark ? 'bg-zinc-900 hover:bg-zinc-850 text-zinc-400' : 'bg-slate-100 hover:bg-slate-200 text-slate-500'}`}
           >
-            <X size={18} strokeWidth={2.5} />
+            <X size={16} strokeWidth={2.5} />
           </button>
         </div>
 
-        {/* Services Grid */}
-        <div className="flex-1 overflow-y-auto mt-4 pr-1 py-1">
+        {/* Services Grid (Rapido style: 4 columns grid, dark rounded rectangle icons, white text/yellow accent) */}
+        <div className="flex-1 overflow-y-auto mt-5 pr-1 py-1 no-scrollbar">
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-2 gap-3.5"
+            className="grid grid-cols-4 gap-y-6 gap-x-2"
           >
-            {services.map((service, index) => (
-              <motion.div key={index} variants={itemVariants}>
-                <ServiceCard
-                  {...service}
-                  isDark={isDark}
-                  onClick={() => onServiceClick(service)}
-                />
-              </motion.div>
-            ))}
+            {services.map((service, index) => {
+              const { icon, label } = service;
+              return (
+                <motion.div key={index} variants={itemVariants} className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onServiceClick(service);
+                    }}
+                    className="flex flex-col items-center group cursor-pointer focus:outline-none"
+                  >
+                    {/* Dark rounded rectangle icon container */}
+                    <div className="w-16 h-16 rounded-[20px] bg-[#121824] dark:bg-[#1A202C] flex items-center justify-center relative overflow-hidden shadow-md transition-all duration-300 border border-slate-800/10 dark:border-white/5 group-hover:scale-105 group-active:scale-95">
+                      <div className="absolute inset-0 bg-[#FFC400]/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <img
+                        src={icon}
+                        alt={label}
+                        className="w-11 h-11 object-contain"
+                        style={{
+                          objectFit: 'contain',
+                          opacity: 1,
+                          filter: 'none'
+                        }}
+                      />
+                    </div>
+                    {/* Service Name below */}
+                    <span className={`text-[10px] font-black tracking-wide text-center mt-2 leading-tight max-w-[76px] break-words whitespace-normal ${
+                      isDark ? 'text-zinc-300 group-hover:text-yellow-400' : 'text-slate-800 group-hover:text-[#FFB300]'
+                    }`}>
+                      {label}
+                    </span>
+                  </button>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
       </motion.div>

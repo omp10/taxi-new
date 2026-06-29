@@ -13,8 +13,8 @@ const ActivityHeader = ({ helperText, onBack }) => {
             <ArrowLeft size={22} className={isDark ? 'text-white' : 'text-slate-900'} strokeWidth={2.6} />
           </button>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">My bookings</p>
-            <h1 className={`mt-1 truncate text-[20px] font-semibold leading-none tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            <p className="text-[10px] font-semibold tracking-[0.2em] text-slate-400">My bookings</p>
+            <h1 className={`mt-1 truncate text-[20px] font-extrabold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
               Recent activity
             </h1>
             <p className="mt-1 text-[12px] opacity-60">{helperText}</p>

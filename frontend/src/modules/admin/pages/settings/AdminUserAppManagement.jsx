@@ -43,7 +43,8 @@ const defaultSettings = {
     { id: '4', title: 'Bike', image: '', route: '/taxi/user/ride/select-location', order: 4, status: 'active' }
   ],
   promos: [
-    { id: '1', title: 'Experience A New Standard With Appzeto', subtitle: 'A premier private hire service where luxury and reliability converge.', image: '', route: '/taxi/user/ride/select-location', order: 1, status: 'active' }
+    { id: '1', title: 'Experience A New Standard With Appzeto', subtitle: 'A premier private hire service where luxury and reliability converge.', image: '', route: '/taxi/user/ride/select-location', order: 1, status: 'active' },
+    { id: '2', title: 'Need to Send Packages? Try Parcel!', subtitle: 'Fast and secure delivery across Indore at affordable prices.', image: '', route: '/taxi/user/parcel/type', order: 2, status: 'active' }
   ],
   goPlaces: [
     { id: '1', title: 'Hassle-Free Airport Rides', image: '', route: '/taxi/user/ride/select-location', order: 1, status: 'active' },
@@ -81,7 +82,28 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
       setLoading(true);
       const res = await api.get('/admin/general-settings/user-home-management');
       const savedSettings = res.data?.settings || {};
-      setSettings({
+
+      let fetchedPromos = [];
+      try {
+        const bannersRes = await api.get('/admin/banners');
+        const bannersData = bannersRes.data?.data?.results || bannersRes.data?.results || bannersRes.data || [];
+        fetchedPromos = bannersData.map((b, idx) => ({
+          id: b._id || b.id || String(idx + 1),
+          title: b.title || 'Experience A New Standard With Appzeto',
+          subtitle: b.subtitle || 'A premier private hire service where luxury and reliability converge.',
+          imageUrl: b.image || '',
+          image: b.image || '',
+          route: b.redirect_url || b.external_link || b.deep_link || '/taxi/user/ride/select-location',
+          status: b.active !== false ? 'active' : 'inactive',
+          order: idx + 1
+        }));
+      } catch (e) {
+        console.error('Failed to fetch banners list:', e);
+      }
+
+      const promosToUse = fetchedPromos.length > 0 ? fetchedPromos : (savedSettings.promos || defaultSettings.promos);
+
+      const nextSettings = {
         ...defaultSettings,
         ...savedSettings,
         homeSections: {
@@ -90,13 +112,20 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
         },
         everything: savedSettings.everything || defaultSettings.everything,
         explore: savedSettings.explore || defaultSettings.explore,
-        promos: savedSettings.promos || defaultSettings.promos,
+        promos: promosToUse,
         goPlaces: savedSettings.goPlaces || defaultSettings.goPlaces,
         footer: {
           ...defaultSettings.footer,
           ...(savedSettings.footer || {})
         }
-      });
+      };
+
+      setSettings(nextSettings);
+
+      // Auto-save settings to DB if we fetched active banners to keep in sync
+      if (fetchedPromos.length > 0) {
+        await api.patch('/admin/general-settings/user-home-management', { settings: nextSettings });
+      }
     } catch (err) {
       console.error('Failed to load user-app-settings from backend:', err);
       try {

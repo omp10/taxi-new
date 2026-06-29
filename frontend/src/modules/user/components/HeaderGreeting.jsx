@@ -17,7 +17,7 @@ const HeaderGreeting = ({ floating = false, hideSearch = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
-  const { theme, toggleTheme } = useUserTheme();
+  const { theme } = useUserTheme();
   
   const { settings, loading, hasBootstrapSettings } = useSettings();
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
@@ -41,29 +41,10 @@ const HeaderGreeting = ({ floating = false, hideSearch = false }) => {
   }, []);
 
   return (
-    <div className={floating ? "absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 pointer-events-none flex items-center justify-between gap-3 w-full" : "px-5 pt-6"}>
+    <div className={floating ? "absolute top-0 left-0 right-0 z-20 px-4 pt-4 pb-2 pointer-events-none flex items-center justify-end gap-3 w-full" : "px-5 pt-6"}>
       {floating ? (
         <>
-          {/* Floating Mobile Header */}
-          <div className="flex items-center gap-2.5 bg-slate-950/75 border border-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full pointer-events-auto shadow-lg min-w-0">
-            {appLogo ? (
-              <img src={appLogo} alt="" className="h-6 w-6 object-contain rounded-full bg-slate-950 p-0.5" />
-            ) : (
-              <div className="h-6 w-6 bg-[#FFB300] rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-[11px] font-black italic text-slate-950">{appName[0]?.toUpperCase() || 'R'}</span>
-              </div>
-            )}
-            <span className="text-[13px] font-black tracking-wide text-white uppercase font-['Outfit']">{appName}</span>
-          </div>
-
           <div className="flex items-center gap-2 shrink-0 pointer-events-auto">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="w-9 h-9 rounded-full border border-white/10 bg-slate-950/70 backdrop-blur-md flex items-center justify-center text-white shadow-lg active:scale-95 transition-transform"
-            >
-              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
             <button
               onClick={() => navigate(`${routePrefix}/wallet`)}
               className="w-9 h-9 rounded-full border border-white/10 bg-slate-950/70 backdrop-blur-md flex items-center justify-center text-white shadow-lg active:scale-95 transition-transform"
@@ -121,19 +102,6 @@ const HeaderGreeting = ({ floating = false, hideSearch = false }) => {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.92 }}
-                onClick={toggleTheme}
-                className="w-12 h-12 rounded-full border border-white/80 bg-white/95 flex items-center justify-center shadow-[0_12px_30px_rgba(15,23,42,0.08)] shrink-0 active:scale-95 transition-transform"
-              >
-                {theme === 'dark' ? (
-                  <Sun size={20} className="text-white fill-white" />
-                ) : (
-                  <Moon size={20} className="text-slate-900 fill-slate-900" />
-                )}
-              </motion.button>
-
               <button
                 onClick={() => navigate(`${routePrefix}/wallet`)}
                 className="relative w-12 h-12 overflow-hidden rounded-full border border-white/80 bg-white/95 flex items-center justify-center shadow-[0_12px_30px_rgba(15,23,42,0.08)] shrink-0 active:scale-95 transition-transform"

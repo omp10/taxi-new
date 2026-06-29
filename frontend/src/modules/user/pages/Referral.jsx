@@ -202,19 +202,19 @@ const Referral = () => {
             <ArrowLeft size={18} className={isDark ? 'text-white' : 'text-slate-900'} strokeWidth={2.3} />
           </button>
           <div className="flex-1 text-center pr-12">
-            <h1 className={`text-[19px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Referrals</h1>
+            <h1 className={`text-[19px] font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Referrals</h1>
           </div>
         </div>
       </header>
 
       <div className="px-5 pt-5">
         <div className={`rounded-[28px] border shadow-sm overflow-hidden transition-colors ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-gray-200'}`}>
-          <div className={`px-5 py-5 text-white flex items-center justify-between ${isDark ? 'bg-slate-950 border-b border-slate-800' : 'bg-slate-900'}`}>
+          <div className={`px-5 py-5 flex items-center justify-between border-b ${isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-gradient-to-r from-amber-100 via-yellow-100 to-yellow-50 border-yellow-200/50'}`}>
             <div>
-              <p className="text-[26px] font-semibold leading-tight text-white">{bannerText}</p>
-              <p className={`text-[11px] mt-1 ${isDark ? 'text-slate-400 font-medium' : 'text-slate-300'}`}>Language: {translation.language_code?.toUpperCase() || 'EN'}</p>
+              <p className={`text-[26px] font-black leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>{bannerText}</p>
+              <p className={`text-[11px] mt-1.5 ${isDark ? 'text-slate-400 font-medium' : 'text-slate-500 font-bold'}`}>Language: {translation.language_code?.toUpperCase() || 'EN'}</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white/10 text-white">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isDark ? 'bg-white/10 text-white' : 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-indigo-500/20'}`}>
               <Gift size={20} />
             </div>
           </div>

@@ -21,6 +21,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
 }
 
 #root {
@@ -301,7 +302,17 @@ body {
 /* 1. Global Font and Typography for User App */
 .user-app-theme,
 .user-app-theme * {
-  font-family: 'Plus Jakarta Sans', 'Inter', 'Outfit', system-ui, -apple-system, sans-serif !important;
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
+}
+
+/* Explicitly map all Tailwind font-override utility classes in user app to Outfit */
+.user-app-theme .font-sans,
+.user-app-theme .font-display,
+.user-app-theme [class*="font-['Plus_Jakarta_Sans'"],
+.user-app-theme [class*="font-['Inter'"],
+.user-app-theme [class*="font-['Plus_Jakarta_Sans']"],
+.user-app-theme [class*="font-['Inter']"] {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
 }
 
 /* 2. Color Schemes for Dark Mode (Default) */
@@ -459,6 +470,13 @@ body {
   background-color: var(--user-card-soft) !important;
   color: var(--user-text-primary) !important;
   border-color: var(--user-border) !important;
+}
+
+.user-app-theme input.bg-transparent,
+.user-app-theme textarea.bg-transparent {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .user-app-theme input:focus,
@@ -840,7 +858,7 @@ html, body, #root {
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  height: 280px !important;
+  height: 240px !important;
   z-index: 1 !important;
   overflow: hidden !important;
 }
@@ -863,11 +881,12 @@ html, body, #root {
 .home-sheet {
   position: relative !important;
   z-index: 5 !important;
-  margin-top: 258px !important;
+  margin-top: 220px !important;
   border-radius: 28px 28px 0 0 !important;
   background: var(--user-bg) !important;
   padding: 16px !important;
-  padding-bottom: 140px !important;
+  padding-bottom: 110px !important;
+  overflow-x: hidden !important;
 }
 
 .user-search-bar {
@@ -880,7 +899,7 @@ html, body, #root {
 .all-services-backdrop {
   position: fixed !important;
   inset: 0 !important;
-  background: rgba(0, 0, 0, 0.45) !important;
+  background: rgba(0, 0, 0, 0.70) !important;
   backdrop-blur: none !important;
   z-index: 9998 !important;
 }
@@ -892,12 +911,81 @@ html, body, #root {
   transform: translateX(-50%) !important;
   width: 100% !important;
   max-width: 430px !important;
-  height: 80vh !important;
+  height: 85vh !important;
   background: var(--user-bg) !important;
-  border-radius: 28px 28px 0 0 !important;
+  border-radius: 36px 36px 0 0 !important;
   z-index: 9999 !important;
   overflow-y: auto !important;
   padding: 20px !important;
+}
+
+/* Centrally force all max-w-lg page wrapper elements to be mobile responsive */
+.max-w-lg {
+  width: 100% !important;
+}
+
+/* Centrally enforce Outfit font-family globally across all elements to override explicit custom font families */
+*, ::before, ::after,
+.redigo-app,
+.redigo-app * {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif !important;
+}
+
+/* Custom Utility overrides to force dark text on light elements (like yellow cards) inside dark mode */
+.user-app-theme .text-dark-force {
+  color: #0f172a !important;
+}
+.user-app-theme .text-dark-force-muted {
+  color: #475569 !important;
+}
+
+/* User App Promo Banner Carousel Rules */
+.promo-carousel {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  border-radius: 22px;
+}
+
+.promo-track {
+  display: flex;
+  transition: transform 0.45s ease;
+  will-change: transform;
+}
+
+.promo-slide {
+  flex: 0 0 100%;
+  min-width: 100%;
+  position: relative;
+}
+
+.promo-slide img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+  border-radius: 22px;
+}
+
+.promo-dots {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 5;
+}
+
+.promo-dots button {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.45);
+}
+
+.promo-dots button.active {
+  width: 18px;
+  background: #FFC400;
 }
 
 

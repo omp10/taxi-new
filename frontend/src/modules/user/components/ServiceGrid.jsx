@@ -305,7 +305,7 @@ const ServiceCardStretched = React.memo(({ subtitle, title, icon, path, onClick,
       <style>{`
         .everything-card {
           position: relative;
-          height: 130px;
+          height: 108px;
           border-radius: 22px;
           overflow: hidden;
           background: #121821 !important;
@@ -361,7 +361,7 @@ const ServiceCardStretched = React.memo(({ subtitle, title, icon, path, onClick,
           position: relative;
           z-index: 4;
           width: 48%;
-          padding: 14px;
+          padding: 11px;
           display: flex;
           flex-direction: column;
           height: 100%;
@@ -371,16 +371,15 @@ const ServiceCardStretched = React.memo(({ subtitle, title, icon, path, onClick,
 
         .everything-card-content span {
           display: block;
-          font-size: 10px;
+          font-size: 11px;
           font-weight: 750;
-          text-transform: uppercase;
           letter-spacing: 0.05em;
           color: #94A3B8 !important;
         }
 
         .everything-card-content h3 {
-          margin-top: 6px;
-          font-size: 14px;
+          margin-top: 4px;
+          font-size: 15px;
           font-weight: 900;
           line-height: 1.25;
           color: #ffffff !important;
@@ -684,7 +683,7 @@ const ServiceGrid = ({
 
   const services = React.useMemo(() => {
     return sortedModules.map((m, idx) => {
-      const apiIcon = normalizeAssetUrl(m.mobile_menu_icon);
+      const apiIcon = normalizeAssetUrl(m.mobile_menu_icon || m.uploadedImage || m.imageUrl || m.image);
       const serviceTypeDisplay = String(m.service_type || '').toUpperCase();
       const transportTypeDisplay = String(m.transport_type || '').toUpperCase();
       const typeLabel = serviceTypeDisplay && transportTypeDisplay 
@@ -697,6 +696,7 @@ const ServiceGrid = ({
         description: typeLabel,
         path: getPath(m),
         accentClass: getAccent(idx),
+        rawModule: m,
       };
     });
   }, [sortedModules]);
@@ -741,8 +741,8 @@ const ServiceGrid = ({
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="py-1"
       >
-        <div className="flex items-center justify-between mb-3">
-          <h2 className={`text-[16px] font-[900] tracking-tight leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+        <div className="flex items-center justify-between mb-2.5">
+          <h2 className={`text-[19px] font-[900] tracking-tight leading-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Everything In Minutes
           </h2>
         </div>

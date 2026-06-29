@@ -47,6 +47,46 @@ const BannerImage = () => {
     [baseUrl],
   );
 
+  const syncBannersToHomeSettings = useCallback(async (bannersList) => {
+    if (!token) return;
+    try {
+      const homeRes = await fetch(`${globalThis.__LEGACY_BACKEND_ORIGIN__}/api/v1/admin/general-settings/user-home-management`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!homeRes.ok) return;
+      const homeData = await homeRes.json();
+      const currentSettings = homeData.settings || {};
+
+      const nextPromos = bannersList.map((b, idx) => ({
+        id: b._id || b.id || String(idx + 1),
+        title: b.title || 'Experience A New Standard With Appzeto',
+        subtitle: b.subtitle || 'A premier private hire service where luxury and reliability converge.',
+        imageUrl: b.image || '',
+        image: b.image || '',
+        route: b.redirect_url || b.external_link || b.deep_link || '/taxi/user/ride/select-location',
+        status: b.active !== false ? 'active' : 'inactive',
+        order: idx + 1
+      }));
+
+      const updatedSettings = {
+        ...currentSettings,
+        promos: nextPromos
+      };
+
+      await fetch(`${globalThis.__LEGACY_BACKEND_ORIGIN__}/api/v1/admin/general-settings/user-home-management`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        body: JSON.stringify({ settings: updatedSettings })
+      });
+    } catch (error) {
+      console.error('Failed to sync banners to home settings:', error);
+    }
+  }, [token]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -57,7 +97,9 @@ const BannerImage = () => {
       if (bootstrapRes.ok) {
         const bootstrapData = await bootstrapRes.json();
         if (bootstrapData.success) {
-          setBanners(bootstrapData.data?.banners || []);
+          const items = bootstrapData.data?.banners || [];
+          setBanners(items);
+          syncBannersToHomeSettings(items);
           return;
         }
       }
@@ -71,6 +113,7 @@ const BannerImage = () => {
         if (data.success) {
           const items = data.data?.results || (Array.isArray(data.data) ? data.data : data.results || []);
           setBanners(items);
+          syncBannersToHomeSettings(items);
         } else {
           setBanners([]);
         }
@@ -83,7 +126,7 @@ const BannerImage = () => {
     } finally {
       setLoading(false);
     }
-  }, [baseUrl, token]);
+  }, [baseUrl, token, syncBannersToHomeSettings]);
 
   useEffect(() => {
     fetchData();
@@ -200,9 +243,11 @@ const BannerImage = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setBanners((current) =>
-          current.map((banner) => ((banner._id || banner.id) === id ? { ...banner, active: !item.active } : banner)),
-        );
+        setBanners((current) => {
+          const nextBanners = current.map((banner) => ((banner._id || banner.id) === id ? { ...banner, active: !item.active } : banner));
+          syncBannersToHomeSettings(nextBanners);
+          return nextBanners;
+        });
       }
     } catch (error) {
       console.error('Banner status toggle error:', error);

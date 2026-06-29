@@ -253,10 +253,10 @@ const ParcelType = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F8FF] max-w-lg mx-auto flex flex-col font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#F5F8FF] w-full max-w-lg mx-auto flex flex-col font-sans relative overflow-x-hidden">
       
       {/* Premium Header with Wave Background */}
-      <div className="relative bg-[#0047AB] pt-10 pb-20 px-6 overflow-hidden">
+      <div className="relative bg-[#F1F5F9] pt-10 pb-20 px-6 overflow-hidden">
         {/* Subtle Wave SVG */}
         <div className="absolute bottom-0 left-0 right-0 h-16 opacity-20 pointer-events-none">
             <svg viewBox="0 0 1440 320" className="w-full h-full preserve-3d">
@@ -298,16 +298,16 @@ const ParcelType = () => {
               transition={{ delay: idx * 0.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleCategorySelect(cat)}
-              className="bg-white rounded-[24px] p-4 flex flex-col items-center gap-4 shadow-md border border-slate-100/50 hover:shadow-xl transition-shadow aspect-[0.85/1]"
+              className="bg-white dark:bg-slate-900 rounded-[24px] p-4 flex flex-col items-center gap-4 shadow-md border border-slate-100/50 dark:border-white/5 hover:shadow-xl transition-all duration-300 aspect-[0.85/1] group"
             >
               <div className="flex-1 flex items-center justify-center w-full">
                 <img 
                   src={cat.img} 
                   alt={cat.title} 
-                  className="w-full h-auto object-contain max-h-[80px] drop-shadow-md"
+                  className="w-full h-auto object-contain max-h-[110px] sm:max-h-[120px] drop-shadow-md transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
-              <p className="text-[12px] font-black text-slate-800 text-center leading-tight">
+              <p className="text-[14px] font-black text-slate-800 text-center leading-tight">
                 {cat.title}
               </p>
             </motion.button>
@@ -319,7 +319,7 @@ const ParcelType = () => {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
-          className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-[#312E81] via-[#4338CA] to-[#4F46E5] p-5 mb-8 shadow-lg group cursor-pointer"
+          className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-amber-100 via-yellow-100 to-yellow-50 border border-yellow-200/60 p-5 mb-8 shadow-md group cursor-pointer"
         >
           {/* Decorative coin circles */}
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-xl" />
@@ -332,14 +332,14 @@ const ParcelType = () => {
                     $
                   </div>
                </div>
-               <div className="text-white">
-                  <h3 className="text-[17px] font-black tracking-tight leading-tight">Explore Rewards</h3>
-                  <p className="text-[11px] font-bold text-white/70 mt-1">Earn 2 coins for every 100 spent</p>
-               </div>
+                <div>
+                  <h3 className="text-[17px] font-black tracking-tight leading-tight text-dark-force">Explore Rewards</h3>
+                  <p className="text-[11px] font-bold text-dark-force-muted mt-1">Earn 2 coins for every 100 spent</p>
+                </div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white group-hover:translate-x-1 transition-transform">
-               <ArrowRight size={18} strokeWidth={3} />
-            </div>
+             <div className="w-8 h-8 rounded-full bg-slate-900/10 flex items-center justify-center text-dark-force group-hover:translate-x-1 transition-transform">
+                <ArrowRight size={18} strokeWidth={3} />
+             </div>
           </div>
         </motion.div>
 
@@ -374,7 +374,7 @@ const ParcelType = () => {
       {/* Floating Back Button */}
       <button 
         onClick={() => navigate(-1)}
-        className="fixed top-2 left-4 z-50 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
+        className="fixed top-2 left-4 z-50 w-8 h-8 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center text-slate-800 border border-slate-200/80 shadow-sm active:scale-95 transition-transform"
       >
         <ArrowLeft size={16} />
       </button>

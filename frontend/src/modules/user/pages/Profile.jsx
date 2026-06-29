@@ -214,7 +214,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen max-w-lg mx-auto pb-[130px] relative overflow-x-hidden font-['Inter'] transition-colors duration-300 user-app-theme">
+    <div className="min-h-screen max-w-lg mx-auto pb-[130px] relative overflow-x-hidden transition-colors duration-300 user-app-theme">
       {/* Premium Header Background */}
       <div 
         style={{
@@ -272,8 +272,8 @@ const Profile = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="rounded-[32px] p-6 shadow-md border transition-all duration-300 animate-fade-in"
             style={{
-              backgroundColor: 'var(--user-card-bg)',
-              borderColor: 'var(--user-border)',
+              backgroundColor: isDark ? 'var(--user-card-bg)' : '#FFFDF0',
+              borderColor: isDark ? 'var(--user-border)' : '#FEF3C7',
               color: 'var(--user-text-primary)'
             }}
           >
@@ -313,25 +313,25 @@ const Profile = () => {
 
             {/* Quick Stats Row */}
             <div 
-              style={{ borderColor: 'var(--user-border)' }}
+              style={{ borderColor: isDark ? 'var(--user-border)' : '#FEF3C7' }}
               className="grid grid-cols-3 gap-3 mt-8 pt-6 border-t"
             >
               <div className="text-center">
                 <p 
                   style={{ color: 'var(--user-text-secondary)' }}
-                  className="text-[10px] font-black uppercase tracking-[0.15em]"
+                  className="text-[10px] font-black tracking-[0.15em]"
                 >
                   Total Trips
                 </p>
                 <p className="font-['Outfit'] text-[18px] font-extrabold mt-1">{profile.stats.trips}</p>
               </div>
               <div 
-                style={{ borderColor: 'var(--user-border)' }}
+                style={{ borderColor: isDark ? 'var(--user-border)' : '#FEF3C7' }}
                 className="text-center border-x"
               >
                 <p 
                   style={{ color: 'var(--user-text-secondary)' }}
-                  className="text-[10px] font-black uppercase tracking-[0.15em]"
+                  className="text-[10px] font-black tracking-[0.15em]"
                 >
                   Rating
                 </p>
@@ -343,7 +343,7 @@ const Profile = () => {
               <div className="text-center">
                 <p 
                   style={{ color: 'var(--user-text-secondary)' }}
-                  className="text-[10px] font-black uppercase tracking-[0.15em]"
+                  className="text-[10px] font-black tracking-[0.15em]"
                 >
                   Credits
                 </p>
@@ -369,7 +369,7 @@ const Profile = () => {
             <motion.div key={sIdx} variants={itemVariants} className="space-y-4">
               <h3 
                 style={{ color: 'var(--user-text-secondary)' }}
-                className="font-['Outfit'] text-[12px] font-black uppercase tracking-[0.25em] ml-1"
+                className="font-['Outfit'] text-[12px] font-black tracking-[0.25em] ml-1"
               >
                 {section.title}
               </h3>

@@ -303,7 +303,7 @@ const Wallet = () => {
           >
             <ArrowLeft size={18} className={isDark ? 'text-white' : 'text-slate-900'} />
           </button>
-          <h1 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>My Wallet</h1>
+          <h1 className={`text-[19px] font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>My Wallet</h1>
         </div>
       </header>
 
@@ -311,16 +311,16 @@ const Wallet = () => {
         <Motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-3xl p-8 text-white shadow-xl relative overflow-hidden ${isDark ? 'bg-slate-900 border border-slate-800 shadow-black/40' : 'bg-slate-900 shadow-slate-900/20'}`}
+          className={`rounded-3xl p-8 shadow-xl relative overflow-hidden border ${isDark ? 'bg-slate-900 border-slate-800 text-white shadow-black/40' : 'bg-[#FFFDF0] border-yellow-100/70 text-slate-900 shadow-yellow-900/5'}`}
         >
           <div className="relative z-10 flex flex-col gap-8">
             <div className="space-y-1">
-              <p className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Available Balance</p>
-              <h2 className="text-4xl font-bold tracking-tight">
+              <p className={`font-bold uppercase tracking-wider text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Available Balance</p>
+              <h2 className="text-3xl font-black tracking-tight">
                 {walletLoading ? (
-                  <>₹ 0<span className="text-slate-600 text-2xl">.00</span></>
+                  <>₹ 0<span className={`text-xl ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>.00</span></>
                 ) : (
-                  <>₹ {balanceText.whole}<span className="text-slate-600 text-2xl">.{balanceText.decimals}</span></>
+                  <>₹ {balanceText.whole}<span className={`text-xl ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>.{balanceText.decimals}</span></>
                 )}
               </h2>
               {walletError && <p className="text-xs font-bold text-rose-400 mt-2">{walletError}</p>}
@@ -350,19 +350,24 @@ const Wallet = () => {
       </div>
 
       <div className="px-5 mt-6">
-        <button
+        <Motion.button
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           onClick={() => navigate(`${basePath}/referral`)}
-          className={`w-full border rounded-3xl p-5 flex items-center gap-4 active:scale-[0.98] transition-all shadow-sm group cursor-pointer ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}
+          className={`w-full border rounded-3xl p-5 flex items-center gap-4 shadow-md group cursor-pointer relative overflow-hidden text-left ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-100/30 border-yellow-250'}`}
         >
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shrink-0 ${isDark ? 'bg-slate-950 text-white group-hover:bg-white group-hover:text-slate-950' : 'bg-slate-50 text-slate-900 group-hover:bg-slate-900 group-hover:text-white'}`}>
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shrink-0 group-hover:scale-110 group-hover:rotate-6 duration-300 ${isDark ? 'bg-slate-950 text-white group-hover:bg-white group-hover:text-slate-950' : 'bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-indigo-500/20'}`}>
             <Gift size={20} />
           </div>
           <div className="flex-1 text-left">
-            <h4 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Refer & Earn ₹50</h4>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Invite friends to {appName}</p>
+            <h4 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              Refer & Earn <span className="text-emerald-600 dark:text-emerald-400 font-extrabold ml-1">₹50</span>
+            </h4>
+            <p className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Invite friends to {appName}</p>
           </div>
-          <ArrowLeft size={18} className={`rotate-180 transition-colors ${isDark ? 'text-slate-600 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-900'}`} />
-        </button>
+          <ArrowLeft size={18} className={`rotate-180 transition-all duration-300 group-hover:translate-x-1 ${isDark ? 'text-slate-600 group-hover:text-white' : 'text-slate-900'}`} />
+        </Motion.button>
       </div>
 
       <div className="px-5 mt-10">

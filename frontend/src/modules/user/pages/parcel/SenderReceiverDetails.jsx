@@ -23,6 +23,7 @@ import { HAS_VALID_GOOGLE_MAPS_KEY, useAppGoogleMapsLoader } from '../../../admi
 import { userAuthService } from '../../services/authService';
 import api from '../../../../shared/api/axiosInstance';
 import { computeDrivingRoute, sumComputedRouteLegs } from '../../../../shared/utils/googleRoutes';
+import { useUserTheme } from '../../../../shared/context/UserThemeContext';
 
 const Motion = motion;
 const PHONE_REGEX = /^[6-9]\d{9}$/;
@@ -309,10 +310,10 @@ const PhoneInput = ({ label, value, onChange, error, name, onClearError, disable
     <div
       className={`flex items-center gap-3 rounded-[18px] border p-4 transition-all ${
         error
-          ? 'border-red-200 bg-red-50'
+          ? 'border-red-200 bg-red-50 dark:border-red-800/40 dark:bg-red-950/20'
           : value && PHONE_REGEX.test(value)
-            ? 'border-emerald-100 bg-emerald-50'
-            : 'border-slate-200 bg-slate-50/80'
+            ? 'border-emerald-100 bg-emerald-50 dark:border-emerald-850/40 dark:bg-slate-900/30'
+            : 'border-slate-200 bg-white dark:border-zinc-800 dark:bg-slate-900/30'
       }`}
     >
       <Phone
@@ -783,7 +784,7 @@ const MapPickerSheet = ({ open, title, confirmLabel, value, initialCoords, onClo
                       setSearchQuery(event.target.value);
                     }}
                     placeholder="Search area, street or landmark..."
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-10 py-3 text-[13px] font-semibold text-slate-900 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-10 py-3 text-[13px] font-semibold text-slate-900 outline-none focus:border-slate-800 focus:ring-2 focus:ring-slate-100"
                   />
                   {searchQuery.length > 0 && (
                     <button 
@@ -806,7 +807,7 @@ const MapPickerSheet = ({ open, title, confirmLabel, value, initialCoords, onClo
                         onClick={() => applySearchSuggestion(item)}
                         className="flex w-full items-start gap-3 rounded-xl px-3 py-2 text-left hover:bg-white transition-colors"
                       >
-                        <Navigation size={14} className="mt-0.5 shrink-0 text-blue-500" />
+                        <Navigation size={14} className="mt-0.5 shrink-0 text-slate-900 dark:text-white" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-[12px] font-black text-slate-800">{item.label}</p>
                           {item.secondaryText ? (
@@ -826,7 +827,7 @@ const MapPickerSheet = ({ open, title, confirmLabel, value, initialCoords, onClo
             </div>
 
             <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-full">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-white bg-blue-600 shadow-xl">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-white bg-slate-900 dark:bg-zinc-800 shadow-xl">
                 <MapPin size={18} className="text-white" />
               </div>
             </div>
@@ -837,7 +838,7 @@ const MapPickerSheet = ({ open, title, confirmLabel, value, initialCoords, onClo
               disabled={isLocating}
               className="absolute bottom-4 right-4 z-20 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-900 shadow-xl"
             >
-              <LocateFixed size={20} className={isLocating ? 'animate-pulse text-blue-600' : ''} />
+              <LocateFixed size={20} className={isLocating ? 'animate-pulse text-slate-900 dark:text-white' : ''} />
             </button>
           </div>
 
@@ -886,12 +887,12 @@ const ContactDetailsSheet = ({
           transition={{ type: 'spring', damping: 26, stiffness: 220 }}
           className="absolute inset-x-0 bottom-0 mx-auto max-w-lg overflow-hidden rounded-t-[34px] bg-white shadow-2xl"
         >
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-850 px-5 py-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Booking Details</p>
               <h3 className="text-lg font-black tracking-tight text-slate-900">Sender & receiver</h3>
             </div>
-            <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 text-slate-500">
+            <button type="button" onClick={onClose} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400">
               <X size={18} />
             </button>
           </div>
@@ -899,14 +900,14 @@ const ContactDetailsSheet = ({
           <div className="max-h-[75vh] space-y-6 overflow-y-auto px-5 py-5">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
                   <User size={16} />
                 </div>
                 <p className="text-sm font-black text-slate-900">Sender</p>
               </div>
 
               <div className="space-y-2">
-                <div className={`flex items-center gap-3 rounded-[18px] border px-4 py-3 ${errors.senderName ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-50/80'}`}>
+                <div className={`flex items-center gap-3 rounded-[18px] border px-4 py-3 ${errors.senderName ? 'border-red-200 bg-red-50 dark:border-red-800/40 dark:bg-red-950/20' : 'border-slate-200 bg-white dark:border-zinc-800 dark:bg-slate-900/30'}`}>
                   <User size={16} className="text-slate-400" />
                   <input
                     type="text"
@@ -927,30 +928,30 @@ const ContactDetailsSheet = ({
 
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400">
                   <Contact size={16} />
                 </div>
                 <p className="text-sm font-black text-slate-900">Receiver</p>
               </div>
 
-              <label className="flex cursor-pointer items-center gap-3 rounded-[24px] border-2 border-dashed border-slate-100 bg-slate-50/30 px-4 py-4 transition-colors hover:bg-blue-50/30 group">
+              <label className="flex cursor-pointer items-center gap-3 rounded-[24px] border border-slate-200 dark:border-zinc-800 bg-white dark:bg-slate-900/10 px-4 py-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 group">
                 <div className="relative flex items-center justify-center">
                   <input
                     type="checkbox"
                     checked={useSelfForReceiver}
                     onChange={(event) => setUseSelfForReceiver(event.target.checked)}
-                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-slate-200 bg-white checked:bg-blue-600 checked:border-blue-600 transition-all"
+                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-slate-200 dark:border-zinc-700 bg-white dark:bg-slate-900 checked:bg-slate-900 checked:border-slate-900 dark:checked:bg-white dark:checked:border-white transition-all"
                   />
                   <CheckCircle2 size={12} className="absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[13px] font-black text-slate-900 group-hover:text-blue-600 transition-colors">Same as Sender</p>
+                  <p className="text-[13px] font-black text-slate-900 group-hover:text-slate-950 transition-colors">Same as Sender</p>
                   <p className="text-[11px] font-bold text-slate-400">Use sender's name and mobile for receiver</p>
                 </div>
               </label>
 
               <div className="space-y-2">
-                <div className={`flex items-center gap-3 rounded-[18px] border px-4 py-3 ${errors.receiverName ? 'border-red-200 bg-red-50' : 'border-slate-200 bg-slate-50/80'} ${useSelfForReceiver ? 'opacity-70' : ''}`}>
+                <div className={`flex items-center gap-3 rounded-[18px] border px-4 py-3 ${errors.receiverName ? 'border-red-200 bg-red-50 dark:border-red-800/40 dark:bg-red-950/20' : 'border-slate-200 bg-white dark:border-zinc-800 dark:bg-slate-900/30'} ${useSelfForReceiver ? 'opacity-70' : ''}`}>
                   <User size={16} className="text-slate-400" />
                   <input
                     type="text"
@@ -971,7 +972,7 @@ const ContactDetailsSheet = ({
             </div>
           </div>
 
-          <div className="border-t border-slate-100 px-5 py-4">
+          <div className="border-t border-slate-100 dark:border-zinc-850 px-5 py-4">
             <button
               type="button"
               onClick={onSave}
@@ -990,6 +991,8 @@ const ContactDetailsSheet = ({
 const SenderReceiverDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme } = useUserTheme();
+  const isDark = theme === 'dark';
   const routePrefix = useMemo(
     () => (location.pathname.startsWith('/taxi/user') ? '/taxi/user' : ''),
     [location.pathname],
@@ -1804,7 +1807,7 @@ const SenderReceiverDetails = () => {
           <ArrowLeft size={20} className="text-slate-900 dark:text-white" strokeWidth={2.5} />
         </button>
         <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Parcel Delivery</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-zinc-100">Parcel Delivery</p>
           <h1 className="mt-0.5 text-[18px] font-bold text-slate-900 dark:text-white tracking-tight leading-none truncate">Details & Address</h1>
         </div>
       </header>
@@ -1825,7 +1828,7 @@ const SenderReceiverDetails = () => {
               </div>
               <div
                 className={`flex-1 flex bg-transparent border rounded-2xl px-4 py-2.5 transition-all cursor-pointer items-center ${
-                  activeInput === 'pickup' ? 'border-blue-600 ring-2 ring-blue-500/10 text-slate-800 dark:text-white' : 'border-slate-100 dark:border-zinc-800/60 hover:bg-slate-100/50 dark:hover:bg-zinc-800/50'
+                  activeInput === 'pickup' ? 'border-slate-900 ring-2 ring-slate-950/10 dark:border-white dark:ring-white/10 text-slate-800 dark:text-white' : 'border-slate-100 dark:border-zinc-800/60 hover:bg-slate-100/50 dark:hover:bg-zinc-800/50'
                 } ${errors.pickup ? 'border-red-400' : ''}`}
                 onClick={() => setActiveInput('pickup')}
               >
@@ -1869,7 +1872,7 @@ const SenderReceiverDetails = () => {
               </div>
               <div
                 className={`flex-1 flex bg-transparent border rounded-2xl px-4 py-2.5 transition-all cursor-pointer items-center ${
-                  activeInput === 'drop' ? 'border-blue-600 ring-2 ring-blue-500/10 text-slate-800 dark:text-white' : 'border-slate-100 dark:border-zinc-800/60 hover:bg-slate-100/50 dark:hover:bg-zinc-800/50'
+                  activeInput === 'drop' ? 'border-slate-900 ring-2 ring-slate-950/10 dark:border-white dark:ring-white/10 text-slate-800 dark:text-white' : 'border-slate-100 dark:border-zinc-800/60 hover:bg-slate-100/50 dark:hover:bg-zinc-800/50'
                 } ${errors.drop ? 'border-red-400' : ''}`}
                 onClick={() => setActiveInput('drop')}
               >
@@ -1911,7 +1914,7 @@ const SenderReceiverDetails = () => {
             onClick={() => openSharedLocationPicker(activeInput)}
             className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-100 rounded-2xl py-3.5 shadow-sm hover:shadow-md hover:border-slate-200 active:scale-95 transition-all text-[13px] font-bold text-slate-800 group"
           >
-            <MapPin size={16} className="text-blue-600 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+            <MapPin size={16} className="text-slate-900 dark:text-white group-hover:scale-110 transition-transform" strokeWidth={2.5} />
             <span>Pin on map</span>
           </button>
           
@@ -1919,14 +1922,14 @@ const SenderReceiverDetails = () => {
             onClick={() => setIsContactSheetOpen(true)}
             className="flex-1 flex items-center justify-center gap-2 bg-white border border-slate-100 rounded-2xl py-3.5 shadow-sm hover:shadow-md hover:border-slate-200 active:scale-95 transition-all text-[13px] font-bold text-slate-800 group"
           >
-            <User size={16} className="text-blue-600 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+            <User size={16} className="text-slate-900 dark:text-white group-hover:scale-110 transition-transform" strokeWidth={2.5} />
             <span>Contact Details</span>
           </button>
         </div>
 
         {/* Contact details badge */}
         {(senderName || receiverName) && (
-          <div className="mx-1 mb-5 bg-gradient-to-r from-blue-50/70 to-indigo-50/30 rounded-2xl p-4 border-l-4 border-l-blue-600 border border-slate-100 flex items-center justify-between gap-3 text-[12px] shadow-sm">
+          <div className="mx-1 mb-5 bg-gradient-to-r from-slate-50/70 to-slate-100/30 rounded-2xl p-4 border-l-4 border-l-slate-900 border border-slate-100 flex items-center justify-between gap-3 text-[12px] shadow-sm">
             <div className="flex-1 min-w-0 space-y-1.5">
               {senderName && (
                 <div className="flex items-center gap-2 text-slate-600">
@@ -1945,7 +1948,7 @@ const SenderReceiverDetails = () => {
             </div>
             <button
               onClick={() => setIsContactSheetOpen(true)}
-              className="text-[11px] font-black text-blue-600 hover:text-blue-700 bg-white px-3 py-1.5 rounded-xl border border-slate-100 shadow-sm uppercase tracking-wider shrink-0 transition-colors"
+              className="text-[11px] font-black text-slate-900 dark:text-white hover:text-slate-800 bg-white dark:bg-zinc-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-zinc-700 shadow-sm uppercase tracking-wider shrink-0 transition-colors"
             >
               Edit
             </button>
@@ -1963,10 +1966,10 @@ const SenderReceiverDetails = () => {
                 <button
                   key={item.id}
                   onClick={() => applySuggestion(activeInput, item)}
-                  className="flex w-full items-start gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3.5 text-left shadow-sm hover:border-blue-200 transition-colors"
+                  className="flex w-full items-start gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3.5 text-left shadow-sm hover:border-slate-300 transition-colors"
                 >
                   <div className="mt-0.5 w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-                    <Navigation size={14} className="text-blue-500 fill-blue-500/10" />
+                    <Navigation size={14} className="text-slate-900 dark:text-white fill-slate-900/10" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-black text-slate-800">{item.label}</p>
@@ -1987,7 +1990,7 @@ const SenderReceiverDetails = () => {
                   <button
                     key={item}
                     onClick={() => applySuggestion(activeInput, item)}
-                    className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white p-3 text-left shadow-sm hover:border-blue-200 transition-colors"
+                    className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white p-3 text-left shadow-sm hover:border-slate-300 transition-colors"
                   >
                     <MapPin size={12} className="shrink-0 text-emerald-500" />
                     <span className="truncate text-[12px] font-bold text-slate-700">{item}</span>
@@ -2005,9 +2008,9 @@ const SenderReceiverDetails = () => {
                   <button
                     key={item.title || item}
                     onClick={() => applySuggestion(activeInput, item)}
-                    className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white p-3 text-left shadow-sm hover:border-blue-200 transition-colors"
+                    className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white p-3 text-left shadow-sm hover:border-slate-300 transition-colors"
                   >
-                    <Navigation size={12} className="text-blue-500 shrink-0" />
+                    <Navigation size={12} className="text-slate-900 dark:text-white shrink-0" />
                     <span className="text-[12px] font-bold text-slate-700 truncate">{item.title || item}</span>
                   </button>
                 ))}
@@ -2026,38 +2029,42 @@ const SenderReceiverDetails = () => {
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
           transition={{ delay: 0.12 }} 
-          className="mt-8 rounded-[30px] bg-gradient-to-br from-slate-900 to-slate-950 p-6 text-white shadow-xl relative overflow-hidden border border-slate-800"
+          className={`mt-8 rounded-[30px] p-6 shadow-xl relative overflow-hidden border transition-colors ${
+            isDark 
+              ? 'bg-gradient-to-br from-slate-900 to-slate-950 text-white border-slate-800' 
+              : 'bg-gradient-to-r from-amber-100 via-yellow-100 to-yellow-50 text-slate-900 border-yellow-200/60 shadow-md'
+          }`}
         >
-          <div className="absolute right-[-20px] top-[-20px] w-36 h-36 bg-blue-600/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute left-[-20px] bottom-[-20px] w-36 h-36 bg-emerald-600/10 rounded-full blur-2xl pointer-events-none" />
+          <div className={`absolute right-[-20px] top-[-20px] w-36 h-36 rounded-full blur-2xl pointer-events-none ${isDark ? 'bg-indigo-500/10' : 'bg-yellow-400/20'}`} />
+          <div className={`absolute left-[-20px] bottom-[-20px] w-36 h-36 rounded-full blur-2xl pointer-events-none ${isDark ? 'bg-emerald-500/5' : 'bg-emerald-400/10'}`} />
           <div className="relative z-10 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Approx. Delivery Fare</p>
-              <p className="mt-1 text-3xl font-black tracking-tight text-white">
+              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Approx. Delivery Fare</p>
+              <p className={`mt-1 text-3xl font-black tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 {estimatedFare ? `Rs ${estimatedFare.approx ?? estimatedFare.min}` : '--'}
               </p>
-              <p className="mt-1 text-[11px] font-bold text-slate-400">
+              <p className={`mt-1 text-[11px] font-bold ${isDark ? 'text-slate-450' : 'text-slate-600'}`}>
                 {estimatedFare
                   ? `Based on ${routeEstimate.source === 'road' ? 'road' : 'approx'} travel of ${effectiveDistanceKm.toFixed(1)} km`
                   : 'Enter drop location to view live fare'}
               </p>
               {estimatedFare ? (
                 <>
-                  <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                  <p className={`mt-1 text-[10px] font-semibold ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
                     Base fare covers {estimatedFare.minBaseDistance === estimatedFare.maxBaseDistance
                       ? `${estimatedFare.maxBaseDistance.toFixed(1)} km`
                       : `${estimatedFare.minBaseDistance.toFixed(1)}-${estimatedFare.maxBaseDistance.toFixed(1)} km`}
                     {' '}before extra charges.
                   </p>
-                  <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                  <p className={`mt-1 text-[10px] font-semibold ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
                     Subtotal Rs {Number(estimatedFare.subtotal || 0).toFixed(2)} + service tax {Number(estimatedFare.serviceTaxPercentage || 0).toFixed(2)}% (Rs {Number(estimatedFare.serviceTaxAmount || 0).toFixed(2)})
                   </p>
                 </>
               ) : null}
             </div>
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
-              <PackageCheck size={28} className="text-emerald-400" />
-            </div>
+             <div className={`flex h-14 w-14 items-center justify-center rounded-2xl shrink-0 ${isDark ? 'bg-white/10 border border-white/10' : 'bg-white shadow-sm border border-slate-200/60'}`}>
+               <PackageCheck size={28} className={isDark ? 'text-emerald-400' : 'text-emerald-600'} />
+             </div>
           </div>
         </motion.section>
       </main>
@@ -2071,7 +2078,7 @@ const SenderReceiverDetails = () => {
             onClick={handleProceed}
             className="relative flex h-16 w-full items-center justify-center gap-3 rounded-[24px] bg-slate-900 text-[15px] font-black text-white shadow-[0_20px_40px_rgba(15,23,42,0.2)] group overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-950 opacity-0 group-hover:opacity-100 transition-opacity" />
             <span className="relative z-10">
                {drop ? 'Confirm Receiver Details' : 'Select Drop Location'}
             </span>
