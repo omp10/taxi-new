@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import '../styles/adminTheme.css';
 import { socketService } from '../../../shared/api/socket';
 import { useSettings } from '../../../shared/context/SettingsContext';
 import { getSupportConversations, markSupportMessagesRead } from '../../shared/chat/chatApi';
@@ -302,22 +303,22 @@ const SidebarItem = ({ icon, label, path, isCollapsed, sidebarTextColor, unreadC
     to={path}
     end
     className={({ isActive }) =>
-      `group relative flex items-center gap-3.5 px-4 py-2 rounded-xl transition-all duration-200 ${isActive ? 'text-white bg-white/10' : 'hover:bg-white/5'
+      `group relative flex items-center gap-3.5 px-4 py-2 rounded-xl transition-all duration-200 ${isActive ? 'text-[#05070D] bg-[#FFC400]' : 'hover:bg-white/5'
       }`
     }
     style={({ isActive }) => ({
-      color: isActive ? '#FFFFFF' : sidebarTextColor,
+      color: isActive ? '#05070D' : sidebarTextColor,
     })}
   >
     {({ isActive }) => (
       <>
         {React.createElement(icon, {
-          size: 18,
-          strokeWidth: isActive ? 2.5 : 2,
-          className: `shrink-0 transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-40 group-hover:opacity-100'}`
+          size: 20,
+          strokeWidth: isActive ? 2.2 : 1.8,
+          className: `shrink-0 transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-65 group-hover:opacity-100'}`
         })}
         {!isCollapsed && (
-          <span className={`min-w-0 flex-1 text-[13px] tracking-tight transition-all duration-200 ${isActive ? 'font-bold' : 'font-medium opacity-60 group-hover:opacity-100'}`}>
+          <span className={`min-w-0 flex-1 text-[13px] tracking-tight transition-all duration-200 ${isActive ? 'font-bold' : 'font-medium opacity-100 group-hover:opacity-100'}`}>
             {label}
           </span>
         )}
@@ -377,9 +378,9 @@ const SidebarGroup = ({
       >
         <div className="flex min-w-0 items-center gap-3.5">
           {React.createElement(icon, {
-            size: 18,
-            strokeWidth: (isActive || isExpanded) ? 2.5 : 2,
-            className: `shrink-0 transition-all duration-300 ${(isActive || isExpanded) ? 'opacity-100' : 'opacity-90 group-hover:opacity-100'}`,
+            size: 20,
+            strokeWidth: (isActive || isExpanded) ? 2.2 : 1.8,
+            className: `shrink-0 transition-all duration-300 ${(isActive || isExpanded) ? 'opacity-100' : 'opacity-80 group-hover:opacity-100'}`,
           })}
           {!isCollapsed && (
             <span className={`truncate text-[13px] tracking-tight transition-all duration-200 ${(isActive || isExpanded) ? 'font-bold' : 'font-medium opacity-95 group-hover:opacity-100'}`}>
@@ -428,16 +429,16 @@ const SidebarGroup = ({
                     to={item.path}
                     end
                     className={({ isActive: childActive }) =>
-                      `group flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12.5px] transition-all duration-200 ${childActive ? 'text-white bg-white/5' : 'hover:text-white'
+                      `group flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12.5px] transition-all duration-200 ${childActive ? 'text-[#05070D] bg-[#FFC400]' : 'hover:text-white hover:bg-white/5'
                       }`
                     }
                     style={({ isActive: childActive }) => ({
-                      color: childActive ? '#FFFFFF' : sidebarTextColor,
+                      color: childActive ? '#05070D' : sidebarTextColor,
                     })}
                   >
                     {({ isActive: childActive }) => (
                       <>
-                        <span className={`min-w-0 flex-1 transition-all duration-200 ${childActive ? 'font-bold' : 'font-medium opacity-50 group-hover:opacity-100'}`}>{item.label}</span>
+                        <span className={`min-w-0 flex-1 transition-all duration-200 ${childActive ? 'font-bold' : 'font-medium opacity-100 group-hover:opacity-100'}`}>{item.label}</span>
                         <SidebarBadge count={getSidebarItemCount(item, unreadCountsByPath)} isActive={childActive} />
                       </>
                     )}
@@ -526,17 +527,17 @@ const NestedGroup = ({
                   to={item.path}
                   end
                   className={({ isActive: childActive }) =>
-                    `group flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12px] transition-all duration-200 ${childActive ? 'text-white' : 'hover:text-slate-300'
+                    `group flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12px] transition-all duration-200 ${childActive ? 'text-[#05070D]' : 'hover:text-slate-300 hover:bg-white/5'
                     }`
                   }
                   style={({ isActive: childActive }) => ({
-                    color: childActive ? '#FFFFFF' : sidebarTextColor,
-                    backgroundColor: childActive ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                    color: childActive ? '#05070D' : sidebarTextColor,
+                    backgroundColor: childActive ? '#FFC400' : 'transparent',
                   })}
                 >
                   {({ isActive: childActive }) => (
                     <>
-                      <div className={`h-0.5 w-0.5 shrink-0 rounded-full transition-all duration-300 ${childActive ? 'bg-indigo-400 scale-150' : 'bg-slate-700'}`} />
+                      <div className={`h-0.5 w-0.5 shrink-0 rounded-full transition-all duration-300 ${childActive ? 'bg-[#05070D] scale-150' : 'bg-slate-700'}`} />
                       <span className={`min-w-0 flex-1 transition-all duration-200 ${childActive ? 'font-bold' : 'font-medium opacity-70 group-hover:opacity-100'}`}>{item.label}</span>
                       <SidebarBadge count={getSidebarItemCount(item, unreadCountsByPath)} isActive={childActive} />
                     </>
@@ -1531,16 +1532,14 @@ const AdminLayout = () => {
             </button>
           </div>
 
-          <nav className="no-scrollbar mt-0 flex-1 space-y-5 overflow-y-auto px-4 pb-10 scroll-smooth">
+          <nav className="no-scrollbar mt-0 flex-1 space-y-4 overflow-y-auto px-3 pb-10 scroll-smooth">
             {sidebarSections.map((section) => (
               <div key={section.title} className="space-y-1">
                 {!isCollapsed && (
-                  <div className="mb-3 mt-2 flex items-center gap-3 px-4 opacity-60">
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                    <span className="text-[10.5px] font-black uppercase tracking-[0.2em] text-white/90 whitespace-nowrap">
+                  <div className="mb-2 mt-4 px-4 flex items-center">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 whitespace-nowrap">
                       {section.title}
                     </span>
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                   </div>
                 )}
                 {section.items.map((item) =>
@@ -1585,13 +1584,15 @@ const AdminLayout = () => {
           <div className="flex items-center gap-4">
             <ModeSwitcher mode={mode} setMode={setMode} />
 
-            <div className="flex items-center gap-2 border-l border-slate-100 pl-4 h-8">
+            <div className="flex items-center gap-3 border-l border-slate-100 pl-4 h-8">
               <button
                 type="button"
                 onClick={() => setIsSearchOpen((current) => !current)}
-                className="group flex items-center justify-center rounded-xl h-10 w-10 text-slate-400 transition-all hover:bg-slate-50 hover:text-slate-900"
+                className="group flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50/50 text-slate-400 transition-all hover:border-slate-300 hover:bg-slate-100/60 text-[12px] font-medium"
               >
-                <Search size={20} strokeWidth={2.5} />
+                <Search size={15} strokeWidth={2.2} className="text-slate-400 group-hover:text-slate-500" />
+                <span className="hidden md:inline text-slate-500">Search dashboard...</span>
+                <kbd className="hidden md:inline-flex h-4 select-none items-center gap-0.5 rounded border border-slate-200 bg-white px-1 text-[9px] font-medium text-slate-400">⌘K</kbd>
               </button>
 
               <div ref={notificationsMenuRef} className="relative">
