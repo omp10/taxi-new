@@ -34,6 +34,24 @@ const MainLayout = ({ children }) => {
     location.pathname.startsWith('/owner');
 
   const isUserPath = !isAdminPath && !isStaticPath;
+  const isSplashPath = location.pathname === '/taxi/user/splash';
+  const isAuthPath = 
+    location.pathname === '/taxi/user/login' ||
+    location.pathname === '/taxi/user/signup' ||
+    location.pathname === '/taxi/user/verify-otp' ||
+    location.pathname === '/login';
+
+  if (isSplashPath || isAuthPath) {
+    return (
+      <>
+        <RentalLocationTracker />
+        <ScrollToTop />
+        <UserAccountInvalidationListener />
+        <UserUpcomingRideReminderBootstrap />
+        {children}
+      </>
+    );
+  }
 
   const content = isAdminPath ? (
     <div className="redigo-admin-root h-screen bg-gray-50 overflow-hidden">{children}</div>
@@ -43,7 +61,7 @@ const MainLayout = ({ children }) => {
     </div>
   ) : (
     <div className={`redigo-app min-h-screen transition-colors duration-300 ${isUserPath ? (theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900') : 'bg-gray-50/50'} ${isUserPath ? 'user-app-theme ' + theme : ''}`}>
-      <main className={`w-full max-w-lg mx-auto shadow-2xl min-h-screen relative overflow-x-hidden transition-colors duration-300 ${isUserPath ? (theme === 'dark' ? 'bg-slate-900 text-white border-x border-slate-800/80' : 'bg-white text-slate-900 border-x border-slate-200') : 'bg-white'}`}>
+      <main className={`w-full max-w-lg md:max-w-7xl mx-auto shadow-2xl min-h-screen relative overflow-x-hidden transition-colors duration-300 ${isUserPath ? (theme === 'dark' ? 'bg-slate-900 text-white border-x border-slate-800/80' : 'bg-white text-slate-900 border-x border-slate-200') : 'bg-white'}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}

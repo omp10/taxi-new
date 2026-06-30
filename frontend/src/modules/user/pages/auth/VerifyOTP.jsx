@@ -243,14 +243,7 @@ const VerifyOTP = () => {
   if (showPermissions) {
     return (
       <div className="login-page min-h-screen max-w-lg mx-auto flex flex-col justify-between p-8 relative">
-        {/* Floating Theme Toggle */}
-        <button 
-          onClick={toggleTheme}
-          className="theme-toggle-floating"
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+
 
         {/* Ambient Blobs */}
         <div className="absolute top-[-10%] right-[-10%] w-72 h-72 rounded-full bg-[#FFB300]/10 blur-3xl pointer-events-none" />
@@ -331,15 +324,8 @@ const VerifyOTP = () => {
   }
 
   return (
-    <div className="login-page select-none relative">
-      {/* Floating Theme Toggle */}
-      <button 
-        onClick={toggleTheme}
-        className="theme-toggle-floating"
-        aria-label="Toggle theme"
-      >
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
+    <div className="login-page w-full select-none relative">
+
 
       {/* Immersive Top Background Image */}
       <div className="login-hero">

@@ -115,15 +115,8 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page select-none relative">
-      {/* Floating Theme Toggle */}
-      <button 
-        onClick={toggleTheme}
-        className="theme-toggle-floating"
-        aria-label="Toggle theme"
-      >
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
+    <div className="login-page w-full select-none relative">
+
 
       {/* Immersive Top Background Image */}
       <div className="login-hero">
@@ -256,7 +249,9 @@ const Login = () => {
                         if (error) setError('');
                       }}
                       placeholder="Enter Mobile Number"
-                      className="flex-1 bg-transparent border-none p-0 text-xl font-bold login-primary-text outline-none focus:ring-0 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 tracking-widest"
+                      className={`flex-1 bg-transparent border-none p-0 font-bold login-primary-text outline-none focus:ring-0 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all ${
+                        phoneNumber ? 'text-xl tracking-widest' : 'text-base tracking-normal'
+                      }`}
                     />
                   </div>
 

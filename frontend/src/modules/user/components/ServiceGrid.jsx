@@ -360,7 +360,7 @@ const ServiceCardStretched = React.memo(({ subtitle, title, icon, path, onClick,
         .everything-card-content {
           position: relative;
           z-index: 4;
-          width: 48%;
+          width: 65%;
           padding: 11px;
           display: flex;
           flex-direction: column;

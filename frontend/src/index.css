@@ -557,6 +557,8 @@ body {
 
 /* User App login page Redesign CSS */
 .login-page {
+  width: 100%;
+  max-width: 100%;
   min-height: 100dvh;
   background: var(--user-bg) !important;
   color: var(--user-text-primary) !important;
@@ -836,7 +838,7 @@ body {
 
 /* HTML and Body scroll configurations */
 html, body, #root {
-  height: 100% !important;
+  min-height: 100%;
 }
 
 .user-app,
@@ -1064,7 +1066,66 @@ html, body, #root {
   padding: 20px !important;
 }
 
+/* Splash screen specific styles */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100dvh;
+  background: #05070D;
+  z-index: 99999;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden !important;
+}
 
+body.splash-active {
+  overflow: hidden;
+}
 
+@media (min-width: 768px) {
+  .login-page {
+    display: flex !important;
+    flex-direction: row !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    overflow: hidden !important;
+  }
+  .login-hero {
+    width: 50% !important;
+    height: 100vh !important;
+  }
+  .login-hero-img {
+    height: 100vh !important;
+  }
+  .login-card {
+    margin-top: 0 !important;
+    border-radius: 28px !important;
+    max-width: 440px !important;
+    width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid var(--user-border) !important;
+  }
+}
 
+@media (min-width: 768px) {
+  .user-app-theme,
+  .user-home,
+  .user-app,
+  .mobile-app-shell,
+  .all-services-sheet {
+    max-width: 100% !important;
+  }
+}

@@ -12,6 +12,7 @@ import {
 import api from '../../../../shared/api/axiosInstance';
 import { useBaseGoogleMapsLoader } from '../../../admin/utils/googleMaps';
 import { getSavedLocation, getSavedLocationCoords, saveLocation } from '../../services/locationStore';
+import { useUserTheme } from '../../../../shared/context/UserThemeContext';
 
 import trucksImg from '@/assets/images/delivery/trucks.png';
 import bikeImg from '@/assets/images/delivery/bike.png';
@@ -80,6 +81,7 @@ const DELIVERY_CATEGORY_OPTIONS = [
 ];
 
 const ParcelType = () => {
+  const { theme } = useUserTheme();
   const location = useLocation();
   const routeState = location.state || {};
   const savedLocation = getSavedLocation();
@@ -253,14 +255,14 @@ const ParcelType = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F8FF] w-full max-w-lg mx-auto flex flex-col font-sans relative overflow-x-hidden">
+    <div className={`min-h-screen w-full max-w-lg mx-auto flex flex-col font-sans relative overflow-x-hidden ${theme === 'dark' ? 'bg-[#05070D]' : 'bg-[#F5F8FF]'}`}>
       
       {/* Premium Header with Wave Background */}
-      <div className="relative bg-[#F1F5F9] pt-10 pb-20 px-6 overflow-hidden">
+      <div className={`relative pt-10 pb-20 px-6 overflow-hidden ${theme === 'dark' ? 'bg-[#090D16]' : 'bg-[#F1F5F9]'}`}>
         {/* Subtle Wave SVG */}
         <div className="absolute bottom-0 left-0 right-0 h-16 opacity-20 pointer-events-none">
             <svg viewBox="0 0 1440 320" className="w-full h-full preserve-3d">
-                <path fill="#ffffff" fillOpacity="1" d="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,186.7C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                <path fill={theme === 'dark' ? '#05070D' : '#ffffff'} fillOpacity="1" d="M0,160L48,176C96,192,192,224,288,224C384,224,480,192,576,165.3C672,139,768,117,864,128C960,139,1056,181,1152,186.7C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
             </svg>
         </div>
 
@@ -269,15 +271,15 @@ const ParcelType = () => {
            <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-           className="bg-white rounded-[24px] p-4 flex items-center gap-4 shadow-lg border border-white/50"
+            className={`rounded-[24px] p-4 flex items-center gap-4 shadow-lg border transition-all cursor-pointer ${theme === 'dark' ? 'bg-[#111827] border-zinc-800/85 text-white' : 'bg-white border-white/50 text-slate-900'}`}
             onClick={() => navigate('/taxi/user/parcel/details', { state: { editPickup: true, pickup: pickupAddress, pickupCoords } })}
            >
-             <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${theme === 'dark' ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
                <MapPin size={20} className="text-emerald-500 fill-emerald-500/20" />
              </div>
              <div className="flex-1 min-w-0">
                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Pick up from</p>
-               <p className="text-[13px] font-bold text-slate-900 truncate mt-0.5">{pickupAddress}</p>
+               <p className={`text-[13px] font-bold truncate mt-0.5 ${theme === 'dark' ? 'text-slate-200' : 'text-slate-900'}`}>{pickupAddress}</p>
              </div>
              <ChevronRight size={18} className="text-slate-400" />
            </motion.div>
@@ -298,7 +300,7 @@ const ParcelType = () => {
               transition={{ delay: idx * 0.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleCategorySelect(cat)}
-              className="bg-white dark:bg-slate-900 rounded-[24px] p-4 flex flex-col items-center gap-4 shadow-md border border-slate-100/50 dark:border-white/5 hover:shadow-xl transition-all duration-300 aspect-[0.85/1] group"
+              className={`rounded-[24px] p-4 flex flex-col items-center gap-4 shadow-md border hover:shadow-xl transition-all duration-300 aspect-[0.85/1] group ${theme === 'dark' ? 'bg-[#111827] border-zinc-800/80' : 'bg-white border-slate-100/50'}`}
             >
               <div className="flex-1 flex items-center justify-center w-full">
                 <img 
@@ -307,7 +309,7 @@ const ParcelType = () => {
                   className="w-full h-auto object-contain max-h-[110px] sm:max-h-[120px] drop-shadow-md transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
-              <p className="text-[14px] font-black text-slate-800 text-center leading-tight">
+              <p className={`text-[14px] font-black text-center leading-tight ${theme === 'dark' ? 'text-white' : 'text-slate-800'}`}>
                 {cat.title}
               </p>
             </motion.button>
@@ -344,9 +346,6 @@ const ParcelType = () => {
           </div>
         </motion.div>
 
-        {/* Announcements Section */}
-        
-
         {/* Footer Illustration */}
         <div className="mt-4 flex justify-center">
             <motion.div 
@@ -355,7 +354,7 @@ const ParcelType = () => {
               className="relative w-full max-w-[320px] aspect-[16/9]"
             >
                 {/* Simulated Road */}
-                <div className="absolute bottom-0 left-0 right-0 h-4 bg-slate-200/50 rounded-full blur-sm" />
+                <div className={`absolute bottom-0 left-0 right-0 h-4 rounded-full blur-sm ${theme === 'dark' ? 'bg-zinc-800/50' : 'bg-slate-200/50'}`} />
                 <img 
                   src={trucksImg} 
                   alt="Delivery Truck" 
@@ -375,7 +374,7 @@ const ParcelType = () => {
       {/* Floating Back Button */}
       <button 
         onClick={() => navigate(-1)}
-        className="fixed top-2 left-4 z-50 w-8 h-8 rounded-full bg-white/70 backdrop-blur-md flex items-center justify-center text-slate-800 border border-slate-200/80 shadow-sm active:scale-95 transition-transform"
+        className={`fixed top-2 left-4 z-50 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center border active:scale-95 transition-transform ${theme === 'dark' ? 'bg-zinc-900/80 border-zinc-800 text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)]' : 'bg-white/70 border-slate-200/80 text-slate-800 shadow-sm'}`}
       >
         <ArrowLeft size={16} />
       </button>

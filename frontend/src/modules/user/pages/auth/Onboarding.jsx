@@ -28,14 +28,7 @@ const Onboarding = () => {
 
   return (
     <div className="login-page flex flex-col items-center justify-center relative min-h-screen max-w-lg mx-auto overflow-hidden">
-      {/* Theme Toggle */}
-      <button 
-        onClick={toggleTheme}
-        className="theme-toggle-floating"
-        aria-label="Toggle theme"
-      >
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
+
 
       {/* Decorative Blobs for Depth */}
       <div className="absolute top-[-10%] right-[-10%] w-72 h-72 rounded-full bg-[#FFB300]/10 blur-3xl pointer-events-none" />
