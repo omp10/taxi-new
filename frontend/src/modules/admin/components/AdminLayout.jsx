@@ -652,6 +652,7 @@ const AdminLayout = () => {
   const [rideRequestPage, setRideRequestPage] = useState(1);
   const [bookingPage, setBookingPage] = useState(1);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState(null);
   const [dismissedNotifications, setDismissedNotifications] = useState(() => readDismissedNotifications());
   const [expandedSidebarGroups, setExpandedSidebarGroups] = useState(() => {
     if (typeof window === 'undefined') return [];
@@ -1199,6 +1200,20 @@ const AdminLayout = () => {
   }, []);
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsNotificationsOpen(false);
+      }
+    };
+    if (isNotificationsOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isNotificationsOpen]);
+
+  useEffect(() => {
     setIsSearchOpen(false);
     setSearchTerm('');
     setIsNotificationsOpen(false);
@@ -1321,6 +1336,7 @@ const AdminLayout = () => {
 
     const fetchNotifications = async () => {
       setNotificationsLoading(true);
+      setNotificationsError(null);
 
       try {
         if (notificationTab === 'ride_requests') {
@@ -1356,6 +1372,7 @@ const AdminLayout = () => {
         console.error('Failed to load admin notifications:', error);
 
         if (!isMounted) return;
+        setNotificationsError(error?.message || 'Failed to load notifications');
 
         if (notificationTab === 'ride_requests') {
           setRideRequestFeed({
@@ -1608,44 +1625,42 @@ const AdminLayout = () => {
                 </button>
 
                 <div
-                  className={`absolute right-0 top-full z-50 mt-4 w-[380px] overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-2xl transition-all duration-300 ${isNotificationsOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
+                  className={`absolute right-0 top-full z-50 mt-2 w-[320px] max-h-[360px] flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-all duration-200 origin-top-right ${isNotificationsOpen ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
                     }`}
                 >
-                  <div className="border-b border-slate-50 px-6 py-6 bg-slate-50/50">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[14px] font-black text-slate-900 tracking-tight">Intelligence Feed</p>
-                        <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                          Real-time system alerts
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {currentNotificationCount > 0 ? (
-                          <button
-                            type="button"
-                            onClick={dismissCurrentNotifications}
-                            className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-600 transition-colors"
-                          >
-                            Flush
-                          </button>
-                        ) : null}
-                        <div className="h-6 w-1 border-l border-slate-200" />
-                        <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-slate-900 px-1.5 text-[10px] font-black text-white">
-                          {totalNotificationItems}
-                        </span>
-                      </div>
+                  {/* Header */}
+                  <div className="border-b border-slate-100 px-4 py-3 bg-white flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 font-poppins">Notifications</h3>
                     </div>
+                    <div className="flex items-center gap-2">
+                      {totalNotificationItems > 0 && (
+                        <button
+                          type="button"
+                          onClick={dismissCurrentNotifications}
+                          className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors uppercase"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-900 px-1.5 text-[9px] font-bold text-white">
+                        {totalNotificationItems}
+                      </span>
+                    </div>
+                  </div>
 
-                    <div className="mt-6 flex gap-1 rounded-2xl bg-white p-1 border border-slate-100">
+                  {/* Tabs */}
+                  <div className="px-4 py-2 bg-slate-50/50 border-b border-slate-100">
+                    <div className="flex gap-1 rounded-xl bg-slate-100 p-0.5">
                       <button
                         type="button"
                         onClick={() => {
                           setNotificationTab('ride_requests');
                           setRideRequestPage(1);
                         }}
-                        className={`flex-1 rounded-xl px-2 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${notificationTab === 'ride_requests'
-                          ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10'
-                          : 'text-slate-400 hover:text-slate-900'
+                        className={`flex-1 rounded-lg py-1.5 text-[10px] font-bold uppercase transition-all ${notificationTab === 'ride_requests'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-900'
                           }`}
                       >
                         Trips
@@ -1656,9 +1671,9 @@ const AdminLayout = () => {
                           setNotificationTab('bookings');
                           setBookingPage(1);
                         }}
-                        className={`flex-1 rounded-xl px-2 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${notificationTab === 'bookings'
-                          ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10'
-                          : 'text-slate-400 hover:text-slate-900'
+                        className={`flex-1 rounded-lg py-1.5 text-[10px] font-bold uppercase transition-all ${notificationTab === 'bookings'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-900'
                           }`}
                       >
                         Bookings
@@ -1668,9 +1683,9 @@ const AdminLayout = () => {
                         onClick={() => {
                           setNotificationTab('chats');
                         }}
-                        className={`flex-1 rounded-xl px-2 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${notificationTab === 'chats'
-                          ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10'
-                          : 'text-slate-400 hover:text-slate-900'
+                        className={`flex-1 rounded-lg py-1.5 text-[10px] font-bold uppercase transition-all ${notificationTab === 'chats'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-900'
                           }`}
                       >
                         Chats
@@ -1678,19 +1693,29 @@ const AdminLayout = () => {
                     </div>
                   </div>
 
-                  <div className="max-h-[420px] overflow-y-auto p-3">
+                  {/* Notification List with Scroll */}
+                  <div className="flex-1 overflow-y-auto p-2">
                     {notificationsLoading ? (
-                      <div className="flex items-center justify-center px-4 py-12 text-sm font-semibold text-slate-500">
+                      <div className="flex items-center justify-center py-12 text-xs font-semibold text-slate-500">
                         Loading notifications...
+                      </div>
+                    ) : notificationsError ? (
+                      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                        <p className="text-xs font-semibold text-rose-500">{notificationsError}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotificationTab(notificationTab);
+                          }}
+                          className="mt-2 text-[10px] font-bold text-indigo-600 hover:underline"
+                        >
+                          Retry
+                        </button>
                       </div>
                     ) : notificationTab === 'ride_requests' ? (
                       visibleRideRequestResults.length === 0 ? (
-                        <div className="px-6 py-12 text-center">
-                          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mx-auto mb-4">
-                            <Zap size={24} />
-                          </div>
-                          <p className="text-[13px] font-black text-slate-900 tracking-tight">Zero Traffic</p>
-                          <p className="mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">No active ride requests</p>
+                        <div className="py-12 text-center text-xs text-slate-400 font-semibold">
+                          No notifications available
                         </div>
                       ) : (
                         <div className="space-y-1">
@@ -1703,18 +1728,18 @@ const AdminLayout = () => {
                                 navigate('/admin/trips');
                                 setIsNotificationsOpen(false);
                               }}
-                              className="relative w-full rounded-2xl p-4 text-left transition-all hover:bg-slate-50 group"
+                              className="relative w-full rounded-xl p-3 text-left transition-all hover:bg-slate-50 border border-transparent hover:border-slate-100 group"
                             >
-                              <div className="flex items-start justify-between gap-4">
+                              <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                  <p className="truncate text-[13px] font-black text-slate-900 tracking-tight">
+                                  <p className="truncate text-xs font-bold text-slate-900">
                                     {item.requestId} · {item.userName}
                                   </p>
-                                  <p className="mt-1 truncate text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                                  <p className="mt-1 truncate text-[10px] text-slate-500">
                                     {formatAdminNotificationLocation(item.pickupLabel, 'Pickup...')} → {formatAdminNotificationLocation(item.dropLabel, 'Drop...')}
                                   </p>
                                 </div>
-                                <span className="shrink-0 text-[10px] font-black text-slate-300 group-hover:text-slate-900">
+                                <span className="shrink-0 text-[9px] text-slate-400">
                                   {formatRelativeAdminTime(item.date)}
                                 </span>
                               </div>
@@ -1723,12 +1748,11 @@ const AdminLayout = () => {
                         </div>
                       )
                     ) : notificationTab === 'bookings' ? pagedBookings.results.length === 0 ? (
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-8 text-center">
-                        <p className="text-sm font-bold text-slate-900">No bookings found</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">Recent bookings will show up here.</p>
+                      <div className="py-12 text-center text-xs text-slate-400 font-semibold">
+                        No notifications available
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {pagedBookings.results.map((item) => (
                           <button
                             key={item._id || item.id || item.booking_reference}
@@ -1738,55 +1762,34 @@ const AdminLayout = () => {
                               navigate('/admin/owners/bookings');
                               setIsNotificationsOpen(false);
                             }}
-                            className="relative w-full rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
+                            className="relative w-full rounded-xl border border-slate-100 bg-white p-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-slate-900">
+                                <p className="truncate text-xs font-bold text-slate-900">
                                   {item.booking_reference || 'Booking'} · {item.customer_name || 'Customer'}
                                 </p>
-                                <p className="mt-1 truncate text-xs font-semibold text-slate-500">
+                                <p className="mt-1 truncate text-[10px] text-slate-500">
                                   {item.pickup_location || 'Pickup'} to {item.dropoff_location || 'Drop'}
                                 </p>
                               </div>
-                              <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                              <span className="shrink-0 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-700">
                                 {item.booking_status || 'Pending'}
                               </span>
                             </div>
-                            <div className="mt-2 flex items-center justify-between gap-3 text-[11px] font-semibold text-slate-400">
+                            <div className="mt-2 flex items-center justify-between gap-3 text-[9px] text-slate-400">
                               <span>{item.owner_id?.name || item.owner_id?.company_name || 'Owner booking'}</span>
                               <span>{formatRelativeAdminTime(item.trip_date || item.createdAt)}</span>
                             </div>
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                dismissNotification('bookings', item);
-                              }}
-                              onKeyDown={(event) => {
-                                if (event.key === 'Enter' || event.key === ' ') {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  dismissNotification('bookings', item);
-                                }
-                              }}
-                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
-                              aria-label="Delete notification"
-                            >
-                              <Trash2 size={14} />
-                            </span>
                           </button>
                         ))}
                       </div>
                     ) : visibleChatNotifications.length === 0 ? (
-                      <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-8 text-center">
-                        <p className="text-sm font-bold text-slate-900">No new chats found</p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">New user and driver support messages will show up here.</p>
+                      <div className="py-12 text-center text-xs text-slate-400 font-semibold">
+                        No notifications available
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         {visibleChatNotifications.map((item) => (
                           <button
                             key={item.id}
@@ -1799,47 +1802,28 @@ const AdminLayout = () => {
                               );
                               setIsNotificationsOpen(false);
                             }}
-                            className="relative w-full rounded-2xl border border-slate-100 bg-white px-4 py-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
+                            className="relative w-full rounded-xl border border-slate-100 bg-white p-3 text-left transition-all hover:border-indigo-200 hover:bg-indigo-50/40"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-bold text-slate-900">{item.title}</p>
-                                <p className="mt-1 truncate text-xs font-semibold text-slate-500">{item.body}</p>
+                                <p className="truncate text-xs font-bold text-slate-900">{item.title}</p>
+                                <p className="mt-1 truncate text-[10px] text-slate-500">{item.body}</p>
                               </div>
-                              <span className="shrink-0 rounded-full bg-sky-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-sky-700">
+                              <span className="shrink-0 rounded-full bg-sky-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-sky-700">
                                 {item.senderRole}
                               </span>
                             </div>
-                            <div className="mt-2 flex items-center justify-end text-[11px] font-semibold text-slate-400">
+                            <div className="mt-2 flex items-center justify-between text-[9px] text-slate-400">
                               <span>{formatRelativeAdminTime(item.createdAt)}</span>
                             </div>
-                            <span
-                              role="button"
-                              tabIndex={0}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                event.stopPropagation();
-                                dismissNotification('chats', item);
-                              }}
-                              onKeyDown={(event) => {
-                                if (event.key === 'Enter' || event.key === ' ') {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  dismissNotification('chats', item);
-                                }
-                              }}
-                              className="absolute right-3 top-3 inline-flex rounded-lg p-1.5 text-slate-400 transition-all hover:bg-rose-50 hover:text-rose-600"
-                              aria-label="Delete notification"
-                            >
-                              <Trash2 size={14} />
-                            </span>
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
+                  {/* Footer / Pagination */}
+                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-2.5 bg-slate-50/50">
                     <button
                       type="button"
                       disabled={(activeNotificationMeta?.current_page || 1) <= 1}
@@ -1850,12 +1834,12 @@ const AdminLayout = () => {
                           setBookingPage((current) => Math.max(1, current - 1));
                         }
                       }}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-600 transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Previous
                     </button>
 
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                    <span className="text-[10px] font-bold text-slate-400">
                       Page {activeNotificationMeta?.current_page || 1} of {activeNotificationMeta?.last_page || 1}
                     </span>
 
@@ -1869,7 +1853,7 @@ const AdminLayout = () => {
                           setBookingPage((current) => current + 1);
                         }
                       }}
-                      className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-600 transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Next
                     </button>

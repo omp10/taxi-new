@@ -436,26 +436,36 @@ const Admins = () => {
 
   // Handle Edit Click
   const handleEditClick = (admin) => {
-    setForm({
-      id: admin.id || admin._id,
-      name: admin.name || '',
-      email: admin.email || '',
-      phone: admin.phone || '',
-      role: admin.role || 'Operations Subadmin',
-      admin_type: admin.admin_type || 'subadmin',
-      permissions: Array.isArray(admin.permissions) ? admin.permissions.filter((p) => p !== '*') : [],
-      service_location_ids: Array.isArray(admin.service_location_ids) ? admin.service_location_ids : [],
-      zone_ids: Array.isArray(admin.zone_ids) ? admin.zone_ids : [],
-      password: '',
-      passwordConfirmation: '',
-      active: admin.active !== false,
-      employeeId: admin.employeeId || '',
-      department: admin.department || 'Operations',
-      designation: admin.designation || 'Subadmin Officer',
-      notes: admin.notes || '',
-      mfaEnabled: admin.mfaEnabled || false
-    });
-    setIsEditOpen(true);
+    const id = admin.id || admin._id;
+    const isEditCurrentlyOpen = selectedAdmin && (selectedAdmin.id === id || selectedAdmin._id === id) && isEditOpen;
+
+    if (isEditCurrentlyOpen) {
+      setIsEditOpen(false);
+      setSelectedAdmin(null);
+    } else {
+      setIsDrawerOpen(false);
+      setSelectedAdmin(admin);
+      setIsEditOpen(true);
+      setForm({
+        id: admin.id || admin._id,
+        name: admin.name || '',
+        email: admin.email || '',
+        phone: admin.phone || '',
+        role: admin.role || 'Operations Subadmin',
+        admin_type: admin.admin_type || 'subadmin',
+        permissions: Array.isArray(admin.permissions) ? admin.permissions.filter((p) => p !== '*') : [],
+        service_location_ids: Array.isArray(admin.service_location_ids) ? admin.service_location_ids : [],
+        zone_ids: Array.isArray(admin.zone_ids) ? admin.zone_ids : [],
+        password: '',
+        passwordConfirmation: '',
+        active: admin.active !== false,
+        employeeId: admin.employeeId || '',
+        department: admin.department || 'Operations',
+        designation: admin.designation || 'Subadmin Officer',
+        notes: admin.notes || '',
+        mfaEnabled: admin.mfaEnabled || false
+      });
+    }
   };
 
   // Handle Edit Submit
@@ -496,6 +506,7 @@ const Admins = () => {
       await adminService.updateAdminAccount(form.id, payload);
       toast.success('Administrator profile updated successfully');
       setIsEditOpen(false);
+      setSelectedAdmin(null);
       loadData();
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Update failed');
@@ -631,6 +642,8 @@ const Admins = () => {
             </button>
             <button
               onClick={() => {
+                setIsDrawerOpen(false);
+                setSelectedAdmin(null);
                 setForm(initialFormState);
                 setIsCreateOpen(true);
               }}
@@ -1167,6 +1180,7 @@ const Admins = () => {
                   const isActive = admin.active !== false;
                   const id = admin.id || admin._id;
                   const isExpanded = selectedAdmin && (selectedAdmin.id === id || selectedAdmin._id === id) && isDrawerOpen;
+                  const isEditExpanded = selectedAdmin && (selectedAdmin.id === id || selectedAdmin._id === id) && isEditOpen;
 
                   const toggleExpand = (e) => {
                     e.stopPropagation();
@@ -1176,6 +1190,7 @@ const Admins = () => {
                     } else {
                       setSelectedAdmin(admin);
                       setIsDrawerOpen(true);
+                      setIsEditOpen(false);
                     }
                   };
 
@@ -1288,6 +1303,8 @@ const Admins = () => {
                             {!isSuper && (
                               <button
                                 onClick={() => {
+                                  setIsDrawerOpen(false);
+                                  setSelectedAdmin(null);
                                   setDeletingAdmin(admin);
                                   setDeleteConfirmText('');
                                   setIsDeleteOpen(true);
@@ -1397,7 +1414,6 @@ const Admins = () => {
                                 </div>
                                 <button
                                   onClick={() => {
-                                    setIsDrawerOpen(false);
                                     handleEditClick(selectedAdmin);
                                   }}
                                   className="admin-btn-primary h-9 px-4 gap-1.5 !bg-[#FFC400] !text-[#0B1220] text-xs font-bold shrink-0 self-end"
@@ -1405,6 +1421,196 @@ const Admins = () => {
                                   <span>Modify Privileges</span>
                                 </button>
                               </div>
+                            </motion.div>
+                          </td>
+                        </tr>
+                      )}
+                      {isEditExpanded && (
+                        <tr className="bg-[#FAFBFD]">
+                          <td colSpan={10} className="px-6 py-4">
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="bg-white border-l-4 border-l-[#FFC400] border border-[#E5E7EB] rounded-r-xl p-6 shadow-sm space-y-6 font-sans text-xs text-[#0B1220] overflow-hidden"
+                            >
+                              <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
+                                <h3 className="font-bold text-sm">Modify Administrative Privileges</h3>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setIsEditOpen(false);
+                                    setSelectedAdmin(null);
+                                  }}
+                                  className="text-slate-400 hover:text-slate-600 p-1"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+
+                              <form onSubmit={handleEditSubmit} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Full Name</label>
+                                    <input
+                                      required
+                                      value={form.name}
+                                      onChange={(e) => setField('name', e.target.value)}
+                                      placeholder="e.g. Marcus Aurelius"
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Email Identity</label>
+                                    <input
+                                      type="email"
+                                      required
+                                      value={form.email}
+                                      onChange={(e) => setField('email', e.target.value)}
+                                      placeholder="e.g. admin@rydon.com"
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Phone Number</label>
+                                    <input
+                                      value={form.phone}
+                                      onChange={(e) => setField('phone', e.target.value)}
+                                      placeholder="e.g. +1 555-0199"
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Admin Role</label>
+                                    <select
+                                      value={form.role}
+                                      onChange={(e) => setField('role', e.target.value)}
+                                      className="admin-input"
+                                    >
+                                      <option value="Operations Subadmin">Operations Subadmin</option>
+                                      <option value="Billing Subadmin">Billing Subadmin</option>
+                                      <option value="Support Staff">Support Staff</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Admin Type</label>
+                                    <select
+                                      value={form.admin_type}
+                                      onChange={(e) => {
+                                        setField('admin_type', e.target.value);
+                                        if (e.target.value === 'superadmin') {
+                                          setField('role', 'superadmin');
+                                        } else {
+                                          setField('role', 'Operations Subadmin');
+                                        }
+                                      }}
+                                      className="admin-input"
+                                    >
+                                      <option value="subadmin">Sub-Admin (Scoped Rights)</option>
+                                      <option value="superadmin">Super Admin (Unrestricted)</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Status</label>
+                                    <select
+                                      value={form.active ? 'active' : 'inactive'}
+                                      onChange={(e) => setField('active', e.target.value === 'active')}
+                                      className="admin-input"
+                                    >
+                                      <option value="active">Active</option>
+                                      <option value="inactive">Suspended</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                {form.admin_type !== 'superadmin' && (
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Cryptographic Module Access</label>
+                                    <div className="border border-[#E5E7EB] rounded-lg p-3 max-h-36 overflow-y-auto grid grid-cols-2 gap-2 bg-[#F8FAFC]">
+                                      {ADMIN_PERMISSION_GROUPS.flatMap(g => g.items).map((perm) => (
+                                        <label key={perm.key} className="flex items-center gap-2 text-xs text-[#0B1220] cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={form.permissions.includes(perm.key)}
+                                            onChange={() => togglePermission(perm.key)}
+                                            className="rounded border-[#E5E7EB] text-[#FFC400] focus:ring-[#FFC400] h-4 w-4"
+                                          />
+                                          <span>{perm.label}</span>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">New Password (Optional)</label>
+                                    <input
+                                      type="password"
+                                      value={form.password}
+                                      onChange={(e) => setField('password', e.target.value)}
+                                      placeholder="Leave blank to retain current"
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Confirm New Password</label>
+                                    <input
+                                      type="password"
+                                      value={form.passwordConfirmation}
+                                      onChange={(e) => setField('passwordConfirmation', e.target.value)}
+                                      placeholder="Confirm new password"
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-3">
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      id={`mfa-edit-${id}`}
+                                      checked={form.mfaEnabled}
+                                      onChange={(e) => setField('mfaEnabled', e.target.checked)}
+                                      className="rounded border-[#E5E7EB] text-[#FFC400] focus:ring-[#FFC400] h-4 w-4"
+                                    />
+                                    <label htmlFor={`mfa-edit-${id}`} className="text-xs font-semibold text-[#0B1220] cursor-pointer">Require Multi-Factor Authentication</label>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Administrative Notes</label>
+                                  <textarea
+                                    value={form.notes}
+                                    onChange={(e) => setField('notes', e.target.value)}
+                                    placeholder="Enter special access notes..."
+                                    className="admin-input min-h-[60px]"
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setIsEditOpen(false);
+                                      setSelectedAdmin(null);
+                                    }}
+                                    className="admin-btn-secondary h-10"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button type="submit" disabled={saving} className="admin-btn-primary h-10 min-w-[120px] !bg-[#FFC400] !text-[#0B1220]">
+                                    {saving ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
+                                  </button>
+                                </div>
+                              </form>
                             </motion.div>
                           </td>
                         </tr>
@@ -1622,189 +1828,7 @@ const Admins = () => {
         )}
       </AnimatePresence>
 
-      {/* EDIT MODAL */}
-      <AnimatePresence>
-        {isEditOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsEditOpen(false)}
-              className="admin-modal-overlay"
-            />
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="fixed inset-0 m-auto w-full max-w-lg h-fit max-h-[85vh] bg-white rounded-xl shadow-2xl z-50 flex flex-col overflow-hidden"
-            >
-              <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between">
-                <h3 className="text-xs font-bold text-[#0B1220] uppercase tracking-wider">Modify Administrative Privileges</h3>
-                <button onClick={() => setIsEditOpen(false)} className="text-slate-400 hover:text-slate-600">
-                  <X size={18} />
-                </button>
-              </div>
 
-              <form onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Full Name</label>
-                    <input
-                      required
-                      value={form.name}
-                      onChange={(e) => setField('name', e.target.value)}
-                      placeholder="e.g. Marcus Aurelius"
-                      className="admin-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Email Identity</label>
-                    <input
-                      type="email"
-                      required
-                      value={form.email}
-                      onChange={(e) => setField('email', e.target.value)}
-                      placeholder="e.g. admin@rydon.com"
-                      className="admin-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Phone Number</label>
-                    <input
-                      value={form.phone}
-                      onChange={(e) => setField('phone', e.target.value)}
-                      placeholder="e.g. +1 555-0199"
-                      className="admin-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Admin Role</label>
-                    <select
-                      value={form.role}
-                      onChange={(e) => setField('role', e.target.value)}
-                      className="admin-input"
-                    >
-                      <option value="Operations Subadmin">Operations Subadmin</option>
-                      <option value="Billing Subadmin">Billing Subadmin</option>
-                      <option value="Support Staff">Support Staff</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Admin Type</label>
-                    <select
-                      value={form.admin_type}
-                      onChange={(e) => {
-                        setField('admin_type', e.target.value);
-                        if (e.target.value === 'superadmin') {
-                          setField('role', 'superadmin');
-                        } else {
-                          setField('role', 'Operations Subadmin');
-                        }
-                      }}
-                      className="admin-input"
-                    >
-                      <option value="subadmin">Sub-Admin (Scoped Rights)</option>
-                      <option value="superadmin">Super Admin (Unrestricted)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Status</label>
-                    <select
-                      value={form.active ? 'active' : 'inactive'}
-                      onChange={(e) => setField('active', e.target.value === 'active')}
-                      className="admin-input"
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Suspended</option>
-                    </select>
-                  </div>
-                </div>
-
-                {form.admin_type !== 'superadmin' && (
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Cryptographic Module Access</label>
-                    <div className="border border-[#E5E7EB] rounded-lg p-3 max-h-36 overflow-y-auto grid grid-cols-2 gap-2 bg-[#F8FAFC]">
-                      {ADMIN_PERMISSION_GROUPS.flatMap(g => g.items).map((perm) => (
-                        <label key={perm.key} className="flex items-center gap-2 text-xs text-[#0B1220] cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={form.permissions.includes(perm.key)}
-                            onChange={() => togglePermission(perm.key)}
-                            className="rounded border-[#E5E7EB] text-[#FFC400] focus:ring-[#FFC400] h-4 w-4"
-                          />
-                          <span>{perm.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">New Password (Optional)</label>
-                    <input
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => setField('password', e.target.value)}
-                      placeholder="Leave blank to retain current"
-                      className="admin-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Confirm New Password</label>
-                    <input
-                      type="password"
-                      value={form.passwordConfirmation}
-                      onChange={(e) => setField('passwordConfirmation', e.target.value)}
-                      placeholder="Confirm new password"
-                      className="admin-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="mfa-edit"
-                      checked={form.mfaEnabled}
-                      onChange={(e) => setField('mfaEnabled', e.target.checked)}
-                      className="rounded border-[#E5E7EB] text-[#FFC400] focus:ring-[#FFC400] h-4 w-4"
-                    />
-                    <label htmlFor="mfa-edit" className="text-xs font-semibold text-[#0B1220] cursor-pointer">Require Multi-Factor Authentication</label>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Administrative Notes</label>
-                  <textarea
-                    value={form.notes}
-                    onChange={(e) => setField('notes', e.target.value)}
-                    placeholder="Enter special access notes..."
-                    className="admin-input min-h-[60px]"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
-                  <button type="button" onClick={() => setIsEditOpen(false)} className="admin-btn-secondary h-10">
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={saving} className="admin-btn-primary h-10 min-w-[120px] !bg-[#FFC400] !text-[#0B1220]">
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
       {/* DELETE CONFIRMATION MODAL */}
       <AnimatePresence>
