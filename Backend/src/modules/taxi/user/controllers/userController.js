@@ -4323,7 +4323,11 @@ export const updateMyActiveRentalLocation = async (req, res) => {
 };
 
 export const listMyBusBookings = async (req, res) => {
-  await ensureBusServiceEnabled();
+  const transportSettings = await getTransportRideSettings();
+  if (String(transportSettings.enable_bus_service || '0') !== '1') {
+    return res.status(200).json({ success: true, results: [], total: 0, message: 'Bus service disabled' });
+  }
+
   await cleanupExpiredBusSeatHolds();
 
   const page = toPositiveInteger(req.query?.page, 1);

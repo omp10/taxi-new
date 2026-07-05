@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { GoogleMap, MarkerF, PolylineF } from '@react-google-maps/api';
+import toast from 'react-hot-toast';
+import { socketService } from '../../../../shared/api/socket';
+import { adminService } from '../../services/adminService';
+import { useBaseGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../utils/googleMaps';
 import {
   AlertTriangle,
   Clock3,
@@ -42,17 +47,6 @@ import {
   Route,
   Timer
 } from 'lucide-react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import AdminPageHeader from '../../components/ui/AdminPageHeader';
-import { socketService } from '../../../../shared/api/socket';
-import { adminService } from '../../services/adminService';
-import {
-  HAS_VALID_GOOGLE_MAPS_KEY,
-  INDIA_CENTER,
-  useBaseGoogleMapsLoader,
-} from '../../utils/googleMaps';
-
 const mapContainerStyle = { width: '100%', height: '100%' };
 
 const statusTone = {
@@ -250,68 +244,115 @@ const RentalTrackingDetail = () => {
   }, [hasLiveLocation, item, mapCenter]);
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] p-3 lg:p-5">
-      <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <AdminPageHeader
-          module="Operations"
-          page="Fleet Dashboard"
-          title={`Trip: ${item?.bookingReference || item?.bookingId || item?.id || 'Details'}`}
-          backTo="/admin/pricing/rental-tracking"
-        />
+    <div className="min-h-screen bg-[#f6f7fb] p-3 lg:p-4">
+      {/* ── Compact header row: breadcrumb + title + actions all inline ── */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        {/* Left: breadcrumb + title */}
+        <div>
+          <p className="mb-0.5 flex items-center gap-1 text-[11px] text-slate-400">
+            <span>Operations</span>
+            <span>›</span>
+            <span className="text-slate-600">Fleet Dashboard</span>
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/pricing/rental-tracking')}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50"
+              title="Back to Fleet Dashboard"
+            >
+              <ArrowLeft size={14} />
+            </button>
+            <h1 className="text-[22px] font-bold leading-tight text-black">
+              Trip:{' '}
+              <span className="font-black">
+                {item?.bookingReference || item?.bookingId || item?.id || 'Details'}
+              </span>
+            </h1>
+          </div>
+        </div>
         
-        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-2 shadow-sm">
+        {/* Right: action buttons – horizontally scrollable on mobile */}
+        <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto rounded-lg bg-white p-1.5 shadow-sm">
 
-          <button onClick={() => load()} className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100">
-            <RefreshCw size={16} /> Refresh
+          <button onClick={() => load()} className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100">
+            <RefreshCw size={14} /> Refresh
           </button>
-          <button onClick={() => window.location.href = `tel:${item?.driver?.phone}`} disabled={!item?.driver?.phone} className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
-            <Phone size={16} /> Driver
+
+          {item?.driver?.phone ? (
+            <a href={`tel:${item.driver.phone}`} title={`Call Driver: ${item.driver.name || ''}`}
+              className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100">
+              <Phone size={14} /> Driver
+            </a>
+          ) : (
+            <span title="Driver phone not available" className="flex shrink-0 cursor-not-allowed items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-300">
+              <Phone size={14} /> Driver
+            </span>
+          )}
+
+          {item?.user?.phone ? (
+            <a href={`tel:${item.user.phone}`} title={`Call Customer: ${item.user.name || ''}`}
+              className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100">
+              <Phone size={14} /> Customer
+            </a>
+          ) : (
+            <span title="Customer phone not available" className="flex shrink-0 cursor-not-allowed items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-300">
+              <Phone size={14} /> Customer
+            </span>
+          )}
+
+          <button onClick={() => navigate('/admin/pricing/rental-requests')} className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100">
+            <Eye size={14} /> Booking
           </button>
-          <button onClick={() => window.location.href = `tel:${item?.user?.phone}`} disabled={!item?.user?.phone} className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
-            <Phone size={16} /> Customer
+
+          <button
+            onClick={() => navigate('/admin/pricing/rental-requests')}
+            disabled={!!item?.driver || isTripEnded}
+            title={item?.driver ? 'Driver already assigned' : isTripEnded ? 'Trip has ended' : 'Assign from Booking Requests'}
+            className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-40"
+          >
+            <UserPlus size={14} /> Assign
           </button>
-          <button onClick={() => navigate('/admin/pricing/rental-requests')} className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100">
-            <Eye size={16} /> Booking
+
+          <button onClick={handleEndTrip} disabled={!isActive || isTripEnded}
+            className="flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-40">
+            <PowerOff size={14} /> End Trip
           </button>
-          <button onClick={() => {
-            toast('Please use the Booking Requests page to assign drivers', { icon: 'ℹ️' });
-            navigate('/admin/pricing/rental-requests');
-          }} disabled={!!item?.driver || isTripEnded} className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:opacity-50">
-            <UserPlus size={16} /> Assign
-          </button>
-          <button onClick={handleEndTrip} disabled={!isActive || isTripEnded} className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-bold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50">
-            <PowerOff size={16} /> End Trip
-          </button>
-          <div className="mx-1 h-6 w-px bg-slate-200" />
-          <button onClick={() => toast.error('Export feature is pending backend implementation')} className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-bold text-slate-900 transition hover:bg-slate-100">
-            <Download size={16} /> Export
+
+          <div className="mx-0.5 h-5 w-px shrink-0 bg-slate-200" />
+
+          <button disabled title="Export is not yet available"
+            className="flex shrink-0 cursor-not-allowed items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-300">
+            <Download size={14} /> Export
           </button>
         </div>
       </div>
 
       {loading && !item ? (
-        <div className="grid gap-4 xl:grid-cols-3">
-          <div className="flex flex-col gap-4 xl:col-span-2">
-            <div className="h-[360px] animate-pulse rounded-xl bg-slate-200"></div>
+        <div className="grid gap-3 xl:grid-cols-3">
+          <div className="flex flex-col gap-3 xl:col-span-2">
+            <div className="h-[380px] animate-pulse rounded-xl bg-slate-200"></div>
+            <div className="h-24 animate-pulse rounded-xl bg-slate-200"></div>
             <div className="h-32 animate-pulse rounded-xl bg-slate-200"></div>
-            <div className="h-40 animate-pulse rounded-xl bg-slate-200"></div>
           </div>
-          <div className="flex flex-col gap-4">
-            <div className="h-[280px] animate-pulse rounded-xl bg-slate-200"></div>
-            <div className="h-48 animate-pulse rounded-xl bg-slate-200"></div>
-            <div className="h-32 animate-pulse rounded-xl bg-slate-200"></div>
+          <div className="flex flex-col gap-3">
+            <div className="h-52 animate-pulse rounded-xl bg-slate-200"></div>
+            <div className="h-40 animate-pulse rounded-xl bg-slate-200"></div>
+            <div className="h-28 animate-pulse rounded-xl bg-slate-200"></div>
           </div>
         </div>
       ) : !item ? (
-        <div className="rounded-xl bg-white px-6 py-8 text-center shadow-sm">
-          <h2 className="text-xl font-black text-slate-900">Tracking item not found</h2>
+        <div className="rounded-xl bg-white px-6 py-6 text-center shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900">Tracking item not found</h2>
         </div>
       ) : (
         <div className="grid gap-3 xl:grid-cols-3">
-          
-          <div className="flex flex-col gap-3 xl:col-span-2">
+
+          {/* ── Left column: Map + lower cards ── */}
+          <div className="flex flex-col gap-2.5 xl:col-span-2">
             
-            <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-50 h-auto' : 'h-[360px]'}`}>
+            {/* Map – 380–420 px tall on desktop */}
+            <div className={`relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-all duration-300 ${isFullscreen ? 'fixed inset-4 z-50 h-auto' : 'h-[380px] lg:h-[400px]'}`}>
               <div className="absolute left-4 top-3 z-10 flex flex-col gap-2">
                 <div className="flex items-center gap-2 rounded-full border border-slate-900/10 bg-white/95 px-4 py-1.5 shadow-lg backdrop-blur-md">
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[9px] font-black tracking-widest ${statusInfo.color}`}>
@@ -390,266 +431,282 @@ const RentalTrackingDetail = () => {
               )}
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h3 className="mb-3 text-sm font-black uppercase tracking-widest text-slate-400">Trip Summary</h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-lg bg-slate-50 p-3">
+            {/* Trip Summary */}
+            <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+              <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-black">Trip Summary</h3>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Booking ID</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{item.bookingReference || 'N/A'}</p>
+                  <p className="mt-0.5 text-sm font-bold text-slate-900">{item.bookingReference || 'N/A'}</p>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3">
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Trip Status</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{isActive ? 'On Trip' : 'Booked'}</p>
+                  <p className="mt-0.5 text-sm font-bold text-slate-900">{isActive ? 'On Trip' : 'Booked'}</p>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3">
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Start Time</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{formatTimeOnly(item.assignedAt)}</p>
+                  <p className="mt-0.5 text-sm font-bold text-slate-900">{formatTimeOnly(item.assignedAt)}</p>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3">
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Package</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{item?.packageName || item?.rentalPackage?.name || (plannedDistanceMeters > 0 ? `Rental ${plannedDistanceMeters/1000}km` : 'N/A')}</p>
+                  <p className="mt-0.5 truncate text-sm font-bold text-slate-900">{item?.packageName || item?.rentalPackage?.name || (plannedDistanceMeters > 0 ? `Rental ${plannedDistanceMeters/1000}km` : 'N/A')}</p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h3 className="mb-3 text-sm font-black uppercase tracking-widest text-slate-400">Route Summary</h3>
-              
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between text-xs font-bold text-slate-500">
-                    <span>Distance Covered: {formatDistance(distanceCoveredMeters)}</span>
-                    <span className="text-emerald-600">{progressPercent.toFixed(1)}%</span>
-                  </div>
-                  <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full bg-emerald-500 transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                    <span>0 km</span>
-                    <span>{formatDistance(plannedDistanceMeters)} planned</span>
-                  </div>
+            {/* Route Summary */}
+            <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+              <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-black">Route Summary</h3>
+
+              <div className="mb-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                  <span>Distance Covered: {formatDistance(distanceCoveredMeters)}</span>
+                  <span className="text-emerald-600">{progressPercent.toFixed(1)}%</span>
+                </div>
+                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-emerald-500 transition-all duration-1000" style={{ width: `${progressPercent}%` }} />
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                  <span>0 km</span>
+                  <span>{formatDistance(plannedDistanceMeters)} planned</span>
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                      <Navigation size={14} />
-                    </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                    <Navigation size={12} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Pickup / Hub</p>
-                    <p className="mt-1 text-sm font-bold text-slate-900">{item?.serviceLocation?.name || item?.hubName || 'N/A'}</p>
-                    <p className="text-xs font-semibold text-slate-500">{formatDateTime(item.assignedAt)}</p>
+                    <p className="mt-0.5 truncate text-sm font-bold text-slate-900">{item?.serviceLocation?.name || item?.hubName || 'N/A'}</p>
+                    <p className="truncate text-[11px] font-semibold text-slate-500">{formatDateTime(item.assignedAt)}</p>
                   </div>
                 </div>
-                <div className="flex gap-3">
-                  <div className="flex flex-col items-center">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                      <Flag size={14} />
-                    </div>
+                <div className="flex items-start gap-2">
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <Flag size={12} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Current / Destination</p>
-                    <p className="mt-1 text-sm font-bold text-slate-900">{hasLiveLocation ? 'On Route' : 'Unknown'}</p>
-                    <p className="text-xs font-semibold text-slate-500">Remaining: {formatDistance(remainingDistanceMeters)} • ETA: {etaMinutes}m</p>
+                    <p className="mt-0.5 text-sm font-bold text-slate-900">{hasLiveLocation ? 'On Route' : 'Unknown'}</p>
+                    <p className="text-[11px] font-semibold text-slate-500">Remaining: {formatDistance(remainingDistanceMeters)} · ETA: {etaMinutes}m</p>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h3 className="mb-3 text-sm font-black uppercase tracking-widest text-slate-400">Event History</h3>
-              <div className="space-y-6 pl-2">
-                 <div className="relative border-l-2 border-slate-100 pl-6">
-                   <div className="absolute -left-[11px] top-0 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 ring-4 ring-white" />
-                   <p className="text-sm font-bold text-slate-900">Live Data Sync</p>
-                   <p className="text-[11px] font-semibold text-slate-500">{formatDateTime(tracking.lastLocationAt)}</p>
-                 </div>
-                 {isActive && (
-                   <div className="relative border-l-2 border-slate-100 pl-6">
-                     <div className="absolute -left-[11px] top-0 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 ring-4 ring-white" />
-                     <p className="text-sm font-bold text-slate-900">Trip Started</p>
-                     <p className="text-[11px] font-semibold text-slate-500">{formatDateTime(item.assignedAt)}</p>
-                   </div>
-                 )}
-                 <div className="relative border-l-2 border-slate-100 pl-6">
-                   <div className="absolute -left-[11px] top-0 flex h-5 w-5 items-center justify-center rounded-full bg-slate-300 ring-4 ring-white" />
-                   <p className="text-sm font-bold text-slate-900">Driver & Vehicle Assigned</p>
-                   <p className="text-[11px] font-semibold text-slate-500">{formatDateTime(item.assignedAt)}</p>
-                 </div>
-                 <div className="relative pl-6">
-                   <div className="absolute -left-[11px] top-0 flex h-5 w-5 items-center justify-center rounded-full bg-slate-300 ring-4 ring-white" />
-                   <p className="text-sm font-bold text-slate-900">Booking Created</p>
-                   <p className="text-[11px] font-semibold text-slate-500">{formatDateTime(item.createdAt)}</p>
-                 </div>
+            {/* Event History */}
+            <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+              <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-black">Event History</h3>
+              <div className="space-y-3 pl-1.5">
+                <div className="relative border-l-2 border-slate-100 pl-5">
+                  <div className="absolute -left-[9px] top-0.5 h-4 w-4 rounded-full bg-emerald-500 ring-2 ring-white" />
+                  <p className="text-xs font-bold text-slate-900">Live Data Sync</p>
+                  <p className="text-[10px] font-semibold text-slate-500">{formatDateTime(tracking.lastLocationAt)}</p>
+                </div>
+                {isActive && (
+                  <div className="relative border-l-2 border-slate-100 pl-5">
+                    <div className="absolute -left-[9px] top-0.5 h-4 w-4 rounded-full bg-blue-500 ring-2 ring-white" />
+                    <p className="text-xs font-bold text-slate-900">Trip Started</p>
+                    <p className="text-[10px] font-semibold text-slate-500">{formatDateTime(item.assignedAt)}</p>
+                  </div>
+                )}
+                <div className="relative border-l-2 border-slate-100 pl-5">
+                  <div className="absolute -left-[9px] top-0.5 h-4 w-4 rounded-full bg-slate-300 ring-2 ring-white" />
+                  <p className="text-xs font-bold text-slate-900">Driver & Vehicle Assigned</p>
+                  <p className="text-[10px] font-semibold text-slate-500">{formatDateTime(item.assignedAt)}</p>
+                </div>
+                <div className="relative pl-5">
+                  <div className="absolute -left-[9px] top-0.5 h-4 w-4 rounded-full bg-slate-300 ring-2 ring-white" />
+                  <p className="text-xs font-bold text-slate-900">Booking Created</p>
+                  <p className="text-[10px] font-semibold text-slate-500">{formatDateTime(item.createdAt)}</p>
+                </div>
               </div>
             </div>
 
           </div>
 
-          <div className="flex flex-col gap-3">
+          {/* ── Right column: Telemetry + Status + Crew ── */}
+          <div className="flex flex-col gap-2.5">
             
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h3 className="mb-3 text-sm font-black uppercase tracking-widest text-slate-400">Live Telemetry</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-slate-50 p-3 text-center">
+            {/* Live Telemetry */}
+            <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+              <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-black">Live Telemetry</h3>
+              <div className="grid grid-cols-2 gap-2">
+
+                {/* Speed pair */}
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2 text-center">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Current Speed</p>
-                  <p className="mt-1 text-xl font-black text-slate-900">{speed.toFixed(0)} <span className="text-xs text-slate-500">km/h</span></p>
+                  <p className="mt-0.5 text-lg font-black text-slate-900">{speed.toFixed(0)} <span className="text-[10px] text-slate-500">km/h</span></p>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3 text-center">
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2 text-center">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Avg Speed</p>
-                  <p className="mt-1 text-xl font-black text-slate-900">{avgSpeed} <span className="text-xs text-slate-500">km/h</span></p>
+                  <p className="mt-0.5 text-lg font-black text-slate-900">{avgSpeed} <span className="text-[10px] text-slate-500">km/h</span></p>
                 </div>
-                
-                <div className="col-span-2 rounded-lg bg-slate-50 p-3">
+
+                {/* Ignition full-width */}
+                <div className="col-span-2 rounded-lg bg-slate-50 px-2.5 py-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Ignition Status</p>
-                      <p className="mt-1 text-sm font-bold text-slate-900">{isActive ? 'ON' : 'OFF'}</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Ignition</p>
+                      <p className="mt-0.5 text-sm font-bold text-slate-900">{isActive ? 'ON – Running' : 'OFF – Stopped'}</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Engine</p>
-                        <p className="mt-1 text-sm font-bold text-slate-900">{isActive ? 'Running' : 'Stopped'}</p>
-                      </div>
-                      <Key size={24} className={isActive ? 'text-emerald-500' : 'text-slate-400'} />
-                    </div>
+                    <Key size={20} className={isActive ? 'text-emerald-500' : 'text-slate-300'} />
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-slate-50 p-3">
+                {/* Heading */}
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Heading</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <p className="text-base font-black text-slate-900">{Number(tracking.heading || 0).toFixed(0)}°</p>
-                    <ArrowUp size={16} className="text-slate-400" style={{ transform: `rotate(${tracking.heading || 0}deg)` }} />
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <p className="text-sm font-black text-slate-900">{Number(tracking.heading || 0).toFixed(0)}°</p>
+                    <ArrowUp size={13} className="text-slate-400" style={{ transform: `rotate(${tracking.heading || 0}deg)` }} />
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3">
+
+                {/* Odometer */}
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Odometer</p>
-                  <p className="mt-1 text-base font-black text-slate-900">{odometer || '--'} <span className="text-xs text-slate-500">km</span></p>
+                  <p className="mt-0.5 text-sm font-black text-slate-900">{odometer || '--'} <span className="text-[10px] text-slate-500">km</span></p>
                 </div>
-                
-                <div className="rounded-lg bg-slate-50 p-3">
+
+                {/* Battery */}
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Battery (EV)</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <BatteryMedium size={18} className={batteryLevel > 20 ? 'text-emerald-500' : 'text-rose-500'} />
-                    <p className="text-base font-black text-slate-900">{batteryLevel || '--'}%</p>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <BatteryMedium size={15} className={batteryLevel > 20 ? 'text-emerald-500' : 'text-rose-500'} />
+                    <p className="text-sm font-black text-slate-900">{batteryLevel || '--'}%</p>
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3">
+
+                {/* Fuel */}
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Fuel Level</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Fuel size={18} className={fuelLevel > 20 ? 'text-blue-500' : 'text-rose-500'} />
-                    <p className="text-base font-black text-slate-900">{fuelLevel || '--'}%</p>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <Fuel size={15} className={fuelLevel > 20 ? 'text-blue-500' : 'text-rose-500'} />
+                    <p className="text-sm font-black text-slate-900">{fuelLevel || '--'}%</p>
                   </div>
                 </div>
-                
-                <div className="rounded-lg bg-slate-50 p-3">
+
+                {/* GPS Accuracy */}
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">GPS Accuracy</p>
-                  <p className={`mt-1 text-sm font-black ${accuracyData.color.split(' ')[0]}`}>{Number(tracking.accuracyMeters || 0).toFixed(0)}m</p>
+                  <p className={`mt-0.5 text-sm font-black ${accuracyData.color.split(' ')[0]}`}>{Number(tracking.accuracyMeters || 0).toFixed(0)}m</p>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3">
+
+                {/* Signal */}
+                <div className="rounded-lg bg-slate-50 px-2.5 py-2">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Signal</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <Signal size={16} className={signalInfo.color} />
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <Signal size={14} className={signalInfo.color} />
                     <p className="text-sm font-black text-slate-900">{signalInfo.label}</p>
                   </div>
                 </div>
+
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h3 className="mb-3 text-sm font-black uppercase tracking-widest text-slate-400">Status & Alerts</h3>
-              
-              <div className="mb-3 flex items-center justify-between rounded-lg bg-slate-50 p-3">
-                <div className="flex items-center gap-3">
-                  <ShieldAlert size={18} className="text-slate-400" />
+            {/* Status & Alerts */}
+            <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+              <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-black">Status & Alerts</h3>
+
+              {/* Geofence zone row */}
+              <div className="mb-2 flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert size={15} className="shrink-0 text-slate-400" />
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Geofence Zone</p>
-                    <p className="text-sm font-bold text-slate-900">{tracking.matchedZoneName || tracking.hubName || 'Rental Zone'}</p>
+                    <p className="text-xs font-bold text-slate-900">{tracking.matchedZoneName || tracking.hubName || 'Rental Zone'}</p>
                   </div>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border ${tracking.zoneStatus === 'outside' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+                <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest ${tracking.zoneStatus === 'outside' ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
                   {tracking.zoneStatus || 'Unknown'}
                 </span>
               </div>
 
-              <div className="mb-3 grid grid-cols-2 gap-2">
-                 <div className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-bold ${hasLiveLocation ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}><ShieldCheck size={14}/> GPS Active</div>
-                 <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700"><ShieldCheck size={14}/> No SOS</div>
-                 <div className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-bold ${speed > 100 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}><ShieldCheck size={14}/> Normal Speed</div>
-                 <div className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-bold ${batteryLevel < 20 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}><ShieldCheck size={14}/> Power OK</div>
+              {/* Status indicators 2-col grid */}
+              <div className="mb-2 grid grid-cols-2 gap-1.5">
+                <div className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-bold ${hasLiveLocation ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}><ShieldCheck size={12}/> GPS Active</div>
+                <div className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2 py-1.5 text-[10px] font-bold text-emerald-700"><ShieldCheck size={12}/> No SOS</div>
+                <div className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-bold ${speed > 100 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}><ShieldCheck size={12}/> Normal Speed</div>
+                <div className={`flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-bold ${batteryLevel < 20 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}><ShieldCheck size={12}/> Power OK</div>
               </div>
 
+              {/* Active alerts or all-clear */}
               {Array.isArray(tracking.alerts) && tracking.alerts.length > 0 ? (
-                <div className="space-y-3 mt-4 pt-4 border-t border-slate-100">
+                <div className="mt-2 space-y-2 border-t border-slate-100 pt-2">
                   {tracking.alerts.map((alert) => (
-                    <div key={`${item.id}-${alert.code}`} className="flex items-start gap-3 rounded-lg border border-rose-100 bg-rose-50 p-3">
-                      <Info size={16} className="shrink-0 text-rose-600" />
+                    <div key={`${item.id}-${alert.code}`} className="flex items-start gap-2 rounded-lg border border-rose-100 bg-rose-50 p-2">
+                      <Info size={14} className="mt-0.5 shrink-0 text-rose-600" />
                       <div>
                         <p className="text-[9px] font-black uppercase tracking-widest text-rose-700">{String(alert.code || 'ALERT').replace(/_/g, ' ')}</p>
-                        <p className="text-xs font-bold text-slate-900">{alert.message}</p>
+                        <p className="text-[11px] font-bold text-slate-900">{alert.message}</p>
                         <p className="text-[9px] font-semibold text-rose-500">{formatTimeOnly(alert.updatedAt || alert.createdAt)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
-                  <CheckCircle2 size={16} className="text-emerald-600" />
+                <div className="mt-2 flex items-center gap-2 border-t border-slate-100 pt-2">
+                  <CheckCircle2 size={14} className="shrink-0 text-emerald-600" />
                   <div>
-                    <p className="text-sm font-bold text-emerald-900">All Systems Normal</p>
-                    <p className="text-[11px] font-semibold text-emerald-600">No active alerts triggered.</p>
+                    <p className="text-xs font-bold text-emerald-900">All Systems Normal</p>
+                    <p className="text-[10px] font-semibold text-emerald-600">No active alerts triggered.</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h3 className="mb-3 text-sm font-black uppercase tracking-widest text-slate-400">Crew & Asset</h3>
-              
-              <div className="mb-3 flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                  <User2 size={20} />
+            {/* Crew & Asset */}
+            <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+              <h3 className="mb-2 text-[10px] font-black uppercase tracking-widest text-black">Crew & Asset</h3>
+
+              {/* Driver */}
+              <div className="mb-2 flex items-center gap-2.5 rounded-lg bg-slate-50 px-2.5 py-2">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                  <User2 size={16} />
                 </div>
-                <div className="flex-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Driver Profile</p>
-                  <p className="text-sm font-bold text-slate-900">{item?.driver?.name || 'Unassigned'}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="flex items-center text-xs font-bold text-amber-500"><Star size={10} className="mr-0.5 fill-current" /> {driverRating}</span>
-                    <span className="text-[9px] text-slate-400">•</span>
-                    <span className="text-xs font-semibold text-slate-500">{item.driver?.phone || 'No phone'}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Driver</p>
+                  <p className="truncate text-xs font-bold text-slate-900">{item?.driver?.name || 'Unassigned'}</p>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <span className="flex items-center text-[10px] font-bold text-amber-500"><Star size={9} className="mr-0.5 fill-current" /> {driverRating}</span>
+                    <span className="text-[9px] text-slate-400">·</span>
+                    <span className="truncate text-[10px] font-semibold text-slate-500">{item.driver?.phone || 'No phone'}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="mb-3 flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                  <User2 size={20} />
+              {/* Customer */}
+              <div className="mb-2 flex items-center gap-2.5 rounded-lg bg-slate-50 px-2.5 py-2">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                  <User2 size={16} />
                 </div>
-                <div className="flex-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Customer Profile</p>
-                  <p className="text-sm font-bold text-slate-900">{item?.user?.name || 'Customer Name'}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {item?.user?.membershipTier && <span className="rounded-md bg-blue-100 px-1.5 py-0.5 text-[9px] font-black uppercase text-blue-700">{item.user.membershipTier}</span>}
-                    <span className="text-xs font-semibold text-slate-500">{item.user?.phone || 'No phone'}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Customer</p>
+                  <p className="truncate text-xs font-bold text-slate-900">{item?.user?.name || '—'}</p>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    {item?.user?.membershipTier && (
+                      <span className="rounded bg-blue-100 px-1 py-0.5 text-[9px] font-black uppercase text-blue-700">{item.user.membershipTier}</span>
+                    )}
+                    <span className="truncate text-[10px] font-semibold text-slate-500">{item.user?.phone || 'No phone'}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600">
-                  <Car size={20} />
+              {/* Vehicle */}
+              <div className="flex items-center gap-2.5 rounded-lg bg-slate-50 px-2.5 py-2">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-600">
+                  <Car size={16} />
                 </div>
-                <div className="flex-1">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Vehicle Info</p>
-                  <p className="text-sm font-bold text-slate-900">{item?.vehicle?.name || 'N/A'}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs font-bold text-slate-600">{item?.vehicle?.registrationNumber || 'N/A'}</span>
-                    <span className="text-[9px] text-slate-400">•</span>
-                    <span className="text-xs font-semibold text-slate-500">{item.vehicle?.capacity || 4} Seats</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Vehicle</p>
+                  <p className="truncate text-xs font-bold text-slate-900">{item?.vehicle?.name || 'N/A'}</p>
+                  <div className="mt-0.5 flex items-center gap-1.5">
+                    <span className="truncate text-[10px] font-bold text-slate-600">{item?.vehicle?.registrationNumber || 'N/A'}</span>
+                    <span className="text-[9px] text-slate-400">·</span>
+                    <span className="text-[10px] font-semibold text-slate-500">{item.vehicle?.capacity || 4} Seats</span>
                   </div>
                 </div>
               </div>

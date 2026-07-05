@@ -303,7 +303,7 @@ const SidebarItem = ({ icon, label, path, isCollapsed, sidebarTextColor, unreadC
     to={path}
     end
     className={({ isActive }) =>
-      `group relative flex items-center gap-3.5 px-4 py-2 rounded-xl transition-all duration-200 ${isActive ? 'text-[#05070D] bg-[#FFC400]' : 'hover:bg-white/5'
+      `group relative flex items-center gap-3.5 px-4 py-2 rounded-xl transition-all duration-200 ${isActive ? 'text-[#05070D] bg-[#FFC400]' : 'hover:bg-amber-100/50 hover:text-slate-900'
       }`
     }
     style={({ isActive }) => ({
@@ -429,7 +429,7 @@ const SidebarGroup = ({
                     to={item.path}
                     end
                     className={({ isActive: childActive }) =>
-                      `group flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12.5px] transition-all duration-200 ${childActive ? 'text-[#05070D] bg-[#FFC400]' : 'hover:text-white hover:bg-white/5'
+                      `group flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12.5px] transition-all duration-200 ${childActive ? 'text-[#05070D] bg-[#FFC400]' : 'hover:text-slate-900 hover:bg-amber-100/50'
                       }`
                     }
                     style={({ isActive: childActive }) => ({
@@ -527,7 +527,7 @@ const NestedGroup = ({
                   to={item.path}
                   end
                   className={({ isActive: childActive }) =>
-                    `group flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12px] transition-all duration-200 ${childActive ? 'text-[#05070D]' : 'hover:text-slate-300 hover:bg-white/5'
+                    `group flex items-center gap-3 px-3 py-1.5 rounded-lg text-[12px] transition-all duration-200 ${childActive ? 'text-[#05070D]' : 'hover:text-slate-900 hover:bg-amber-100/50'
                     }`
                   }
                   style={({ isActive: childActive }) => ({
@@ -632,7 +632,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const { settings } = useSettings();
   const adminThemeColor = normalizeHexColor(settings.customization?.admin_theme_color, '#405189');
-  const sidebarTextColor = normalizeHexColor(settings.customization?.sidebar_text_color, '#CBD5E1');
+  const sidebarTextColor = normalizeHexColor(settings.customization?.sidebar_text_color, '#475569');
   const [isSidebarOpen] = useState(true);
   const [isCollapsed, setCollapsed] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -1492,19 +1492,18 @@ const AdminLayout = () => {
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F9FA] font-sans text-gray-900">
       <aside
-        className={`relative z-50 flex h-screen flex-col overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-72'
+        className={`relative z-50 flex h-screen flex-col overflow-hidden transition-all bg-[#fffbeb] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-72'
           } ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
-        style={{ backgroundColor: adminThemeColor }}
       >
         <div className="flex h-full flex-col">
-          <div className="group/sidebar-head relative mb-2 flex h-14 items-center border-b border-white/5 px-5">
+          <div className="group/sidebar-head relative mb-2 flex h-14 items-center border-b border-amber-200/50 px-5">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/10 p-1.5 transition-all duration-300 group-hover/sidebar-head:scale-105 shadow-sm backdrop-blur-md">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-100 p-1.5 transition-all duration-300 group-hover/sidebar-head:scale-105 shadow-sm">
                   {settings.general?.logo || settings.customization?.logo ? (
                     <img src={settings.general?.logo || settings.customization?.logo} alt={appName} className="h-full w-full object-contain" />
                   ) : (
-                    <Zap size={20} className="text-white fill-white" />
+                    <Zap size={20} className="text-amber-600 fill-amber-600" />
                   )}
                 </div>
                 <div className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-indigo-900" />
@@ -1515,11 +1514,11 @@ const AdminLayout = () => {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex flex-col"
                 >
-                  <h3 className="text-sm font-bold leading-tight text-white tracking-tight">
+                  <h3 className="text-sm font-bold leading-tight text-slate-900 tracking-tight">
                     {mode === OWNER_MODE ? 'Owner Panel' : appName || 'APPZETO'}
                   </h3>
                   <div className="mt-0.5 flex items-center gap-1.5">
-                    <span className="text-[9px] font-medium uppercase tracking-wider text-white/60">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
                       {mode === OWNER_MODE ? 'Fleet Console' : 'System Hub'}
                     </span>
                   </div>

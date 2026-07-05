@@ -7,7 +7,7 @@ import { adminService } from '../../services/adminService';
 import { Autocomplete } from '@react-google-maps/api';
 import { useAppGoogleMapsLoader, HAS_VALID_GOOGLE_MAPS_KEY } from '../../utils/googleMaps';
 
-const inputClass = 'w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-xs text-slate-800 outline-none transition-all shadow-sm hover:border-teal-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-100';
+const inputClass = 'w-full rounded-md border border-gray-200 px-2.5 py-1.5 text-xs text-slate-800 outline-none transition-all shadow-sm hover:border-amber-300 focus:border-amber-400 focus:ring-1 focus:ring-amber-400';
 const labelClass = 'mb-0.5 block text-xs font-semibold text-slate-800';
 const selectWrapClass = 'relative';
 
@@ -233,7 +233,7 @@ const CreatePackagePrice = ({ mode = 'create' }) => {
       <div className="relative rounded-[28px] border border-gray-100 bg-white shadow-sm">
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[28px] bg-white/80">
-            <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
           </div>
         )}
 
@@ -247,7 +247,7 @@ const CreatePackagePrice = ({ mode = 'create' }) => {
               <ArrowLeft size={16} />
               Back to Package Pricing
             </button>
-            <button type="button" onClick={() => setShowHowItWorks(true)} className="text-[11px] font-bold text-[#00BFA5] underline decoration-dotted underline-offset-4">
+            <button type="button" onClick={() => setShowHowItWorks(true)} className="text-[11px] font-bold text-amber-500 underline decoration-dotted underline-offset-4">
               How It Works
             </button>
           </div>
@@ -371,7 +371,7 @@ const CreatePackagePrice = ({ mode = 'create' }) => {
               <button
                 type="button"
                 onClick={addRow}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700 transition hover:bg-teal-100"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-600 transition hover:bg-amber-100"
               >
                 <Plus size={14} />
                 Add Vehicle Price
@@ -379,22 +379,22 @@ const CreatePackagePrice = ({ mode = 'create' }) => {
             </div>
 
             {formData.package_vehicle_prices.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50/50 p-10 text-center">
+              <div className="rounded-3xl border border-dashed border-gray-300 bg-gray-50/50 p-6 text-center">
                 <p className="text-sm font-bold text-slate-500">No vehicle pricing added yet.</p>
                 <button
                   type="button"
                   onClick={addRow}
-                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700"
+                  className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-2 text-sm font-bold text-slate-900 transition hover:bg-amber-500"
                 >
                   <Plus size={16} /> Add Vehicle Price
                 </button>
               </div>
             ) : (
               formData.package_vehicle_prices.map((row, index) => (
-                <div key={row.id} className="rounded-xl border border-gray-200 bg-[#FCFCFD] p-4 lg:p-5">
+                <div key={row.id} className="rounded-xl border border-gray-200 bg-[#FCFCFD] p-3 lg:p-4">
                   <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-teal-600">Vehicle Pricing {index + 1}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-500">Vehicle Pricing {index + 1}</p>
                       <p className="mt-0.5 text-xs text-slate-500">{vehicleLabelMap[row.vehicle_type] || 'Choose vehicle and fill its package pricing'}</p>
                     </div>
                     <button
