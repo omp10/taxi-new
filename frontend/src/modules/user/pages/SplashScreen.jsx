@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getLocalUserToken } from '../services/authService';
-import rydonLogo from '../../../assets/rydon24_logo.png';
 
 const SplashScreen = () => {
   const navigate = useNavigate();
@@ -76,15 +75,15 @@ const SplashScreen = () => {
     const getPointOnPath = (points, t) => {
       if (points.length === 0) return { x: 0, y: 0 };
       if (points.length === 1) return points[0];
-      
+
       const segmentCount = points.length - 1;
       const scaledT = t * segmentCount;
       const index = Math.min(Math.floor(scaledT), segmentCount - 1);
       const segmentT = scaledT - index;
-      
+
       const p0 = points[index];
       const p1 = points[index + 1];
-      
+
       return {
         x: p0.x + (p1.x - p0.x) * segmentT,
         y: p0.y + (p1.y - p0.y) * segmentT,
@@ -158,7 +157,7 @@ const SplashScreen = () => {
   // Automatic routing redirect logic after 2.5 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
-      sessionStorage.setItem('rydon24_splash_seen', 'true');
+      sessionStorage.setItem('Appzeto 24_splash_seen', 'true');
       const token = getLocalUserToken();
       if (token) {
         navigate('/taxi/user', { replace: true });
@@ -186,16 +185,9 @@ const SplashScreen = () => {
           transition={{ duration: 0.8, ease: 'easeOut' }}
           className="flex flex-col items-center"
         >
-          {/* Logo from assets */}
-          <img
-            src={rydonLogo}
-            alt="RYDON 24"
-            className="w-24 h-24 object-contain mb-4 relative z-10"
-          />
-
           {/* Clean text logo */}
           <h1 className="text-[32px] font-[900] tracking-wider text-white mb-2 leading-none uppercase">
-            RYDON 24
+            Appzeto
           </h1>
 
           {/* Subtitle */}

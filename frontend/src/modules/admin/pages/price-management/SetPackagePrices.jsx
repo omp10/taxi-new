@@ -70,8 +70,8 @@ const SetPackagePrices = () => {
     <div className="min-h-screen bg-[#F8F9FD] p-6 lg:p-8 font-sans">
       <div className="flex flex-col gap-4 border-b border-gray-100 pb-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-sm font-bold text-[#1E293B] uppercase tracking-[0.15em]">PACKAGE PRICING</h1>
-          <p className="mt-2 text-sm text-slate-500">Manage package name, destination, availability, and vehicle-wise pricing in one place.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Package Pricing</h1>
+          <p className="mt-1 text-xs text-slate-500">Manage package name, destination, availability, and vehicle-wise pricing in one place.</p>
         </div>
         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium tracking-tight">
           <span className="hover:text-slate-600 transition-colors cursor-pointer" onClick={() => navigate('/admin/pricing/package-pricing')}>Package Pricing</span>

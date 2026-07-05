@@ -423,7 +423,7 @@ const EditDriver = () => {
           <span className="text-gray-700">Edit Driver</span>
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Edit Driver</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Edit Driver</h1>
           <button 
             onClick={() => navigate(backRoute)}
             className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -445,7 +445,7 @@ const EditDriver = () => {
                 <User size={18} />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Identity Details</h3>
+                <h3 className="text-sm text-gray-900 font-bold">Identity Details</h3>
                 <p className="text-xs text-gray-400">Personal & contact information</p>
               </div>
             </div>
@@ -583,7 +583,7 @@ const EditDriver = () => {
                 <Car size={18} />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Vehicle Information</h3>
+                <h3 className="text-sm text-gray-900 font-bold">Vehicle Information</h3>
                 <p className="text-xs text-gray-400">Assigned vehicle specifications</p>
               </div>
             </div>
@@ -729,7 +729,7 @@ const EditDriver = () => {
         <div className="space-y-6">
           {/* Photo Upload */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Profile Photo</h3>
+            <h3 className="text-sm text-gray-900 mb-4 font-bold">Profile Photo</h3>
             <div className="relative group cursor-pointer">
               <div className="w-full aspect-square rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden transition-colors group-hover:border-indigo-300 group-hover:bg-indigo-50/30">
                 {imagePreview ? (

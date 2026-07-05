@@ -192,7 +192,7 @@ const PaymentMethods = () => {
             <span className="text-gray-700">Payment Methods</span>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-xl font-semibold text-gray-900">
+            <h1 className="text-xl text-gray-900 font-bold">
               {editingId ? 'Edit Payment Method' : 'Add Payment Method'}
             </h1>
             <div className="flex items-center gap-3">
@@ -329,7 +329,7 @@ const PaymentMethods = () => {
           <span className="text-gray-700">Payment Methods</span>
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Payment Methods</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Payment Methods</h1>
           <button
             onClick={startAdd}
             className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"

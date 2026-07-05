@@ -1,9 +1,9 @@
 export const SUPPORT_INFO = {
-  companyName: 'Rydon24 Trawler',
+  companyName: 'Appzeto 24 Trawler',
   ownerName: 'Sandeep Kumar',
   phone: '91-93-911-911',
   phoneHref: '91-93-911-911',
-  email: 'customercare@rydon24.com',
+  email: 'customercare@Appzeto 24.com',
   supportLabel: '24/7 client support',
   responseTime: 'Replies typically within 2 hours',
   serviceArea: 'Taxi rides, parcels, bookings, payments, and account help',

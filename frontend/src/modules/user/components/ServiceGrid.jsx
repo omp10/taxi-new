@@ -8,7 +8,7 @@ import { BACKEND_ORIGIN } from '../../../shared/api/runtimeConfig';
 
 const getDynamicImageSrc = (item = {}, fallbackImage) => {
   const rawImage = item.uploadedImage || item.imageUrl || item.image || item.thumbnail || item.icon || null;
-  
+
   if (!rawImage) {
     return fallbackImage;
   }
@@ -120,9 +120,8 @@ export const ServiceCard = React.memo(({ icon, label, description, path, loading
 
   if (loading) {
     return (
-      <div className={`h-[106px] w-full animate-pulse rounded-[24px] border ${
-        isDark ? 'border-zinc-800/85 bg-zinc-900/60' : 'border-slate-200 bg-slate-100/80'
-      }`} />
+      <div className={`h-[106px] w-full animate-pulse rounded-[24px] border ${isDark ? 'border-zinc-800/85 bg-zinc-900/60' : 'border-slate-200 bg-slate-100/80'
+        }`} />
     );
   }
 
@@ -153,6 +152,21 @@ export const ServiceCard = React.memo(({ icon, label, description, path, loading
   };
 
   const handleCardClick = () => {
+    const cleanLabel = String(label || '').toLowerCase();
+    let vehicleType = '';
+    if (cleanLabel.includes('bike') || cleanLabel.includes('moto')) vehicleType = 'bike';
+    else if (cleanLabel.includes('auto')) vehicleType = 'auto';
+    else if (cleanLabel.includes('cab') || cleanLabel.includes('taxi') || cleanLabel.includes('car') || cleanLabel === 'book now' || cleanLabel === 'ride') vehicleType = 'cab';
+    else if (cleanLabel.includes('parcel') || cleanLabel.includes('delivery')) vehicleType = 'parcel';
+
+    if (vehicleType) {
+      localStorage.setItem('selectedVehicleType', vehicleType);
+      console.log('--- TEMPORARY DEBUG LOG ---');
+      console.log('selectedVehicleType on click (ServiceCard):', vehicleType);
+    } else {
+      localStorage.removeItem('selectedVehicleType');
+    }
+
     if (onClick) {
       onClick();
     } else if (path) {
@@ -166,23 +180,20 @@ export const ServiceCard = React.memo(({ icon, label, description, path, loading
       whileHover={{ y: -2, scale: 1.01 }}
       whileTap={{ scale: 0.97 }}
       onClick={handleCardClick}
-      className={`relative overflow-hidden w-full h-[106px] flex items-center justify-between p-4 rounded-[24px] border text-left transition-all duration-300 group shadow-sm ${
-        isDark
+      className={`relative overflow-hidden w-full h-[106px] flex items-center justify-between p-4 rounded-[24px] border text-left transition-all duration-300 group shadow-sm ${isDark
           ? 'bg-gradient-to-br from-zinc-900 to-zinc-950/90 border-zinc-850 hover:border-yellow-500/30 hover:shadow-[0_12px_24px_rgba(0,0,0,0.4)]'
           : 'bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200/70 hover:border-[#FFB300]/30 hover:shadow-[0_8px_16px_rgba(15,23,42,0.04)]'
-      }`}
+        }`}
     >
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.05] pointer-events-none" />
 
       <div className="flex flex-col justify-center max-w-[58%] pr-1">
-        <span className={`text-[10px] sm:text-[11px] font-semibold leading-snug line-clamp-1 opacity-75 uppercase tracking-wide ${
-          isDark ? 'text-zinc-400' : 'text-slate-500'
-        }`}>
+        <span className={`text-[10px] sm:text-[11px] font-semibold leading-snug line-clamp-1 opacity-75 uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-slate-500'
+          }`}>
           {getDynamicSubtitle()}
         </span>
-        <span className={`text-base sm:text-[17px] font-black mt-1 leading-tight tracking-tight line-clamp-2 uppercase ${
-          isDark ? 'text-white group-hover:text-yellow-400' : 'text-slate-900 group-hover:text-[#FFB300]'
-        }`}>
+        <span className={`text-base sm:text-[17px] font-black mt-1 leading-tight tracking-tight line-clamp-2 uppercase ${isDark ? 'text-white group-hover:text-yellow-400' : 'text-slate-900 group-hover:text-[#FFB300]'
+          }`}>
           {label}
         </span>
       </div>
@@ -220,30 +231,26 @@ const ViewAllCard = React.memo(({ isDark, onClick }) => {
       whileHover={{ y: -2, scale: 1.01 }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className={`relative overflow-hidden w-full h-[106px] flex items-center justify-between p-4 rounded-[24px] border text-left transition-all duration-300 group shadow-sm ${
-        isDark
+      className={`relative overflow-hidden w-full h-[106px] flex items-center justify-between p-4 rounded-[24px] border text-left transition-all duration-300 group shadow-sm ${isDark
           ? 'bg-gradient-to-br from-zinc-800 to-zinc-900 border-zinc-700/80 hover:border-yellow-500/30 hover:shadow-[0_12px_24px_rgba(0,0,0,0.4)]'
           : 'bg-gradient-to-br from-slate-100 to-slate-200/90 border-slate-350 hover:border-[#FFB300]/30 hover:shadow-[0_8px_16px_rgba(15,23,42,0.04)]'
-      }`}
+        }`}
     >
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.05] pointer-events-none" />
 
       <div className="flex flex-col justify-center">
-        <span className={`text-[10px] sm:text-[11px] font-semibold leading-snug opacity-75 uppercase tracking-wide ${
-          isDark ? 'text-zinc-400' : 'text-slate-500'
-        }`}>
+        <span className={`text-[10px] sm:text-[11px] font-semibold leading-snug opacity-75 uppercase tracking-wide ${isDark ? 'text-zinc-400' : 'text-slate-500'
+          }`}>
           Explore more
         </span>
-        <span className={`text-base sm:text-[17px] font-black mt-1 leading-tight tracking-tight uppercase ${
-          isDark ? 'text-white group-hover:text-yellow-400' : 'text-slate-900 group-hover:text-[#FFB300]'
-        }`}>
+        <span className={`text-base sm:text-[17px] font-black mt-1 leading-tight tracking-tight uppercase ${isDark ? 'text-white group-hover:text-yellow-400' : 'text-slate-900 group-hover:text-[#FFB300]'
+          }`}>
           All Services
         </span>
       </div>
 
-      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105 ${
-        isDark ? 'bg-zinc-700/60' : 'bg-slate-200'
-      }`}>
+      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105 ${isDark ? 'bg-zinc-700/60' : 'bg-slate-200'
+        }`}>
         <LayoutGrid size={24} className={isDark ? 'text-yellow-400' : 'text-[#FFB300]'} strokeWidth={2.5} />
       </div>
     </motion.button>
@@ -259,6 +266,21 @@ const ServiceCardStretched = React.memo(({ subtitle, title, icon, path, onClick,
   }, [icon]);
 
   const handleCardClick = () => {
+    const cleanTitle = String(title || '').toLowerCase();
+    let vehicleType = '';
+    if (cleanTitle.includes('bike') || cleanTitle.includes('moto')) vehicleType = 'bike';
+    else if (cleanTitle.includes('auto')) vehicleType = 'auto';
+    else if (cleanTitle.includes('cab') || cleanTitle.includes('taxi') || cleanTitle.includes('car') || cleanTitle === 'book now' || cleanTitle === 'ride') vehicleType = 'cab';
+    else if (cleanTitle.includes('parcel') || cleanTitle.includes('delivery')) vehicleType = 'parcel';
+
+    if (vehicleType) {
+      localStorage.setItem('selectedVehicleType', vehicleType);
+      console.log('--- TEMPORARY DEBUG LOG ---');
+      console.log('selectedVehicleType on click (ServiceCardStretched):', vehicleType);
+    } else {
+      localStorage.removeItem('selectedVehicleType');
+    }
+
     if (onClick) {
       onClick();
     } else if (path) {
@@ -276,9 +298,8 @@ const ServiceCardStretched = React.memo(({ subtitle, title, icon, path, onClick,
   };
 
   const renderAllServicesIcon = () => (
-    <div className={`h-11 w-11 rounded-[14px] flex items-center justify-center shrink-0 ${
-      isDark ? 'bg-zinc-800/80 border border-zinc-700/50' : 'bg-slate-200/50 border border-slate-300/30'
-    }`}>
+    <div className={`h-11 w-11 rounded-[14px] flex items-center justify-center shrink-0 ${isDark ? 'bg-zinc-800/80 border border-zinc-700/50' : 'bg-slate-200/50 border border-slate-300/30'
+      }`}>
       <div className="grid grid-cols-2 gap-1 w-5.5 h-5.5">
         <div className="w-[9px] h-[9px] rounded-[2.5px] bg-[#FFC400]" />
         <div className="w-[9px] h-[9px] rounded-[2.5px] bg-slate-400 dark:bg-white" />
@@ -417,9 +438,9 @@ const ServiceCardStretched = React.memo(({ subtitle, title, icon, path, onClick,
           </div>
         ) : (
           <div className="everything-card-image-wrap">
-            <img 
-              src={currentImageSrc} 
-              alt={title} 
+            <img
+              src={currentImageSrc}
+              alt={title}
               className="everything-card-image"
               loading="lazy"
               onError={() => {
@@ -442,8 +463,8 @@ const defaultSettings = {
   ]
 };
 
-const ServiceGrid = ({ 
-  showAllModal: parentShowAllModal, 
+const ServiceGrid = ({
+  showAllModal: parentShowAllModal,
   setShowAllModal: parentSetShowAllModal,
   isAllServicesOpen,
   setIsAllServicesOpen,
@@ -455,12 +476,12 @@ const ServiceGrid = ({
   const [loading, setLoading] = useState(true);
   const [localShowAllModal, localSetShowAllModal] = useState(false);
 
-  const showAllModal = isAllServicesOpen !== undefined 
-    ? isAllServicesOpen 
+  const showAllModal = isAllServicesOpen !== undefined
+    ? isAllServicesOpen
     : (parentShowAllModal !== undefined ? parentShowAllModal : localShowAllModal);
-    
-  const setShowAllModal = setIsAllServicesOpen !== undefined 
-    ? setIsAllServicesOpen 
+
+  const setShowAllModal = setIsAllServicesOpen !== undefined
+    ? setIsAllServicesOpen
     : (parentSetShowAllModal !== undefined ? parentSetShowAllModal : localSetShowAllModal);
 
   const [uiSettings, setUiSettings] = useState(() => {
@@ -468,7 +489,7 @@ const ServiceGrid = ({
       if (settings?.userHomeSettings && Object.keys(settings.userHomeSettings).length > 0) {
         return settings.userHomeSettings;
       }
-      const saved = window.localStorage.getItem('rydon24:admin:user-app-settings');
+      const saved = window.localStorage.getItem('Appzeto 24:admin:user-app-settings');
       if (saved) return JSON.parse(saved);
     } catch (e) {
       console.error(e);
@@ -490,7 +511,7 @@ const ServiceGrid = ({
   useEffect(() => {
     const handleStorageChange = () => {
       try {
-        const saved = window.localStorage.getItem('rydon24:admin:user-app-settings');
+        const saved = window.localStorage.getItem('Appzeto 24:admin:user-app-settings');
         if (saved) {
           const parsed = JSON.parse(saved);
           setUiSettings(prev => {
@@ -521,8 +542,8 @@ const ServiceGrid = ({
     const handleOpenModal = () => {
       setShowAllModal(true);
     };
-    window.addEventListener('rydon24:open-all-services-modal', handleOpenModal);
-    return () => window.removeEventListener('rydon24:open-all-services-modal', handleOpenModal);
+    window.addEventListener('Appzeto 24:open-all-services-modal', handleOpenModal);
+    return () => window.removeEventListener('Appzeto 24:open-all-services-modal', handleOpenModal);
   }, []);
 
   useEffect(() => {
@@ -686,7 +707,7 @@ const ServiceGrid = ({
       const apiIcon = normalizeAssetUrl(m.mobile_menu_icon || m.uploadedImage || m.imageUrl || m.image);
       const serviceTypeDisplay = String(m.service_type || '').toUpperCase();
       const transportTypeDisplay = String(m.transport_type || '').toUpperCase();
-      const typeLabel = serviceTypeDisplay && transportTypeDisplay 
+      const typeLabel = serviceTypeDisplay && transportTypeDisplay
         ? `${serviceTypeDisplay} • ${transportTypeDisplay}`
         : serviceTypeDisplay || transportTypeDisplay || 'SERVICE';
 
@@ -772,9 +793,9 @@ const ServiceGrid = ({
                 const isBook = String(item.title || '').toLowerCase().includes('book') || String(item.title || '').toLowerCase().includes('ride');
 
                 const fallbackIcon = isParcel ? (parcelModule ? normalizeAssetUrl(parcelModule.mobile_menu_icon) : parcelFallback)
-                                     : isBike ? (bikeModule ? normalizeAssetUrl(bikeModule.mobile_menu_icon) : bikeFallback)
-                                     : isBook ? (rideModule ? normalizeAssetUrl(rideModule.mobile_menu_icon) : taxiFallback)
-                                     : taxiFallback;
+                  : isBike ? (bikeModule ? normalizeAssetUrl(bikeModule.mobile_menu_icon) : bikeFallback)
+                    : isBook ? (rideModule ? normalizeAssetUrl(rideModule.mobile_menu_icon) : taxiFallback)
+                      : taxiFallback;
 
                 const clickHandler = () => {
                   const clickRoute = item.actionRoute || item.route;
@@ -787,7 +808,7 @@ const ServiceGrid = ({
                   } else {
                     const fallbackRoute = isParcel ? '/taxi/user/parcel/type' : '/taxi/user/ride/select-location';
                     const isSelectLocationRoute = fallbackRoute.includes('/ride/select-location');
-                    
+
                     if (isSelectLocationRoute) {
                       const category = isBike ? 'bike' : 'car';
                       navigate(fallbackRoute, { state: { selectedCategory: category, flow: 'ride', activeInput: 'drop' } });

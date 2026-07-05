@@ -9,8 +9,8 @@
   --admin-text-secondary: #64748B;
   --admin-border: #E5E7EB;
 
-  --font-heading: 'Poppins', sans-serif;
-  --font-body: 'Poppins', sans-serif;
+  --font-heading: 'Times New Roman', serif;
+  --font-body: 'Times New Roman', serif;
 
   /* Page content fade-up on load */
   animation: adminFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
@@ -31,12 +31,13 @@
 .redigo-admin-root,
 .redigo-admin-root * {
   font-family: var(--font-body) !important;
+  font-size: 16px !important;
 }
 
 /* 1. Page Title */
 .redigo-admin-root .admin-page-title {
   font-family: var(--font-heading) !important;
-  font-size: 28px !important;
+  font-size: 34px !important;
   font-weight: 700 !important;
   letter-spacing: -0.02em !important;
   text-transform: none !important;
@@ -48,8 +49,8 @@
 .redigo-admin-root .admin-h1,
 .redigo-admin-root .admin-main-heading {
   font-family: var(--font-heading) !important;
-  font-size: 32px !important;
-  font-weight: 700 !important;
+  font-size: 28px !important;
+  font-weight: bold !important;
   letter-spacing: -0.03em !important;
   text-transform: none !important;
   line-height: 1.2 !important;
@@ -73,23 +74,33 @@
 .redigo-admin-root .admin-h2,
 .redigo-admin-root h3,
 .redigo-admin-root .admin-h3,
+.redigo-admin-root h4,
+.redigo-admin-root h5,
+.redigo-admin-root h6,
 .redigo-admin-root .section-heading,
 .redigo-admin-root .chart-title {
   position: relative !important;
   padding-left: 12px !important;
   font-family: var(--font-heading) !important;
   font-size: 22px !important;
-  font-weight: 700 !important;
+  font-weight: bold !important;
   letter-spacing: -0.02em !important;
   text-transform: none !important;
   line-height: 1.25 !important;
   color: var(--admin-text) !important;
+  margin-bottom: 0.5rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .redigo-admin-root h2::before,
 .redigo-admin-root .admin-h2::before,
 .redigo-admin-root h3::before,
 .redigo-admin-root .admin-h3::before,
+.redigo-admin-root h4::before,
+.redigo-admin-root h5::before,
+.redigo-admin-root h6::before,
 .redigo-admin-root .section-heading::before,
 .redigo-admin-root .chart-title::before {
   content: '' !important;
@@ -105,11 +116,10 @@
 /* 4. Small Labels */
 .redigo-admin-root .card-label,
 .redigo-admin-root .metric-card-label,
-.redigo-admin-root .small-label,
-.redigo-admin-root [class*="card"] span:first-child {
+.redigo-admin-root .small-label {
   font-family: var(--font-heading) !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase !important;
 }
@@ -118,8 +128,8 @@
 .redigo-admin-root .kpi-number,
 .redigo-admin-root .metric-card-value {
   font-family: var(--font-heading) !important;
-  font-weight: 800 !important;
-  font-size: 34px !important;
+  font-weight: 700 !important;
+  font-size: 24px !important;
 }
 
 /* Table Headers */
@@ -127,7 +137,7 @@
 .redigo-admin-root .admin-table th {
   font-family: var(--font-heading) !important;
   font-weight: 700 !important;
-  font-size: 14px !important;
+  font-size: 17px !important;
   color: var(--admin-text-secondary) !important;
 }
 
@@ -136,7 +146,7 @@
 .redigo-admin-root .admin-table td {
   font-family: var(--font-body) !important;
   font-weight: 400 !important;
-  font-size: 14px !important;
+  font-size: 16px !important;
   color: var(--admin-text) !important;
 }
 
@@ -144,8 +154,8 @@
 .redigo-admin-root aside a,
 .redigo-admin-root aside button {
   font-family: var(--font-heading) !important;
-  font-weight: 600 !important;
-  font-size: 15px !important;
+  font-weight: 700 !important;
+  font-size: 19px !important;
 }
 .redigo-admin-root aside a.active,
 .redigo-admin-root aside button.active {
@@ -156,7 +166,7 @@
 .redigo-admin-root .sidebar-category-header,
 .redigo-admin-root aside .category-title {
   font-family: var(--font-heading) !important;
-  font-weight: 700 !important;
+  font-weight: 500 !important;
   font-size: 12px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.08em !important;
@@ -167,8 +177,8 @@
 .redigo-admin-root .admin-btn-primary,
 .redigo-admin-root .admin-btn-secondary {
   font-family: var(--font-heading) !important;
-  font-weight: 700 !important;
-  font-size: 14px !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
 }
 
 /* Form Labels */
@@ -176,7 +186,7 @@
 .redigo-admin-root .admin-label {
   font-family: var(--font-heading) !important;
   font-weight: 600 !important;
-  font-size: 14px !important;
+  font-size: 15px !important;
   color: var(--admin-text) !important;
 }
 
@@ -187,42 +197,42 @@
 .redigo-admin-root .admin-input {
   font-family: var(--font-body) !important;
   font-weight: 400 !important;
-  font-size: 14px !important;
+  font-size: 16px !important;
   color: var(--admin-text) !important;
 }
 
 /* Status Badges */
 .redigo-admin-root .admin-badge {
   font-family: var(--font-heading) !important;
-  font-weight: 700 !important;
+  font-weight: 500 !important;
   font-size: 12px !important;
 }
 
 /* Graph Axis Labels */
 .redigo-admin-root .chart-axis-label {
   font-family: var(--font-body) !important;
-  font-weight: 400 !important;
-  font-size: 12px !important;
+  font-weight: 500 !important;
+  font-size: 15px !important;
 }
 
 /* Notification Titles */
 .redigo-admin-root .notification-title {
   font-family: var(--font-heading) !important;
   font-weight: 700 !important;
-  font-size: 15px !important;
+  font-size: 18px !important;
 }
 
 /* Notification Description */
 .redigo-admin-root .notification-desc {
   font-family: var(--font-body) !important;
   font-weight: 400 !important;
-  font-size: 13px !important;
+  font-size: 15px !important;
 }
 
 /* Modal Titles */
 .redigo-admin-root .modal-title {
   font-family: var(--font-heading) !important;
-  font-weight: 800 !important;
+  font-weight: 600 !important;
   font-size: 24px !important;
 }
 
@@ -341,8 +351,16 @@
 }
 
 .redigo-admin-root aside .active span {
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   opacity: 1 !important;
+}
+
+/* Submenu Items (Fallback) */
+.redigo-admin-root aside ul li a,
+.redigo-admin-root aside .submenu-item,
+.redigo-admin-root aside [class*="submenu"] {
+  font-weight: 500 !important;
+  font-size: 17px !important;
 }
 
 /* Hover and Normal states for sidebar items */
@@ -377,7 +395,7 @@
 .redigo-admin-root .admin-btn-primary {
   background-color: var(--admin-accent) !important;
   color: #05070D !important;
-  font-weight: 700 !important;
+  font-weight: 500 !important;
   padding: 0.5rem 1rem !important;
   border-radius: 6px !important;
   border: 1px solid transparent !important;
@@ -396,7 +414,7 @@
 .redigo-admin-root .admin-btn-secondary {
   background-color: #FFFFFF !important;
   color: var(--admin-text) !important;
-  font-weight: 700 !important;
+  font-weight: 500 !important;
   padding: 0.5rem 1rem !important;
   border-radius: 6px !important;
   border: 1px solid var(--admin-border) !important;
@@ -435,7 +453,7 @@
   align-items: center !important;
   padding: 0.125rem 0.5rem !important;
   font-size: 0.75rem !important;
-  font-weight: 700 !important;
+  font-weight: 500 !important;
   border-radius: 9999px !important;
 }
 
@@ -468,7 +486,7 @@
   background-color: #F9FAFB !important;
   padding: 0.75rem 1rem !important;
   font-size: 14px !important;
-  font-weight: 700 !important;
+  font-weight: 500 !important;
   color: var(--admin-text-secondary) !important;
   border-bottom: 1px solid var(--admin-border) !important;
 }
@@ -478,10 +496,16 @@
   border-bottom: 1px solid var(--admin-border) !important;
 }
 
-.admin-modal-overlay {
-  position: fixed !important;
-  inset: 0 !important;
-  background-color: rgba(0, 0, 0, 0.55) !important;
-  z-index: 40 !important;
-  backdrop-filter: blur(2px) !important;
+/* Fallback generic text replacements to strictly enforce sizes */
+.redigo-admin-root p,
+.redigo-admin-root .admin-desc {
+  font-weight: 400 !important;
+  font-size: 15px !important;
+}
+
+.redigo-admin-root header a,
+.redigo-admin-root header button,
+.redigo-admin-root header span {
+  font-weight: 600 !important;
+  font-size: 18px !important;
 }

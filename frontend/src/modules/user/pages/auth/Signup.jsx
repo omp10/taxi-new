@@ -14,8 +14,8 @@ const PENDING_SIGNUP_REFERRAL_CODE_KEY = 'pendingUserSignupReferralCode';
 const PENDING_SIGNUP_EMPLOYEE_CODE_KEY = 'pendingUserSignupEmployeeCode';
 
 const syncPushTokens = () => {
-  window.__flushNativeFcmToken?.().catch?.(() => {});
-  window.__registerBrowserFcmToken?.({ interactive: true }).catch?.(() => {});
+  window.__flushNativeFcmToken?.().catch?.(() => { });
+  window.__registerBrowserFcmToken?.({ interactive: true }).catch?.(() => { });
 };
 
 const notifyAuthReady = () => {
@@ -33,7 +33,7 @@ const Signup = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { theme, toggleTheme } = useUserTheme();
-  
+
   const referralCodeFromQuery = new URLSearchParams(location.search).get('ref') || '';
   const employeeCodeFromQuery = new URLSearchParams(location.search).get('emp') || '';
   const preservedPhone = typeof window !== 'undefined' ? sessionStorage.getItem(PENDING_SIGNUP_PHONE_KEY) || '' : '';
@@ -44,7 +44,7 @@ const Signup = () => {
     ? sessionStorage.getItem(PENDING_SIGNUP_EMPLOYEE_CODE_KEY) || ''
     : '';
   const initialPhone = String(location.state?.phone || preservedPhone || '').replace(/\D/g, '').slice(-10);
-  
+
   const [formData, setFormData] = useState({
     phone: initialPhone,
     name: '',
@@ -54,22 +54,22 @@ const Signup = () => {
     referralCode: String(location.state?.referralCode || referralCodeFromQuery || preservedReferralCode || '').trim().toUpperCase(),
     employeeCode: String(location.state?.employeeCode || employeeCodeFromQuery || preservedEmployeeCode || '').trim().toUpperCase(),
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const [error, setError] = useState('');
   const [otpSending, setOtpSending] = useState(false);
   const fileInputRef = useRef(null);
-  
-  const appName = settings.general?.app_name || 'Rydon24';
+
+  const appName = settings.general?.app_name || 'Appzeto 24';
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
-  
+
   const isValidPhone = /^\d{10}$/.test(formData.phone);
   const showHelperText = formData.phone.length > 0 && formData.phone.length < 10;
   const hasVerifiedSignupContext = Boolean(location.state?.otpVerified) || Boolean(preservedPhone);
   const [step, setStep] = useState(() => (hasVerifiedSignupContext ? 'profile' : 'phone'));
-  
+
   const [showPermissions, setShowPermissions] = useState(false);
   const [permissionStep, setPermissionStep] = useState('location');
 
@@ -228,11 +228,11 @@ const Signup = () => {
       localStorage.setItem('userInfo', JSON.stringify(payload.user || {}));
       notifyAuthReady();
       syncPushTokens();
-      
+
       sessionStorage.removeItem(PENDING_SIGNUP_PHONE_KEY);
       sessionStorage.removeItem(PENDING_SIGNUP_REFERRAL_CODE_KEY);
       sessionStorage.removeItem(PENDING_SIGNUP_EMPLOYEE_CODE_KEY);
-      
+
       // Success signup goes to permission sequence
       setTimeout(() => setShowPermissions(true), 800);
     } catch (err) {
@@ -357,7 +357,7 @@ const Signup = () => {
           >
             Allow Permission
           </motion.button>
-          
+
           <button
             onClick={permissionStep === 'location' ? () => setPermissionStep('notification') : () => navigate('/taxi/user', { replace: true })}
             className="w-full py-4 text-sm font-extrabold uppercase tracking-widest login-subtitle hover:text-white transition-colors cursor-pointer"
@@ -375,12 +375,12 @@ const Signup = () => {
 
       {/* Immersive Top Background Image */}
       <div className="login-hero">
-        <motion.img 
+        <motion.img
           initial={{ opacity: 0, scale: 1.06 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.0, ease: "easeOut" }}
-          src={yellowTaxiLoginBg} 
-          alt="Taxi background" 
+          src={yellowTaxiLoginBg}
+          alt="Taxi background"
           className="login-hero-img"
         />
 
@@ -392,14 +392,14 @@ const Signup = () => {
             className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-xl"
           >
             {appLogo ? (
-              <img 
-                src={appLogo} 
-                alt={appName} 
+              <img
+                src={appLogo}
+                alt={appName}
                 className="h-6 w-6 object-contain rounded-full bg-slate-950 p-0.5"
               />
             ) : (
               <div className="h-6 w-6 bg-[#FFB300] rounded-full flex items-center justify-center shadow-lg">
-                 <span className="text-[11px] font-black italic text-slate-950">{appName[0]?.toUpperCase() || 'R'}</span>
+                <span className="text-[11px] font-black italic text-slate-950">{appName[0]?.toUpperCase() || 'R'}</span>
               </div>
             )}
             <span className="text-[13px] font-black tracking-wide text-white uppercase">{appName}</span>
@@ -415,13 +415,13 @@ const Signup = () => {
             <span className="login-accent-text">
               {step === 'profile' ? 'Complete Profile' : 'Start Journey'}
             </span> <br />
-            Standard with Rydon 24
+            Standard with Appzeto
           </h1>
         </div>
       </div>
 
       <main className="flex-1 flex flex-col justify-end">
-        <motion.div 
+        <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
@@ -429,29 +429,28 @@ const Signup = () => {
         >
           <AnimatePresence mode="wait">
             {step === 'phone' ? (
-              <motion.form 
+              <motion.form
                 key="phone-step"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                onSubmit={handleStartSignup} 
+                onSubmit={handleStartSignup}
                 className="space-y-8"
               >
                 <div className="space-y-2">
-                   <h2 className="text-[26px] font-black login-primary-text leading-tight">
-                     Create your account
-                   </h2>
-                   <p className="login-subtitle text-[14px] font-semibold">
-                     Start with your mobile number and we will verify it before creating your {appName} account.
-                   </p>
+                  <h2 className="text-[26px] font-black login-primary-text leading-tight">
+                    Create your account
+                  </h2>
+                  <p className="login-subtitle text-[14px] font-semibold">
+                    Start with your mobile number and we will verify it before creating your {appName} account.
+                  </p>
                 </div>
 
                 <div className="space-y-4">
-                  <div className={`flex items-center gap-4 p-5 rounded-2xl transition-all border-2 ${
-                    error 
-                      ? 'border-rose-500/20 bg-rose-500/5' 
-                      : 'border-zinc-200/50 bg-zinc-100/50 dark:border-white/5 dark:bg-white/5 focus-within:border-[#FFB300] focus-within:bg-zinc-50 dark:focus-within:bg-black/30 focus-within:shadow-xl'
-                  }`}>
+                  <div className={`flex items-center gap-4 p-5 rounded-2xl transition-all border-2 ${error
+                    ? 'border-rose-500/20 bg-rose-500/5'
+                    : 'border-zinc-200/50 bg-zinc-100/50 dark:border-white/5 dark:bg-white/5 focus-within:border-[#FFB300] focus-within:bg-zinc-50 dark:focus-within:bg-black/30 focus-within:shadow-xl'
+                    }`}>
                     <div className="flex items-center gap-3 pr-4 border-r border-zinc-200 dark:border-white/10">
                       <img src="https://flagcdn.com/w40/in.png" alt="India" className="w-5 h-3.5 object-cover rounded-sm" />
                       <span className="login-subtitle text-sm font-black">+91</span>
@@ -513,28 +512,27 @@ const Signup = () => {
                 </div>
               </motion.form>
             ) : (
-              <motion.form 
+              <motion.form
                 key="profile-step"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
-                onSubmit={handleSignup} 
+                onSubmit={handleSignup}
                 className="space-y-6 max-h-[48dvh] overflow-y-auto pr-1 no-scrollbar"
               >
                 {/* Avatar Section */}
                 <div className="flex flex-col items-center">
-                  <div 
+                  <div
                     onClick={() => !photoUploading && fileInputRef.current?.click()}
-                    className={`relative group w-20 h-20 rounded-full bg-zinc-100 dark:bg-white/5 border-2 ${
-                      photoUploading ? 'border-zinc-300 dark:border-white/10 cursor-not-allowed' : 'border-zinc-300 dark:border-white/10 hover:border-[#FFB300] cursor-pointer'
-                    } flex items-center justify-center overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md active:scale-95`}
+                    className={`relative group w-20 h-20 rounded-full bg-zinc-100 dark:bg-white/5 border-2 ${photoUploading ? 'border-zinc-300 dark:border-white/10 cursor-not-allowed' : 'border-zinc-300 dark:border-white/10 hover:border-[#FFB300] cursor-pointer'
+                      } flex items-center justify-center overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md active:scale-95`}
                   >
                     {avatarPreviewUrl ? (
                       <img src={avatarPreviewUrl} alt="Profile" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     ) : (
                       <User size={32} className="login-subtitle group-hover:login-primary-text transition-colors" />
                     )}
-                    
+
                     {!photoUploading && (
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity duration-300">
                         <Camera size={14} className="drop-shadow" />
@@ -602,8 +600,8 @@ const Signup = () => {
                     <label className="text-xs font-extrabold uppercase tracking-widest login-subtitle ml-1">Full Name *</label>
                     <div className="flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-200/50 bg-zinc-100/50 dark:border-white/5 dark:bg-white/5 focus-within:border-[#FFB300] focus-within:bg-zinc-50 dark:focus-within:bg-black/30 transition-all">
                       <User size={18} className="login-subtitle" />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="Enter your name"
                         className="flex-1 bg-transparent border-none p-0 text-base font-bold login-primary-text outline-none focus:ring-0 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                         value={formData.name}
@@ -618,8 +616,8 @@ const Signup = () => {
                     <label className="text-xs font-extrabold uppercase tracking-widest login-subtitle ml-1">Email Address (Optional)</label>
                     <div className="flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-200/50 bg-zinc-100/50 dark:border-white/5 dark:bg-white/5 focus-within:border-[#FFB300] focus-within:bg-zinc-50 dark:focus-within:bg-black/30 transition-all">
                       <Mail size={18} className="login-subtitle" />
-                      <input 
-                        type="email" 
+                      <input
+                        type="email"
                         placeholder="Enter email address"
                         className="flex-1 bg-transparent border-none p-0 text-base font-bold login-primary-text outline-none focus:ring-0 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                         value={formData.email}
@@ -637,11 +635,10 @@ const Signup = () => {
                           key={g.value}
                           type="button"
                           onClick={() => setFormData({ ...formData, gender: g.value })}
-                          className={`flex-1 py-3.5 px-4 rounded-2xl font-bold transition-all border-2 text-sm text-center cursor-pointer ${
-                            formData.gender === g.value
-                              ? 'bg-[#FFB300] border-[#FFB300] text-slate-950 shadow-md shadow-yellow-500/10'
-                              : 'border-zinc-200/50 bg-zinc-100/50 dark:border-white/5 dark:bg-white/5 login-primary-text'
-                          }`}
+                          className={`flex-1 py-3.5 px-4 rounded-2xl font-bold transition-all border-2 text-sm text-center cursor-pointer ${formData.gender === g.value
+                            ? 'bg-[#FFB300] border-[#FFB300] text-slate-950 shadow-md shadow-yellow-500/10'
+                            : 'border-zinc-200/50 bg-zinc-100/50 dark:border-white/5 dark:bg-white/5 login-primary-text'
+                            }`}
                         >
                           {g.label}
                         </button>
@@ -693,7 +690,7 @@ const Signup = () => {
                 </div>
 
                 <div className="space-y-3 pt-3">
-                  <motion.button 
+                  <motion.button
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"

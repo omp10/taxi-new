@@ -120,7 +120,7 @@ const UserCreate = () => {
         </div>
 
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Add User</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Add User</h1>
           <button
             type="button"
             onClick={() => navigate('/admin/users')}
@@ -139,7 +139,7 @@ const UserCreate = () => {
                 <User size={18} />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">User Details</h3>
+                <h3 className="text-sm text-gray-900 font-bold">User Details</h3>
                 <p className="text-xs text-gray-400">Customer identity and login information</p>
               </div>
             </div>
@@ -254,7 +254,7 @@ const UserCreate = () => {
                 <ImagePlus size={18} />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">Profile Picture</h3>
+                <h3 className="text-sm text-gray-900 font-bold">Profile Picture</h3>
                 <p className="text-xs text-gray-400">Optional user photo</p>
               </div>
             </div>

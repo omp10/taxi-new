@@ -436,36 +436,28 @@ const Admins = () => {
 
   // Handle Edit Click
   const handleEditClick = (admin) => {
-    const id = admin.id || admin._id;
-    const isEditCurrentlyOpen = selectedAdmin && (selectedAdmin.id === id || selectedAdmin._id === id) && isEditOpen;
-
-    if (isEditCurrentlyOpen) {
-      setIsEditOpen(false);
-      setSelectedAdmin(null);
-    } else {
-      setIsDrawerOpen(false);
-      setSelectedAdmin(admin);
-      setIsEditOpen(true);
-      setForm({
-        id: admin.id || admin._id,
-        name: admin.name || '',
-        email: admin.email || '',
-        phone: admin.phone || '',
-        role: admin.role || 'Operations Subadmin',
-        admin_type: admin.admin_type || 'subadmin',
-        permissions: Array.isArray(admin.permissions) ? admin.permissions.filter((p) => p !== '*') : [],
-        service_location_ids: Array.isArray(admin.service_location_ids) ? admin.service_location_ids : [],
-        zone_ids: Array.isArray(admin.zone_ids) ? admin.zone_ids : [],
-        password: '',
-        passwordConfirmation: '',
-        active: admin.active !== false,
-        employeeId: admin.employeeId || '',
-        department: admin.department || 'Operations',
-        designation: admin.designation || 'Subadmin Officer',
-        notes: admin.notes || '',
-        mfaEnabled: admin.mfaEnabled || false
-      });
-    }
+    window.dispatchEvent(new Event('admin:closeDropdowns'));
+    setIsDrawerOpen(false); // Close details drawer if open
+    setForm({
+      id: admin.id || admin._id,
+      name: admin.name || '',
+      email: admin.email || '',
+      phone: admin.phone || '',
+      role: admin.role || 'Operations Subadmin',
+      admin_type: admin.admin_type || 'subadmin',
+      permissions: admin.permissions || [],
+      service_location_ids: admin.service_location_ids || [],
+      zone_ids: admin.zone_ids || [],
+      password: '',
+      passwordConfirmation: '',
+      active: admin.active !== false,
+      employeeId: admin.employeeId || '',
+      department: admin.department || 'Operations',
+      designation: admin.designation || 'Subadmin Officer',
+      notes: admin.notes || '',
+      mfaEnabled: admin.mfaEnabled || false
+    });
+    setIsEditOpen(true);
   };
 
   // Handle Edit Submit
@@ -506,7 +498,6 @@ const Admins = () => {
       await adminService.updateAdminAccount(form.id, payload);
       toast.success('Administrator profile updated successfully');
       setIsEditOpen(false);
-      setSelectedAdmin(null);
       loadData();
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Update failed');
@@ -607,13 +598,13 @@ const Admins = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+          className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
         >
           <div>
-            <div className="flex items-center gap-2 mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#64748B]">
+            <div className="flex items-center gap-1.5 mb-1.5 text-[9px] font-medium uppercase tracking-wider text-slate-500">
               <span>Management</span>
-              <ChevronRight size={10} />
-              <span className="text-[#0B1220] font-bold">Access Center</span>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-700">Access Center</span>
             </div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-[#0B1220] tracking-tight">Admin Control Center</h1>
@@ -642,8 +633,7 @@ const Admins = () => {
             </button>
             <button
               onClick={() => {
-                setIsDrawerOpen(false);
-                setSelectedAdmin(null);
+                window.dispatchEvent(new Event('admin:closeDropdowns'));
                 setForm(initialFormState);
                 setIsCreateOpen(true);
               }}
@@ -658,28 +648,28 @@ const Admins = () => {
         {/* KPI CARDS ROW */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {[
-            { label: "Total Admins", value: stats.total, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50/60", trend: "+2 from last month", isTrendPositive: true },
-            { label: "Login Success Rate", value: "98.6%", icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50/60", trend: "↑ 1.3% from last month", isTrendPositive: true },
-            { label: "Active Sessions", value: stats.active, icon: Laptop, color: "text-blue-600", bg: "bg-blue-50/60", trend: "↑ 2 active now", isTrendPositive: true },
-            { label: "Password Resets", value: "4", icon: KeyRound, color: "text-purple-600", bg: "bg-purple-50/60", trend: "— 0% from last month", isTrendPositive: false },
-            { label: "Permission Changes", value: "12", icon: Info, color: "text-amber-600", bg: "bg-amber-50/60", trend: "↑ 33% from last month", isTrendPositive: true },
-            { label: "Suspended Today", value: stats.suspended, icon: UserMinus, color: "text-rose-600", bg: "bg-rose-50/60", trend: "↑ 1 from last month", isTrendPositive: false }
+            { label: "Total Admins", value: stats.total, icon: Users, cardBg: "!bg-violet-500", trend: "+2 from last month", isTrendPositive: true },
+            { label: "Login Success Rate", value: "98.6%", icon: CheckCircle, cardBg: "!bg-emerald-500", trend: "↑ 1.3% from last month", isTrendPositive: true },
+            { label: "Active Sessions", value: stats.active, icon: Laptop, cardBg: "!bg-blue-500", trend: "↑ 2 active now", isTrendPositive: true },
+            { label: "Password Resets", value: "4", icon: KeyRound, cardBg: "!bg-fuchsia-500", trend: "— 0% from last month", isTrendPositive: false },
+            { label: "Permission Changes", value: "12", icon: Info, cardBg: "!bg-orange-500", trend: "↑ 33% from last month", isTrendPositive: true },
+            { label: "Suspended Today", value: stats.suspended, icon: UserMinus, cardBg: "!bg-rose-500", trend: "↑ 1 from last month", isTrendPositive: false }
           ].map((insight, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: idx * 0.04 }}
-              className="admin-card !p-4 bg-white hover:scale-[1.02] transition-transform hover:shadow-md"
+              className={`admin-card !p-4 border-none !text-white hover:scale-[1.02] transition-transform shadow-lg ${insight.cardBg}`}
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="card-label text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">{insight.label}</span>
-                <div className={`p-2 rounded-lg ${insight.bg} ${insight.color}`}>
-                  <insight.icon size={16} />
+                <span className="card-label text-[10px] font-bold opacity-80 uppercase tracking-wider">{insight.label}</span>
+                <div className="p-2 rounded-full bg-white/20 backdrop-blur-sm">
+                  <insight.icon size={16} strokeWidth={2.5} />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-[#0B1220] tracking-tight">{insight.value}</h3>
-              <p className={`text-[9px] mt-1.5 font-medium ${insight.isTrendPositive ? 'text-emerald-600' : 'text-slate-400'}`}>
+              <h3 className="text-2xl font-black !text-white tracking-tight drop-shadow-sm">{insight.value}</h3>
+              <p className="text-[10px] mt-2 font-semibold opacity-80">
                 {insight.trend}
               </p>
             </motion.div>
@@ -698,7 +688,7 @@ const Admins = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider">Historical Admin Growth</h3>
+                  <h3 className="text-xs text-[#0B1220] uppercase tracking-wider font-bold">Historical Admin Growth</h3>
                   <div className="h-1.5 w-1.5 rounded-full bg-[#FFC400]" />
                 </div>
                 <select
@@ -716,8 +706,8 @@ const Admins = () => {
             {/* Area SVG Chart */}
             {growthData.length === 0 ? (
               <div className="h-[150px] flex flex-col items-center justify-center border border-dashed border-[#E5E7EB] rounded-2xl bg-slate-50/50 p-4 my-2">
-                <p className="text-xs font-semibold text-[#0B1220] modal-title !text-sm">No historical data available</p>
-                <p className="text-[10px] text-[#64748B] mt-1">Growth telemetry will automatically sync here.</p>
+                <p className="text-sm font-semibold text-[#0B1220] whitespace-normal text-center">No historical data available</p>
+                <p className="text-[10px] text-[#64748B] mt-1 whitespace-normal text-center">Growth telemetry will automatically sync here.</p>
               </div>
             ) : (
               <>
@@ -761,7 +751,7 @@ const Admins = () => {
                   {/* Tooltip */}
                   {hoveredGrowthIndex !== null && growthPoints[hoveredGrowthIndex] && (
                     <div
-                      className="absolute bg-slate-900 text-white rounded p-2.5 text-[10px] pointer-events-none shadow-xl border border-slate-800 animate-in fade-in duration-200"
+                      className="absolute bg-slate-900 !text-white rounded p-2.5 text-[10px] pointer-events-none shadow-xl border border-slate-800 animate-in fade-in duration-200"
                       style={{
                         left: `${(growthPoints[hoveredGrowthIndex].x / chartWidth) * 100}%`,
                         top: `${(growthPoints[hoveredGrowthIndex].y / chartHeight) * 100 - 40}%`,
@@ -788,7 +778,7 @@ const Admins = () => {
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider">Role Distribution</h3>
+                <h3 className="text-xs text-[#0B1220] uppercase tracking-wider font-bold">Role Distribution</h3>
                 <div className="h-1.5 w-1.5 rounded-full bg-[#3B82F6]" />
               </div>
               <p className="text-[11px] text-[#64748B] mb-4">Distribution by access class.</p>
@@ -853,7 +843,7 @@ const Admins = () => {
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider">Security Health</h3>
+                <h3 className="text-xs text-[#0B1220] uppercase tracking-wider font-bold">Security Health</h3>
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               </div>
               <p className="text-[11px] text-[#64748B] mb-3">Real-time authentication scoring.</p>
@@ -916,7 +906,7 @@ const Admins = () => {
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider">Recent Activity</h3>
+                <h3 className="text-xs text-[#0B1220] uppercase tracking-wider font-bold">Recent Activity</h3>
                 <span className="text-[9px] text-[#64748B] hover:underline cursor-pointer">View All</span>
               </div>
               <div className="space-y-3.5 max-h-[160px] overflow-y-auto pr-1">
@@ -942,7 +932,7 @@ const Admins = () => {
           {/* Quick Insights */}
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider mb-3">Quick Insights</h3>
+              <h3 className="text-xs text-[#0B1220] uppercase tracking-wider mb-3 font-bold">Quick Insights</h3>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { label: "New Admins", value: "2", desc: "This week" },
@@ -965,7 +955,7 @@ const Admins = () => {
           {/* Top Departments */}
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider mb-3">Top Departments</h3>
+              <h3 className="text-xs text-[#0B1220] uppercase tracking-wider mb-3 font-bold">Top Departments</h3>
               <div className="space-y-3">
                 {[
                   { label: "Operations", count: 5, color: "bg-[#FFC400]", percent: 80 },
@@ -992,7 +982,7 @@ const Admins = () => {
           {/* Access by Module */}
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider mb-3">Access by Module</h3>
+              <h3 className="text-xs text-[#0B1220] uppercase tracking-wider mb-3 font-bold">Access by Module</h3>
               <div className="space-y-3">
                 {[
                   { label: "Dashboard", percent: 100, color: "bg-indigo-500" },
@@ -1146,7 +1136,7 @@ const Admins = () => {
               <div className="w-16 h-16 bg-[#F6F8FC] rounded-full flex items-center justify-center text-slate-300 mb-4 border border-[#E5E7EB]">
                 <FileSearch size={24} />
               </div>
-              <h3 className="text-sm font-semibold text-[#0B1220]">No Nodes Located</h3>
+              <h3 className="text-sm text-[#0B1220] font-bold">No Nodes Located</h3>
               <p className="text-xs text-[#64748B] mt-1 max-w-sm leading-relaxed">
                 We couldn't locate any administrators matching your search criteria. Check for typos or expand filters.
               </p>
@@ -1180,7 +1170,7 @@ const Admins = () => {
                   const isActive = admin.active !== false;
                   const id = admin.id || admin._id;
                   const isExpanded = selectedAdmin && (selectedAdmin.id === id || selectedAdmin._id === id) && isDrawerOpen;
-                  const isEditExpanded = selectedAdmin && (selectedAdmin.id === id || selectedAdmin._id === id) && isEditOpen;
+                  const isEditExpanded = isEditOpen && (form.id === id || form._id === id);
 
                   const toggleExpand = (e) => {
                     e.stopPropagation();
@@ -1188,9 +1178,9 @@ const Admins = () => {
                       setIsDrawerOpen(false);
                       setSelectedAdmin(null);
                     } else {
+                      window.dispatchEvent(new Event('admin:closeDropdowns'));
                       setSelectedAdmin(admin);
                       setIsDrawerOpen(true);
-                      setIsEditOpen(false);
                     }
                   };
 
@@ -1303,8 +1293,7 @@ const Admins = () => {
                             {!isSuper && (
                               <button
                                 onClick={() => {
-                                  setIsDrawerOpen(false);
-                                  setSelectedAdmin(null);
+                                  window.dispatchEvent(new Event('admin:closeDropdowns'));
                                   setDeletingAdmin(admin);
                                   setDeleteConfirmText('');
                                   setIsDeleteOpen(true);
@@ -1414,6 +1403,7 @@ const Admins = () => {
                                 </div>
                                 <button
                                   onClick={() => {
+                                    setIsDrawerOpen(false);
                                     handleEditClick(selectedAdmin);
                                   }}
                                   className="admin-btn-primary h-9 px-4 gap-1.5 !bg-[#FFC400] !text-[#0B1220] text-xs font-bold shrink-0 self-end"
@@ -1425,6 +1415,7 @@ const Admins = () => {
                           </td>
                         </tr>
                       )}
+
                       {isEditExpanded && (
                         <tr className="bg-[#FAFBFD]">
                           <td colSpan={10} className="px-6 py-4">
@@ -1433,23 +1424,16 @@ const Admins = () => {
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="bg-white border-l-4 border-l-[#FFC400] border border-[#E5E7EB] rounded-r-xl p-6 shadow-sm space-y-6 font-sans text-xs text-[#0B1220] overflow-hidden"
+                              className="bg-white border-l-4 border-l-[#FFC400] border border-[#E5E7EB] rounded-r-xl shadow-sm space-y-4 font-sans text-xs text-[#0B1220] overflow-hidden"
                             >
-                              <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
-                                <h3 className="font-bold text-sm">Modify Administrative Privileges</h3>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setIsEditOpen(false);
-                                    setSelectedAdmin(null);
-                                  }}
-                                  className="text-slate-400 hover:text-slate-600 p-1"
-                                >
-                                  <X size={16} />
+                              <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between bg-slate-50">
+                                <h3 className="text-xs font-bold text-[#0B1220] uppercase tracking-wider">Modify Administrative Privileges</h3>
+                                <button type="button" onClick={() => setIsEditOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                  <X size={18} />
                                 </button>
                               </div>
 
-                              <form onSubmit={handleEditSubmit} className="space-y-4">
+                              <form onSubmit={handleEditSubmit} className="p-5 space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
                                     <label className="block text-[10px] font-semibold text-[#64748B] uppercase mb-1">Full Name</label>
@@ -1596,14 +1580,7 @@ const Admins = () => {
                                 </div>
 
                                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setIsEditOpen(false);
-                                      setSelectedAdmin(null);
-                                    }}
-                                    className="admin-btn-secondary h-10"
-                                  >
+                                  <button type="button" onClick={() => setIsEditOpen(false)} className="admin-btn-secondary h-10">
                                     Cancel
                                   </button>
                                   <button type="submit" disabled={saving} className="admin-btn-primary h-10 min-w-[120px] !bg-[#FFC400] !text-[#0B1220]">
@@ -1630,7 +1607,7 @@ const Admins = () => {
           transition={{ duration: 0.3, delay: 0.42 }}
           className="admin-card"
         >
-          <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider mb-3">System Permission Directory</h3>
+          <h3 className="text-xs text-[#0B1220] uppercase tracking-wider mb-3 font-bold">System Permission Directory</h3>
           <div className="flex flex-wrap gap-1.5">
             {['Dashboard', 'Users', 'Drivers', 'Bookings', 'Finance', 'Taxi', 'Rental', 'Bus', 'Delivery', 'Support', 'Pricing', 'Promotion', 'Reports', 'Settings', 'Analytics'].map((mod, i) => (
               <span key={i} className="admin-badge admin-badge-info text-[9px] py-0.5 px-2 bg-slate-50 border border-slate-200 text-slate-600 rounded">
@@ -1828,8 +1805,6 @@ const Admins = () => {
         )}
       </AnimatePresence>
 
-
-
       {/* DELETE CONFIRMATION MODAL */}
       <AnimatePresence>
         {isDeleteOpen && deletingAdmin && (
@@ -1891,7 +1866,7 @@ const Admins = () => {
                   <button
                     onClick={handleDeleteConfirm}
                     disabled={deleteConfirmText !== 'DELETE' || saving}
-                    className="admin-btn-primary h-10 bg-rose-600 hover:bg-rose-700 text-white min-w-[120px] disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="admin-btn-primary h-10 bg-rose-600 hover:bg-rose-700 !text-white min-w-[120px] disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {saving ? <Loader2 size={16} className="animate-spin" /> : 'Revoke Node'}
                   </button>

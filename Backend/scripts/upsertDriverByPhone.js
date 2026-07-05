@@ -23,7 +23,7 @@ const connect = async () => {
 };
 
 const buildReferralCode = (value) => `DRV${String(value || '').slice(-4)}SEED`;
-const buildEmail = (value) => `driver.${value}@rydon24.local`;
+const buildEmail = (value) => `driver.${value}@Appzeto 24.local`;
 
 const ensureServiceLocation = async () => {
   const existing = await ServiceLocation.findOne({
@@ -172,5 +172,5 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    await mongoose.disconnect().catch(() => {});
+    await mongoose.disconnect().catch(() => { });
   });

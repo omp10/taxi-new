@@ -65,7 +65,7 @@ const CareersPage = () => {
   };
 
   const buildShareText = (job) => (
-    `Check out this opening at Rydon24: ${job.title} (${job.department}) in ${job.location}.`
+    `Check out this opening at Appzeto 24: ${job.title} (${job.department}) in ${job.location}.`
   );
 
   const syncSelectedJobToUrl = (job) => {
@@ -103,7 +103,7 @@ const CareersPage = () => {
     if (channel === 'native' && navigator.share) {
       try {
         await navigator.share({
-          title: `${job.title} at Rydon24`,
+          title: `${job.title} at Appzeto 24`,
           text: shareText,
           url: shareUrl
         });
@@ -120,7 +120,7 @@ const CareersPage = () => {
       whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-      email: `mailto:?subject=${encodeURIComponent(`${job.title} at Rydon24`)}&body=${encodedText}%0A%0A${encodedUrl}`
+      email: `mailto:?subject=${encodeURIComponent(`${job.title} at Appzeto 24`)}&body=${encodedText}%0A%0A${encodedUrl}`
     };
 
     if (channel === 'copy') {
@@ -224,7 +224,7 @@ const CareersPage = () => {
             WE ARE HIRING
           </span>
           <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
-            Build the Future of <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFB300] to-[#FFC43D]">Mobility</span> with Rydon24
+            Build the Future of <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFB300] to-[#FFC43D]">Mobility</span> with Appzeto 24
           </h1>
           <p className="text-base md:text-lg text-gray-400 leading-relaxed max-w-2xl mx-auto">
             Join a fast-growing, dynamic team dedicated to providing secure, efficient, and modern transit and delivery services.
@@ -259,11 +259,10 @@ const CareersPage = () => {
                   <div
                     key={job.id}
                     onClick={() => handleSelectJob(job)}
-                    className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer bg-white ${
-                      selectedJob?.id === job.id
+                    className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer bg-white ${selectedJob?.id === job.id
                         ? 'border-[#FFB300] ring-2 ring-[#FFB300]/25 shadow-md scale-[1.01]'
                         : 'border-gray-100 shadow-sm hover:border-[#FFB300]/50 hover:shadow-md hover:translate-y-[-2px]'
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-start">
                       <div>

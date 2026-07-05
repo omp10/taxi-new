@@ -495,7 +495,7 @@ const ReferralTranslation = () => {
           <span className="text-gray-700">Referral Translation</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900 uppercase tracking-tight">Referral Translation</h1>
+          <h1 className="text-xl text-gray-900 uppercase tracking-tight font-bold">Referral Translation</h1>
           <div className="flex items-center gap-3">
             <button 
               onClick={() => navigate(-1)}

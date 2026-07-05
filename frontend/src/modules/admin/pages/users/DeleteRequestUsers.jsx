@@ -128,7 +128,7 @@ const DeleteRequestUsers = () => {
         </div>
 
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">Delete Requests</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Delete Requests</h1>
           <button
             type="button"
             onClick={() => navigate('/admin/users')}
@@ -154,7 +154,7 @@ const DeleteRequestUsers = () => {
                   <Trash2 size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Pending Requests</h3>
+                  <h3 className="text-sm text-gray-900 font-bold">Pending Requests</h3>
                   <p className="text-xs text-gray-400">Review customer account deletion requests</p>
                 </div>
               </div>

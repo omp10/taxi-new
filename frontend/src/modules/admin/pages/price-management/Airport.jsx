@@ -181,6 +181,14 @@ const Airport = ({ mode: initialMode = "list" }) => {
       alert('Airport name and service location are required.');
       return;
     }
+    if (formData.airport_surge && Number(formData.airport_surge) < 0) {
+      alert('Airport surge fee must be greater than or equal to 0.');
+      return;
+    }
+    if (formData.support_airport_fee && Number(formData.support_airport_fee) < 0) {
+      alert('Support airport fee must be greater than or equal to 0.');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -278,14 +286,35 @@ const Airport = ({ mode: initialMode = "list" }) => {
                 <span className="text-gray-700">Airport Management</span>
               </div>
               <div className="flex items-center justify-between">
-                <h1 className="text-xl font-semibold text-gray-900">Airport Management</h1>
+                <h1 className="text-xl text-gray-900 font-bold">Airport Management</h1>
                 <button 
+                  type="button"
                   onClick={() => navigate("create")}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-[#FFC400] text-[#0B1220] rounded-lg text-sm font-medium hover:brightness-95 transition-colors shadow-sm"
                 >
                   <Plus size={16} /> Add Airport
                 </button>
               </div>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+               <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                 <p className="text-xs font-semibold text-gray-500 mb-1">Total Airports</p>
+                 <h3 className="text-2xl font-bold text-gray-900">{airports.length}</h3>
+               </div>
+               <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                 <p className="text-xs font-semibold text-gray-500 mb-1">Active Airports</p>
+                 <h3 className="text-2xl font-bold text-gray-900">{airports.filter(a => (a.status || 'active').toLowerCase() === 'active' || a.active).length}</h3>
+               </div>
+               <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                 <p className="text-xs font-semibold text-gray-500 mb-1">Inactive Airports</p>
+                 <h3 className="text-2xl font-bold text-gray-900">{airports.filter(a => (a.status || '').toLowerCase() === 'inactive' || a.active === false).length}</h3>
+               </div>
+               <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                 <p className="text-xs font-semibold text-gray-500 mb-1">Locations Covered</p>
+                 <h3 className="text-2xl font-bold text-gray-900">{new Set(airports.map(a => a.service_location_id?._id || a.service_location_id).filter(Boolean)).size}</h3>
+               </div>
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -399,7 +428,10 @@ const Airport = ({ mode: initialMode = "list" }) => {
                               <div className="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600">
                                 <Plane size={14} />
                               </div>
-                              <span className="font-medium text-gray-900">{airport.name}</span>
+                              <span className="font-medium text-gray-900">
+                                {airport.name}
+                                {airport.code && <span className="ml-2 text-[10px] font-bold tracking-wider text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200 uppercase">{airport.code}</span>}
+                              </span>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-gray-600">
@@ -419,19 +451,26 @@ const Airport = ({ mode: initialMode = "list" }) => {
                             </select>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-2 text-gray-400">
-                              <button onClick={() => navigate(`edit/${airport._id || airport.id}`)} className="p-1.5 hover:text-indigo-600 transition-colors"><Edit2 size={14} /></button>
-                              <button onClick={() => handleDelete(airport._id || airport.id)} className="p-1.5 hover:text-rose-600 transition-colors"><Trash2 size={14} /></button>
+                            <div className="flex justify-end gap-2 text-gray-400 relative z-50">
+                              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`edit/${airport._id || airport.id}`); }} className="p-1.5 hover:text-[#0B1220] hover:bg-[#FFC400] rounded-lg transition-colors"><Edit2 size={14} /></button>
+                              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(airport._id || airport.id); }} className="p-1.5 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"><Trash2 size={14} /></button>
                             </div>
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="4" className="py-32 text-center text-gray-400">
-                          <FileSearch size={48} className="mx-auto mb-4 opacity-20" />
-                          <h3 className="text-gray-900 font-semibold">No Data Found</h3>
-                          <p className="text-xs">Try adjusting your search or add a new airport.</p>
+                        <td colSpan="4" className="py-24 text-center">
+                          <Plane size={48} className="mx-auto mb-4 text-gray-300" />
+                          <h3 className="text-gray-900 mb-1 font-bold">No Airports Available</h3>
+                          <p className="text-sm text-gray-500 mb-6">Create your first airport to enable airport pricing.</p>
+                          <button 
+                            type="button"
+                            onClick={() => navigate("create")}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-[#FFC400] text-[#0B1220] rounded-lg text-sm font-medium hover:brightness-95 transition-colors shadow-sm"
+                          >
+                            <Plus size={16} /> Add Airport
+                          </button>
                         </td>
                       </tr>
                     )}
@@ -454,12 +493,13 @@ const Airport = ({ mode: initialMode = "list" }) => {
                 <span className="text-gray-700">{id ? 'Edit' : 'Create'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <h1 className="text-xl font-semibold text-gray-900">{id ? 'Edit Airport' : 'Add Airport'}</h1>
+                <h1 className="text-xl text-gray-900 font-bold">{id ? 'Edit Airport' : 'Add Airport'}</h1>
                 <button 
-                  onClick={() => navigate("/admin/pricing/airport")}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate("/admin/pricing/airport"); setView('list'); }}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm relative z-50"
                 >
-                  <ArrowLeft size={16} /> Back
+                  <ArrowLeft size={14} /> Back
                 </button>
               </div>
             </div>
@@ -472,7 +512,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
                         <Plane size={18} />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Airport Details</h3>
+                        <h3 className="text-sm text-gray-900 font-bold">Airport Details</h3>
                         <p className="text-xs text-gray-400">Configure core airport terminal data</p>
                       </div>
                    </div>
@@ -520,6 +560,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
                             <Globe size={12} className="inline mr-1 text-gray-400" />
                             Airport Surge Fee
                           </label>
+                          <p className="text-[10px] text-gray-400 mb-2">Extra pickup/drop charge for airport trips.</p>
                           <input
                             type="number"
                             min="0"
@@ -536,6 +577,7 @@ const Airport = ({ mode: initialMode = "list" }) => {
                             <Globe size={12} className="inline mr-1 text-gray-400" />
                             Support Airport Fee
                           </label>
+                          <p className="text-[10px] text-gray-400 mb-2">Additional operational airport support fee.</p>
                           <input
                             type="number"
                             min="0"
@@ -570,14 +612,16 @@ const Airport = ({ mode: initialMode = "list" }) => {
 
                 <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
                    <button 
+                     type="button"
                      onClick={handleSave} disabled={saving}
-                     className="w-full py-3 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                     className="w-full py-3 bg-[#FFC400] text-[#0B1220] rounded-lg text-sm font-medium hover:brightness-95 transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
                    >
                      {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                      {id ? 'Update Airport' : 'Save Airport'}
                    </button>
                    <button 
-                     onClick={() => navigate("/admin/pricing/airport")}
+                     type="button"
+                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate("/admin/pricing/airport"); setView('list'); }}
                      className="w-full py-3 bg-gray-50 text-gray-600 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
                    >
                      Cancel

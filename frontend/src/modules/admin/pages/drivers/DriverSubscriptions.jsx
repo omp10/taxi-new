@@ -91,7 +91,7 @@ const DriverSubscriptions = () => {
           <span className="text-gray-700">Subscription</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">Subscription</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Subscription</h1>
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">
               <Download size={15} /> Export List

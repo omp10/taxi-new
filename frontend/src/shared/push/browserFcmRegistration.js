@@ -31,7 +31,7 @@ const isNativeContainer = () => {
   }
 
   // Primary flag set by main.jsx WebView detection.
-  if (window.__isRydon24WebView) {
+  if (window.__isAppzeto24WebView) {
     return true;
   }
 
@@ -40,15 +40,15 @@ const isNativeContainer = () => {
   if (
     typeof window.flutter_inappwebview !== 'undefined' ||
     typeof window.Flutter !== 'undefined' ||
-    typeof window.__rydon24_native !== 'undefined' ||
-    typeof window.AndroidBridge !== 'undefined' ||
-    typeof window.Android !== 'undefined'
+    typeof window.__Appzeto24_native !== 'undefined' ||
+      typeof window.AndroidBridge !== 'undefined' ||
+      typeof window.Android !== 'undefined'
   ) {
-    window.__isRydon24WebView = true;
-    return true;
-  }
+  window.__isAppzeto24WebView = true;
+  return true;
+}
 
-  return false;
+return false;
 };
 
 const getPushPlatform = () => {
@@ -164,7 +164,7 @@ const saveTokenForRole = async (role, token) => {
   // Also save to 'web' (fcmTokenWeb) so both fields have a valid token and
   // push notifications can be delivered through either channel.
   if (platform === 'mobile') {
-    await saveFn(token, 'web').catch(() => {});
+    await saveFn(token, 'web').catch(() => { });
   }
 };
 
@@ -251,7 +251,7 @@ export const installBrowserFcmRegistration = () => {
   window.__registerBrowserFcmToken = (options) => registerBrowserFcmToken(options);
 
   const retryPassiveRegistration = () => {
-    registerBrowserFcmToken({ interactive: false }).catch(() => {});
+    registerBrowserFcmToken({ interactive: false }).catch(() => { });
   };
 
   window.addEventListener('focus', retryPassiveRegistration);

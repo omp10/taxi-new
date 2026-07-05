@@ -82,7 +82,7 @@ const WithdrawalRequestDrivers = () => {
           <span className="text-gray-700">Withdrawal Request Drivers</span>
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Withdrawal Request Drivers</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Withdrawal Request Drivers</h1>
         </div>
       </div>
 

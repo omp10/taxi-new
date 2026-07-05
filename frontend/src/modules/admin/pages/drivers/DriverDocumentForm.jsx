@@ -367,7 +367,7 @@ const DriverDocumentForm = () => {
           <span className="text-gray-700">{isEditMode ? 'Edit' : 'Create'}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">
+          <h1 className="text-xl text-gray-900 font-bold">
             {isEditMode ? 'Edit' : 'Create'} {templateType === 'vehicle_field' ? 'Vehicle Field' : 'Document'}
           </h1>
           <button

@@ -495,14 +495,49 @@ body {
 .user-app-theme .bg-slate-300,
 .user-app-theme .bg-gray-300,
 .user-app-theme .bg-slate-50\/50,
+.user-app-theme .bg-slate-50\/60,
+.user-app-theme .bg-slate-50\/70,
+.user-app-theme .bg-slate-50\/80,
+.user-app-theme .bg-slate-50\/90,
 .user-app-theme .bg-slate-100\/40,
+.user-app-theme .bg-slate-100\/50,
+.user-app-theme .bg-slate-100\/60,
 .user-app-theme .bg-slate-100\/70,
 .user-app-theme .bg-white\/10,
+.user-app-theme .bg-white\/20,
+.user-app-theme .bg-white\/30,
 .user-app-theme .bg-slate-200\/50,
+.user-app-theme .bg-orange-50,
+.user-app-theme .bg-orange-50\/60,
+.user-app-theme .bg-orange-50\/70,
+.user-app-theme .bg-orange-100,
+.user-app-theme .bg-orange-100\/60,
+.user-app-theme .bg-emerald-50,
 .user-app-theme .bg-emerald-50\/30,
 .user-app-theme .bg-emerald-50\/50,
+.user-app-theme .bg-emerald-50\/70,
+.user-app-theme .bg-emerald-100,
+.user-app-theme .bg-emerald-100\/50,
+.user-app-theme .bg-emerald-100\/70,
+.user-app-theme .bg-blue-50,
+.user-app-theme .bg-blue-50\/60,
+.user-app-theme .bg-blue-50\/70,
+.user-app-theme .bg-blue-100,
+.user-app-theme .bg-blue-100\/50,
+.user-app-theme .bg-indigo-50,
+.user-app-theme .bg-indigo-50\/50,
 .user-app-theme .bg-indigo-50\/70,
+.user-app-theme .bg-red-50,
 .user-app-theme .bg-rose-50,
+.user-app-theme .bg-rose-50\/60,
+.user-app-theme .bg-rose-50\/70,
+.user-app-theme .bg-rose-100,
+.user-app-theme .bg-amber-50,
+.user-app-theme .bg-amber-50\/60,
+.user-app-theme .bg-amber-100,
+.user-app-theme .bg-yellow-50,
+.user-app-theme .bg-yellow-50\/60,
+.user-app-theme .bg-yellow-100,
 .user-app-theme .bg-slate-900\/60,
 .user-app-theme .bg-slate-950\/60,
 .user-app-theme .bg-slate-950\/75,
@@ -751,6 +786,7 @@ body {
 :root {
   --user-bg: #0F172A;
   --user-card-bg: #111827;
+  --user-card-soft: #162238;
   --user-text-primary: #FFFFFF;
   --user-text-secondary: #CBD5E1;
   --user-border: rgba(255,255,255,0.10);
@@ -764,6 +800,7 @@ body {
 .user-app-theme[class*="light"] {
   --user-bg: #F8FAFC;
   --user-card-bg: #FFFFFF;
+  --user-card-soft: #f1f3f8;
   --user-text-primary: #0B1220;
   --user-text-secondary: #64748B;
   --user-border: rgba(15,23,42,0.10);
@@ -777,6 +814,7 @@ body {
 .user-app-theme[class*="dark"] {
   --user-bg: #05070D;
   --user-card-bg: #101827;
+  --user-card-soft: #162238;
   --user-text-primary: #FFFFFF;
   --user-text-secondary: #CBD5E1;
   --user-border: rgba(255,255,255,0.12);
@@ -790,10 +828,14 @@ body {
   background-color: var(--user-bg) !important;
   color: var(--user-text-primary) !important;
   width: 100% !important;
-  max-width: 430px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
   box-sizing: border-box !important;
+}
+@media (max-width: 1023px) {
+  .user-app-theme {
+    max-width: 430px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
 }
 
 /* Shortcut image background blob */
@@ -854,13 +896,17 @@ html, body, #root {
   position: relative !important;
   min-height: 100vh !important;
   width: 100% !important;
-  max-width: 430px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   background: var(--user-bg) !important;
   box-sizing: border-box !important;
+}
+@media (max-width: 1023px) {
+  .user-home {
+    max-width: 430px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
 }
 
 .map-header {
@@ -933,7 +979,13 @@ html, body, #root {
 
 /* Centrally force all max-w-lg page wrapper elements to be mobile responsive */
 .max-w-lg {
-  width: 100% !important;
+  /* Let tailwind handle max-w-lg or we can override below */
+}
+@media (max-width: 1023px) {
+  .max-w-lg {
+    width: 100% !important;
+    max-width: 430px !important;
+  }
 }
 
 /* Centrally enforce Outfit font-family globally across all elements to override explicit custom font families */
@@ -1004,8 +1056,13 @@ html, body, #root {
 .user-app,
 .mobile-app-shell {
   width: 100% !important;
-  max-width: 430px !important;
   overflow-x: hidden !important;
+}
+@media (max-width: 1023px) {
+  .user-app,
+  .mobile-app-shell {
+    max-width: 430px !important;
+  }
 }
 
 .home-section,

@@ -46,7 +46,7 @@ const OwnerFormPanel = ({
             <User size={18} />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Basic Information</h3>
+            <h3 className="text-sm text-gray-900 font-bold">Basic Information</h3>
             <p className="text-xs text-gray-400">Register an owner account for fleet operations.</p>
           </div>
         </div>

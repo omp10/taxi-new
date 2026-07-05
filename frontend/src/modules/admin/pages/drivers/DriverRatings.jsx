@@ -51,7 +51,7 @@ const DriverRatings = () => {
           <span className="text-gray-700">Driver Rating</span>
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Driver Rating</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Driver Rating</h1>
         </div>
       </div>
 

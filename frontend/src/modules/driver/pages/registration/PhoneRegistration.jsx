@@ -25,7 +25,7 @@ const PhoneRegistration = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings } = useSettings();
-  const appName = settings.general?.app_name || 'Rydon24 Trawler';
+  const appName = settings.general?.app_name || 'Appzeto 24 Trawler';
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
   const storedSession = getStoredDriverRegistrationSession();
   const isOwnerPortal = location.pathname.startsWith('/taxi/owner');
@@ -236,11 +236,11 @@ const PhoneRegistration = () => {
                 </p>
               </div>
             </div>
-         
+
             <h1 className="text-4xl font-black text-slate-900 tracking-tight">
               {isLoginPage ? 'Hello!' : 'Welcome'}
             </h1>
-         
+
             {!isOwnerPortal && (
               <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
                 Driver, owner, pooling, bus, and service center logins all start here
@@ -329,11 +329,10 @@ const PhoneRegistration = () => {
               whileTap={{ scale: 0.98 }}
               onClick={handleSendOTP}
               disabled={loading || !agreed || phone.length !== 10}
-              className={`group flex h-18 w-full items-center justify-center gap-3 rounded-[24px] text-lg font-black transition-all ${
-                agreed && phone.length === 10
+              className={`group flex h-18 w-full items-center justify-center gap-3 rounded-[24px] text-lg font-black transition-all ${agreed && phone.length === 10
                   ? 'bg-slate-900 text-white shadow-2xl shadow-slate-900/20'
                   : 'bg-slate-100 text-slate-300 pointer-events-none'
-              }`}
+                }`}
             >
               {loading ? (
                 <div className="h-6 w-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />

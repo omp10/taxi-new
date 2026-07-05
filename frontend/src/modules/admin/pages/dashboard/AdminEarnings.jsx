@@ -388,31 +388,31 @@ const AdminEarnings = () => {
       {/* 2. KPI CARDS SECTION (10 Metrics) */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 mb-8">
         {[
-          { label: "Total Commission", value: currency(totalCommission), icon: IndianRupee, color: "text-[#0B1220]", bg: "bg-amber-50" },
-          { label: "Gross Ride Fare", value: currency(grossFare), icon: Wallet, color: "text-blue-600", bg: "bg-blue-50/50" },
-          { label: "Driver Earnings", value: currency(driverEarnings), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50/60" },
-          { label: "Net Platform Revenue", value: currency(netPlatformRevenue), icon: ShieldCheck, color: "text-indigo-600", bg: "bg-indigo-50/50" },
-          { label: "Average Commission", value: currency(averageCommission), icon: BarChart3, color: "text-purple-600", bg: "bg-purple-50/50" },
-          { label: "Cash Commission", value: currency(cashCommission), icon: UserRound, color: "text-slate-700", bg: "bg-slate-100/70" },
-          { label: "Online Commission", value: currency(onlineCommission), icon: Car, color: "text-teal-600", bg: "bg-teal-50/50" },
-          { label: "Pending Settlements", value: currency(pendingSettlements), icon: Clock, color: "text-amber-600", bg: "bg-amber-50/60" },
-          { label: "Refund Amount", value: currency(refundAmount), icon: AlertTriangle, color: "text-rose-600", bg: "bg-rose-50/50" },
-          { label: "Completed Transactions", value: totalTrips, icon: CheckCircle, color: "text-sky-600", bg: "bg-sky-50/50" }
+          { label: "Total Commission", value: currency(totalCommission), icon: IndianRupee, cardBg: "!bg-orange-500" },
+          { label: "Gross Ride Fare", value: currency(grossFare), icon: Wallet, cardBg: "!bg-blue-500" },
+          { label: "Driver Earnings", value: currency(driverEarnings), icon: TrendingUp, cardBg: "!bg-emerald-500" },
+          { label: "Net Platform Revenue", value: currency(netPlatformRevenue), icon: ShieldCheck, cardBg: "!bg-violet-500" },
+          { label: "Average Commission", value: currency(averageCommission), icon: BarChart3, cardBg: "!bg-fuchsia-500" },
+          { label: "Cash Commission", value: currency(cashCommission), icon: UserRound, cardBg: "!bg-slate-600" },
+          { label: "Online Commission", value: currency(onlineCommission), icon: Car, cardBg: "!bg-teal-500" },
+          { label: "Pending Settlements", value: currency(pendingSettlements), icon: Clock, cardBg: "!bg-orange-500" },
+          { label: "Refund Amount", value: currency(refundAmount), icon: AlertTriangle, cardBg: "!bg-rose-500" },
+          { label: "Completed Transactions", value: totalTrips, icon: CheckCircle, cardBg: "!bg-sky-500" }
         ].map((kpi, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: idx * 0.03 }}
-            className="admin-card !p-4 bg-white hover:scale-[1.02] transition-all hover:shadow-md border border-[#E5E7EB] rounded-lg"
+            className={`admin-card !p-4 border-none !text-white hover:scale-[1.02] transition-all shadow-lg rounded-lg ${kpi.cardBg}`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="card-label text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">{kpi.label}</span>
-              <div className={`p-2 rounded-lg ${kpi.bg} ${kpi.color}`}>
-                <kpi.icon size={15} />
+              <span className="card-label text-[10px] font-bold opacity-80 uppercase tracking-wider">{kpi.label}</span>
+              <div className="p-2 rounded-full bg-white/20 backdrop-blur-sm">
+                <kpi.icon size={16} strokeWidth={2.5} />
               </div>
             </div>
-            <h4 className="text-base font-bold text-[#0B1220] tracking-tight mt-1">{loading ? '...' : kpi.value}</h4>
+            <h4 className="text-xl font-black tracking-tight mt-1">{loading ? '...' : kpi.value}</h4>
           </motion.div>
         ))}
       </div>
@@ -568,7 +568,7 @@ const AdminEarnings = () => {
               const heightPercent = maxCommission > 0 ? Math.max(10, Math.min(100, (Number(r.adminCommission || 0) / maxCommission) * 100)) : 10;
               return (
                 <div key={i} className="w-5 bg-amber-100 hover:bg-[#FFC400] transition-colors rounded-sm group relative" style={{ height: `${heightPercent}%` }}>
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 bg-slate-900 text-white rounded p-1.5 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mb-1 z-10 whitespace-nowrap">
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 bg-slate-900 !text-white rounded p-1.5 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none mb-1 z-10 whitespace-nowrap">
                     ₹{r.adminCommission}
                   </div>
                 </div>
@@ -760,15 +760,15 @@ const AdminEarnings = () => {
                       </tr>
                       {isExpanded && (
                         <tr className="bg-[#FAFBFD]">
-                          <td colSpan={14} className="px-5 py-4">
+                          <td colSpan={14} className="px-3 py-2">
                             <motion.div
                               initial={{ opacity: 0, height: 0 }}
                               animate={{ opacity: 1, height: 'auto' }}
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
-                              className="bg-white border-l-4 border-l-[#FFC400] border border-[#E5E7EB] rounded-r-xl p-6 shadow-sm space-y-6 font-sans text-xs text-[#0B1220] overflow-hidden"
+                              className="bg-white border-l-4 border-l-[#FFC400] border border-[#E5E7EB] rounded-r-xl p-3 shadow-sm space-y-3 font-sans text-xs text-[#0B1220] overflow-hidden"
                             >
-                              <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
+                              <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-2">
                                 <div>
                                   <h4 className="font-bold text-sm text-[#0B1220] flex items-center gap-1.5">
                                     <IndianRupee size={15} className="text-[#FFC400]" />
@@ -787,14 +787,14 @@ const AdminEarnings = () => {
                                 </button>
                               </div>
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div className="bg-slate-50 rounded-lg p-2.5 border border-slate-100">
                                   <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-bold mb-1.5">Rider Information</span>
                                   <span className="font-bold text-slate-900 block">{selectedTx.userName || 'Not available'}</span>
                                   <span className="text-slate-400 block mt-0.5 text-[10px]">{selectedTx.userPhone || 'Not available'}</span>
                                 </div>
 
-                                <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                <div className="bg-slate-50 rounded-lg p-2.5 border border-slate-100">
                                   <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-bold mb-1.5">Driver Information</span>
                                   <span className="font-bold text-slate-900 block">{selectedTx.driverName || 'Not available'}</span>
                                   <span className="text-slate-400 block mt-0.5 text-[10px]">{selectedTx.driverPhone || 'Not available'}</span>
@@ -825,7 +825,7 @@ const AdminEarnings = () => {
                                 </div>
                               </div>
 
-                              <div className="pt-4 border-t border-[#F1F5F9] grid grid-cols-2 md:grid-cols-4 gap-4 text-[11px]">
+                              <div className="pt-2 border-t border-[#F1F5F9] grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
                                 <div>
                                   <span className="text-slate-400 block">Gross Ride Fare</span>
                                   <span className="font-bold text-[#0B1220] text-sm mt-0.5 block">{currency(selectedTx.grossFare)}</span>

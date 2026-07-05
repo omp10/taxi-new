@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ChevronRight, 
-  Save, 
-  Plus, 
-  Trash2, 
-  Edit2, 
-  ToggleLeft, 
-  ToggleRight, 
-  ArrowUp, 
+import {
+  ChevronRight,
+  Save,
+  Plus,
+  Trash2,
+  Edit2,
+  ToggleLeft,
+  ToggleRight,
+  ArrowUp,
   ArrowDown,
   LayoutGrid,
   Sparkles,
@@ -20,7 +20,7 @@ import { uploadService } from '../../../../shared/services/uploadService';
 import api from '../../../../shared/api/axiosInstance';
 import { useSettings } from '../../../../shared/context/SettingsContext';
 
-const STORAGE_KEY = 'rydon24:admin:user-app-settings';
+const STORAGE_KEY = 'Appzeto :admin:user-app-settings';
 
 const defaultSettings = {
   homeSections: {
@@ -317,10 +317,10 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
   };
 
   const updateTabItems = (newItems) => {
-    const key = activeTab === 'everything' ? 'everything' : 
-                activeTab === 'explore' ? 'explore' : 
-                activeTab === 'promos' ? 'promos' : 
-                activeTab === 'go-places' ? 'go-places' : '';
+    const key = activeTab === 'everything' ? 'everything' :
+      activeTab === 'explore' ? 'explore' :
+        activeTab === 'promos' ? 'promos' :
+          activeTab === 'go-places' ? 'go-places' : '';
     if (!key) return;
 
     // Convert tab name mapping correctly
@@ -434,9 +434,9 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
       <div className="mb-8 flex items-center justify-between">
         <h1 className="text-[15px] font-black text-gray-800 uppercase tracking-widest">User App Management</h1>
         <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-           <span>Settings</span>
-           <ChevronRight size={12} strokeWidth={3} />
-           <span className="text-gray-600">User App UI</span>
+          <span>Settings</span>
+          <ChevronRight size={12} strokeWidth={3} />
+          <span className="text-gray-600">User App UI</span>
         </div>
       </div>
 
@@ -452,11 +452,10 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                   setEditItem(null);
                   setIsAdding(false);
                 }}
-                className={`w-full text-left px-4 py-3 rounded-xl text-[13px] font-bold transition-all flex items-center justify-between ${
-                  activeTab === tab.id 
-                    ? 'bg-[#405189] text-white shadow-md' 
+                className={`w-full text-left px-4 py-3 rounded-xl text-[13px] font-bold transition-all flex items-center justify-between ${activeTab === tab.id
+                    ? 'bg-[#405189] text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <span>{tab.label}</span>
                 <ChevronRight size={14} className={activeTab === tab.id ? 'text-white' : 'text-gray-300'} />
@@ -593,7 +592,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                 {/* Upload Footer Image Section */}
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Upload Footer Background Image</label>
-                  
+
                   {settings.footer.uploadedImage ? (
                     <div className="relative rounded-2xl border border-gray-200 p-4 bg-gray-50 flex items-center gap-4">
                       <img
@@ -626,11 +625,10 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                           await processFooterFile(e.dataTransfer.files[0]);
                         }
                       }}
-                      className={`relative rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-200 ${
-                        dragActive
+                      className={`relative rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-200 ${dragActive
                           ? 'border-[#405189] bg-indigo-50/20'
                           : 'border-gray-300 hover:border-gray-400 bg-white'
-                      }`}
+                        }`}
                     >
                       <input
                         type="file"
@@ -725,11 +723,10 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                             <td className="py-3.5">
                               <button
                                 onClick={() => toggleItemStatus(item.id)}
-                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                                  item.status === 'active' 
-                                    ? 'bg-emerald-50 text-emerald-700' 
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${item.status === 'active'
+                                    ? 'bg-emerald-50 text-emerald-700'
                                     : 'bg-red-50 text-red-700'
-                                }`}
+                                  }`}
                               >
                                 {item.status}
                               </button>
@@ -806,7 +803,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                     {/* Upload Image Section */}
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Upload Image</label>
-                      
+
                       {uploadedImageUrl ? (
                         <div className="relative rounded-2xl border border-gray-200 p-4 bg-gray-50 flex items-center gap-4">
                           <img
@@ -832,11 +829,10 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                           onDragOver={handleDrag}
                           onDragLeave={handleDrag}
                           onDrop={handleDrop}
-                          className={`relative rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-200 ${
-                            dragActive
+                          className={`relative rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-200 ${dragActive
                               ? 'border-[#405189] bg-indigo-50/20'
                               : 'border-gray-300 hover:border-gray-400 bg-white'
-                          }`}
+                            }`}
                         >
                           <input
                             type="file"

@@ -16,8 +16,8 @@ const PENDING_SIGNUP_EMPLOYEE_CODE_KEY = 'pendingUserSignupEmployeeCode';
 const RESEND_OTP_COOLDOWN_SECONDS = 60;
 
 const syncPushTokens = () => {
-  window.__flushNativeFcmToken?.().catch?.(() => {});
-  window.__registerBrowserFcmToken?.({ interactive: true }).catch?.(() => {});
+  window.__flushNativeFcmToken?.().catch?.(() => { });
+  window.__registerBrowserFcmToken?.({ interactive: true }).catch?.(() => { });
 };
 
 const notifyAuthReady = () => {
@@ -36,14 +36,14 @@ const VerifyOTP = () => {
   const { settings } = useSettings();
   const { theme, toggleTheme } = useUserTheme();
   const inputs = useRef([]);
-  
+
   const phone = String(
     location.state?.phone ||
     sessionStorage.getItem(PENDING_OTP_PHONE_KEY) ||
     sessionStorage.getItem(PENDING_SIGNUP_PHONE_KEY) ||
     '',
   ).replace(/\D/g, '').slice(-10);
-  
+
   const referralCode = String(
     location.state?.referralCode ||
     sessionStorage.getItem(PENDING_SIGNUP_REFERRAL_CODE_KEY) ||
@@ -64,7 +64,7 @@ const VerifyOTP = () => {
   const [showPermissions, setShowPermissions] = useState(false);
   const [permissionStep, setPermissionStep] = useState('location');
 
-  const appName = settings.general?.app_name || 'Rydon24';
+  const appName = settings.general?.app_name || 'Appzeto 24';
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
 
   useEffect(() => {
@@ -173,7 +173,7 @@ const VerifyOTP = () => {
         notifyAuthReady();
         syncPushTokens();
         sessionStorage.removeItem(PENDING_OTP_PHONE_KEY);
-        
+
         // Successful login for existing user triggers permissions flow
         setTimeout(() => setShowPermissions(true), 800);
         return;
@@ -311,7 +311,7 @@ const VerifyOTP = () => {
           >
             Allow Permission
           </motion.button>
-          
+
           <button
             onClick={permissionStep === 'location' ? () => setPermissionStep('notification') : () => navigate('/taxi/user', { replace: true })}
             className="w-full py-4 text-sm font-extrabold uppercase tracking-widest login-subtitle hover:text-white transition-colors cursor-pointer"
@@ -329,12 +329,12 @@ const VerifyOTP = () => {
 
       {/* Immersive Top Background Image */}
       <div className="login-hero">
-        <motion.img 
+        <motion.img
           initial={{ opacity: 0, scale: 1.06 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.0, ease: "easeOut" }}
-          src={yellowTaxiLoginBg} 
-          alt="Taxi background" 
+          src={yellowTaxiLoginBg}
+          alt="Taxi background"
           className="login-hero-img"
         />
 
@@ -346,14 +346,14 @@ const VerifyOTP = () => {
             className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-xl"
           >
             {appLogo ? (
-              <img 
-                src={appLogo} 
-                alt={appName} 
+              <img
+                src={appLogo}
+                alt={appName}
                 className="h-6 w-6 object-contain rounded-full bg-slate-950 p-0.5"
               />
             ) : (
               <div className="h-6 w-6 bg-[#FFB300] rounded-full flex items-center justify-center shadow-lg">
-                 <span className="text-[11px] font-black italic text-slate-950">{appName[0]?.toUpperCase() || 'R'}</span>
+                <span className="text-[11px] font-black italic text-slate-950">{appName[0]?.toUpperCase() || 'R'}</span>
               </div>
             )}
             <span className="text-[13px] font-black tracking-wide text-white uppercase">{appName}</span>
@@ -373,7 +373,7 @@ const VerifyOTP = () => {
       </div>
 
       <main className="flex-1 flex flex-col justify-end">
-        <motion.div 
+        <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
@@ -381,12 +381,12 @@ const VerifyOTP = () => {
         >
           <div className="space-y-8">
             <div className="space-y-2">
-               <h2 className="text-[26px] font-black login-primary-text leading-tight">
-                 Verify Number
-               </h2>
-               <p className="login-subtitle text-[14px] font-semibold">
-                 We've sent a code to <span className="login-primary-text font-bold">+91 {phone}</span>
-               </p>
+              <h2 className="text-[26px] font-black login-primary-text leading-tight">
+                Verify Number
+              </h2>
+              <p className="login-subtitle text-[14px] font-semibold">
+                We've sent a code to <span className="login-primary-text font-bold">+91 {phone}</span>
+              </p>
             </div>
 
             {/* OTP Inputs */}
@@ -420,18 +420,17 @@ const VerifyOTP = () => {
               <button
                 onClick={handleResend}
                 disabled={timer > 0 || loading}
-                className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${
-                  timer > 0 
-                    ? 'login-subtitle opacity-40' 
+                className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${timer > 0
+                    ? 'login-subtitle opacity-40'
                     : 'login-primary-text hover:opacity-70 underline underline-offset-4 decoration-2 cursor-pointer'
-                }`}
+                  }`}
               >
                 <MessageSquare size={14} />
                 {timer > 0 ? `Retry in ${timer}s` : 'Resend Code'}
               </button>
             </div>
 
-            <motion.button 
+            <motion.button
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handleVerify()}

@@ -7,7 +7,7 @@ const withTimeout = (promise, timeoutMs = 1500) =>
   ]);
 
 const isAndroidWebView = () => {
-  if (globalThis.window?.__isRydon24WebView) return true;
+  if (globalThis.window?.__isAppzeto24WebView) return true;
   const ua = String(globalThis.navigator?.userAgent || '');
   // Standard Android WebView marker: "; wv)" in the user agent.
   if (/; wv\)/i.test(ua)) return true;
@@ -16,9 +16,9 @@ const isAndroidWebView = () => {
   // Some Flutter WebViews strip the wv marker but still have Android + Chrome.
   // Detect via the standalone property (WebViews are not standalone PWAs).
   if (/Android/i.test(ua) && globalThis.navigator?.standalone === undefined
-      && typeof globalThis.matchMedia === 'function'
-      && !globalThis.matchMedia('(display-mode: standalone)').matches
-      && !globalThis.matchMedia('(display-mode: browser)').matches) {
+    && typeof globalThis.matchMedia === 'function'
+    && !globalThis.matchMedia('(display-mode: standalone)').matches
+    && !globalThis.matchMedia('(display-mode: browser)').matches) {
     return true;
   }
   return false;
@@ -161,13 +161,13 @@ const postToJavascriptChannel = (targetUrl, checkoutPayload) => {
 };
 
 const callNativeInterface = (targetUrl, checkoutPayload) => {
-  if (typeof globalThis.Rydon24Native?.openExternalUrl === 'function') {
+  if (typeof globalThis.Appzeto24Native?.openExternalUrl === 'function') {
     try {
-      globalThis.Rydon24Native.openExternalUrl({ url: targetUrl });
-      recordCheckoutDiagnostic({ status: 'rydon24-native-bridge-called', targetUrl });
+      globalThis.Appzeto24Native.openExternalUrl({ url: targetUrl });
+      recordCheckoutDiagnostic({ status: 'Appzeto24-native-bridge-called', targetUrl });
       return true;
     } catch (error) {
-      recordCheckoutDiagnostic({ status: 'rydon24-native-bridge-failed', message: error?.message || String(error) });
+      recordCheckoutDiagnostic({ status: 'Appzeto24-native-bridge-failed', message: error?.message || String(error) });
     }
   }
 
@@ -233,8 +233,8 @@ const callNativeInterface = (targetUrl, checkoutPayload) => {
 
 const redirectInCurrentWindow = (targetUrl, status = 'browser-redirect') => {
   recordCheckoutDiagnostic({ status });
-  
-  if (isAndroidWebView() || globalThis.window?.__isRydon24WebView) {
+
+  if (isAndroidWebView() || globalThis.window?.__isAppzeto24WebView) {
     const intentUrl = convertToAndroidIntentUrl(targetUrl);
     recordCheckoutDiagnostic({ status: 'android-webview-intent-redirect', intentUrl });
     globalThis.location.href = intentUrl;
@@ -359,12 +359,12 @@ export const openExternalCheckout = async (url) => {
     }
 
     // 3. Try intent-based redirection fallback or custom Chrome protocol handler FIRST!
-    if (isAndroidWebView() || globalThis.window?.__isRydon24WebView) {
+    if (isAndroidWebView() || globalThis.window?.__isAppzeto24WebView) {
       const chromeCustomUrl = `googlechromes://navigate?url=${encodeURIComponent(targetUrl)}`;
       try {
         globalThis.location.href = chromeCustomUrl;
         recordCheckoutDiagnostic({ status: 'webview-chrome-scheme-redirect', chromeCustomUrl });
-        
+
         globalThis.setTimeout(() => {
           const intentUrl = convertToAndroidIntentUrl(targetUrl);
           recordCheckoutDiagnostic({ status: 'webview-intent-fallback-deferred', intentUrl });

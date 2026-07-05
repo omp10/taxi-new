@@ -224,7 +224,7 @@ const DriverList = ({ mode = 'approved' }) => {
           <span className="text-gray-700">{mode === 'active' ? 'Active Drivers' : 'Approved Drivers'}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">{mode === 'active' ? 'Active Drivers' : 'Approved Drivers'}</h1>
+          <h1 className="text-xl text-gray-900 font-bold">{mode === 'active' ? 'Active Drivers' : 'Approved Drivers'}</h1>
           {mode !== 'active' ? (
             <button
               onClick={() => navigate('/admin/drivers/create')}
@@ -472,7 +472,7 @@ const DriverList = ({ mode = 'approved' }) => {
             <div className="p-6 space-y-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-semibold text-gray-900">Update Password</h3>
+                  <h3 className="text-base text-gray-900 font-bold">Update Password</h3>
                   <p className="text-xs text-gray-400 mt-0.5">Set a new password for this driver</p>
                 </div>
                 <button 

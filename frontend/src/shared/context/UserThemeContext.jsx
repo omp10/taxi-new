@@ -22,6 +22,17 @@ export const UserThemeProvider = ({ children }) => {
     });
   };
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.style.backgroundColor = theme === 'dark' ? '#07111f' : '#f6f7fb';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [theme]);
+
   return (
     <UserThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}

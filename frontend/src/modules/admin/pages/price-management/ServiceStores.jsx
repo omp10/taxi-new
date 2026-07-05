@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Autocomplete, GoogleMap, MarkerF, Polygon } from '@react-google-maps/api';
+import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   Building2,
@@ -168,8 +169,11 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
   const filteredStores = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     if (!q) return stores;
-    return stores.filter(s => [s.name, s.owner_name, s.owner_phone, s.zone_id?.name, s.address].some(v => String(v || '').toLowerCase().includes(q)));
-  }, [searchTerm, stores]);
+    return stores.filter(s => {
+      const zoneName = s.zone_id?.name || zones.find(z => String(z._id || z.id) === String(s.zone_id))?.name || '';
+      return [s.name, s.owner_name, s.owner_phone, zoneName, s.address].some(v => String(v || '').toLowerCase().includes(q));
+    });
+  }, [searchTerm, stores, zones]);
 
   const selectedStore = useMemo(() => stores.find(s => String(s._id || s.id) === String(selectedStoreId)), [selectedStoreId, stores]);
   const selectedStoreStaff = useMemo(() => Array.isArray(selectedStore?.staff) ? selectedStore.staff : [], [selectedStore]);
@@ -236,17 +240,27 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
   };
 
   const handleSave = async () => {
-    if (!formData.name.trim() || !formData.zone_id) return alert('Name and zone are required.');
-    if (!formData.latitude || !formData.longitude) return alert('Pin the store on the map.');
+    if (!formData.name.trim()) return toast.error('Store Name is required.');
+    if (!formData.zone_id) return toast.error('Zone Association is required.');
+    if (!formData.address.trim()) return toast.error('Physical Address is required.');
+    
+    const phoneRegex = /^\d{10,15}$/;
+    if (!formData.owner_phone || !phoneRegex.test(formData.owner_phone.replace(/\D/g, ''))) {
+      return toast.error('Valid Owner Contact number (10-15 digits) is required.');
+    }
+    
+    if (!formData.latitude || !formData.longitude) return toast.error('Please pin the store on the map.');
+    
     setSaving(true);
     try {
       const payload = { ...formData, latitude: Number(formData.latitude), longitude: Number(formData.longitude) };
       const res = selectedStoreId ? await adminService.updateServiceStore(selectedStoreId, payload) : await adminService.createServiceStore(payload);
-      if (res?.data?.success || res?.success) {
+      if (res?.data?.success || res?.success || res) {
+        toast.success(selectedStoreId ? 'Store updated successfully' : 'Store created successfully');
         navigate('/admin/pricing/service-stores');
         fetchData();
       }
-    } catch (e) { alert(e.response?.data?.message || 'Error saving.'); } finally { setSaving(false); }
+    } catch (e) { toast.error(e.response?.data?.message || 'Error saving store.'); } finally { setSaving(false); }
   };
 
   const handleAddStaff = async () => {
@@ -313,26 +327,26 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] p-6 lg:p-8 font-sans">
+    <div className="min-h-screen bg-[#F8F9FA] p-4 lg:p-6 font-sans">
       <AnimatePresence mode="wait">
         {view === 'list' ? (
-          <motion.div key="list" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mx-auto max-w-7xl space-y-8">
+          <motion.div key="list" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mx-auto max-w-7xl space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+                <div className="flex items-center gap-2 mb-1 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
                   <span>Pricing</span><ChevronRight size={10} /><span className="text-slate-900">Stores</span>
                 </div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight">Service Stores</h1>
+                <h1 className="text-xl font-bold text-slate-900" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Service Stores</h1>
               </div>
-              <button onClick={() => navigate('/admin/pricing/service-stores/add')} className="flex items-center gap-2 rounded-2xl bg-slate-900 px-6 py-4 text-sm font-black text-white shadow-xl shadow-slate-900/10 transition-all hover:scale-105">
-                <Plus size={18} /> Add New Store
+              <button onClick={() => navigate('/admin/pricing/service-stores/add')} className="flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-black text-white shadow-md transition-all hover:scale-105">
+                <Plus size={16} /> Add New Store
               </button>
             </div>
-            <div className="grid gap-6 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
               {[{ label: 'Total Registry', val: stores.length, icon: Building2 }, { label: 'Pending Requests', val: pendingStores.length + pendingStaff.length, icon: Users }, { label: 'Active', val: stores.filter(s => s.status === 'active').length, icon: ShieldCheck }].map((s, i) => (
-                <div key={i} className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
-                  <div className="flex justify-between mb-4"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</p><s.icon size={16} className="text-slate-300" /></div>
-                  <p className="text-4xl font-black text-slate-900">{s.val}</p>
+                <div key={i} className="rounded-2xl border border-yellow-100 bg-[#FFFDF0] p-4 shadow-sm">
+                  <div className="flex justify-between mb-2"><p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</p><s.icon size={16} className="text-slate-300" /></div>
+                  <p className="text-2xl font-black text-slate-900">{s.val}</p>
                 </div>
               ))}
             </div>
@@ -380,9 +394,9 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
                 </div>
               </div>
             ) : null}
-            <div className="overflow-hidden rounded-[2.5rem] border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 bg-slate-50/50 p-6">
-                <div className="relative max-w-md"><Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search registry..." className="w-full rounded-2xl border border-slate-200 py-3.5 pl-12 pr-5 text-[13px] font-bold text-slate-900 outline-none focus:border-slate-900 focus:ring-8 focus:ring-slate-900/5" /></div>
+            <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 bg-slate-50/50 p-4">
+                <div className="relative max-w-sm"><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input type="text" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Search registry..." className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-xs font-bold text-slate-900 outline-none focus:border-slate-900 focus:ring-4 focus:ring-slate-900/5" /></div>
               </div>
               <div className="overflow-x-auto no-scrollbar">
                 {loading ? <div className="py-24 text-center"><Loader2 size={32} className="animate-spin text-slate-900 mx-auto" /></div> : (
@@ -391,12 +405,12 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
                     <tbody className="divide-y divide-slate-50">
                       {filteredStores.map(s => (
                         <tr key={s._id || s.id} className="group hover:bg-slate-50/30">
-                          <td className="px-8 py-6 flex items-center gap-4"><div className="h-11 w-11 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-colors"><Building2 size={18} /></div><div><p className="text-[14px] font-bold text-slate-900">{s.name}</p><p className="text-[11px] text-slate-400 truncate max-w-[150px]">{s.address}</p></div></td>
-                          <td className="px-8 py-6 text-[13px] font-bold text-slate-700">{s.zone_id?.name || '-'}</td>
-                          <td className="px-8 py-6"><p className="text-[13px] font-bold text-slate-900">{s.owner_name}</p><p className="text-[11px] text-slate-400">{s.owner_phone}</p></td>
-                          <td className="px-8 py-6"><div className="flex gap-4"><div className="flex items-center gap-1.5"><Users size={14} className="text-slate-300"/><span className="text-[13px] font-black">{s.staff?.length || 0}</span></div><div className="flex items-center gap-1.5"><Car size={14} className="text-slate-300"/><span className="text-[13px] font-black">{rentalVehicles.filter(v => v.serviceStoreIds?.includes(s._id || s.id)).length}</span></div></div></td>
-                          <td className="px-8 py-6"><div className="flex items-center gap-2"><div className={`h-1.5 w-1.5 rounded-full ${s.status === 'active' ? 'bg-emerald-500' : 'bg-slate-300'}`} /><span className="text-[10px] font-black uppercase text-slate-400">{s.status}</span></div></td>
-                          <td className="px-8 py-6 text-right"><div className="flex justify-end gap-1"><button onClick={() => navigate(`/admin/pricing/service-stores/edit/${s._id || s.id}`)} className="p-2.5 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"><Edit2 size={16} /></button><button onClick={() => handleDelete(s._id || s.id)} className="p-2.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"><Trash2 size={16} /></button></div></td>
+                          <td className="px-8 py-4 flex items-center gap-4"><div className="h-11 w-11 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-900 group-hover:bg-slate-900 group-hover:text-white transition-colors"><Building2 size={18} /></div><div><p className="text-[14px] font-bold text-slate-900">{s.name}</p><p className="text-[11px] text-slate-400 truncate max-w-[150px]">{s.address}</p></div></td>
+                          <td className="px-8 py-4 text-[13px] font-bold text-slate-700">{s.zone_id?.name || zones.find(z => String(z._id || z.id) === String(s.zone_id))?.name || '-'}</td>
+                          <td className="px-8 py-4"><p className="text-[13px] font-bold text-slate-900">{s.owner_name}</p><p className="text-[11px] text-slate-400">{s.owner_phone}</p></td>
+                          <td className="px-8 py-4"><div className="flex gap-4"><div className="flex items-center gap-1.5"><Users size={14} className="text-slate-300"/><span className="text-[13px] font-black">{s.staff?.length || 0}</span></div><div className="flex items-center gap-1.5"><Car size={14} className="text-slate-300"/><span className="text-[13px] font-black">{rentalVehicles.filter(v => v.serviceStoreIds?.includes(s._id || s.id)).length}</span></div></div></td>
+                          <td className="px-8 py-4"><div className="flex items-center gap-2"><div className={`h-1.5 w-1.5 rounded-full ${s.status === 'active' ? 'bg-emerald-500' : 'bg-slate-300'}`} /><span className="text-[10px] font-black uppercase text-slate-400">{s.status}</span></div></td>
+                          <td className="px-8 py-4 text-right"><div className="flex justify-end gap-1"><button onClick={() => navigate(`/admin/pricing/service-stores/edit/${s._id || s.id}`)} title="Edit Store" className="p-2.5 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all"><Edit2 size={16} /></button><button onClick={() => handleDelete(s._id || s.id)} title="Delete Store" className="p-2.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"><Trash2 size={16} /></button></div></td>
                         </tr>
                       ))}
                     </tbody>
@@ -406,35 +420,35 @@ const ServiceStores = ({ mode: initialMode = 'list' }) => {
             </div>
           </motion.div>
         ) : (
-          <motion.div key="form" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-7xl space-y-8">
-            <div className="flex items-center justify-between"><div><h1 className="text-2xl font-black text-slate-900 tracking-tight">{selectedStoreId ? 'Configure Hub' : 'Initialize Hub'}</h1></div><button onClick={() => navigate('/admin/pricing/service-stores')} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:border-slate-900 hover:text-slate-900 transition-all"><ArrowLeft size={16} /> Return</button></div>
-            <div className="grid gap-8 xl:grid-cols-[400px_minmax(0,1fr)]">
-              <div className="space-y-6">
-                <div className="rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm space-y-6">
-                  <div className="flex items-center gap-4 mb-4"><div className="h-12 w-12 bg-slate-900 rounded-2xl flex items-center justify-center text-white"><Building2 size={20} /></div><div><h3 className="font-bold text-slate-900">Identity Details</h3><p className="text-[11px] text-slate-400 uppercase tracking-widest font-black">Core Metadata</p></div></div>
-                  <div><label className={labelClass}>Store Name</label><input type="text" value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} className={inputClass} placeholder="Hub Name" /></div>
-                  <div><label className={labelClass}>Zone Association</label><select value={formData.zone_id} onChange={e => handleZoneChange(e.target.value)} className={inputClass}><option value="">Select Zone</option>{zones.map(z => <option key={z._id || z.id} value={z._id || z.id}>{z.name}</option>)}</select></div>
-                  <div><label className={labelClass}>Physical Address</label><textarea value={formData.address} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} className={`${inputClass} min-h-[100px] resize-none leading-relaxed`} placeholder="Street address" /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div><label className={labelClass}>Status</label><select value={formData.status} onChange={e => setFormData(p => ({ ...p, status: e.target.value }))} className={inputClass}><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
-                    <div><label className={labelClass}>Owner Contact</label><input type="text" value={formData.owner_phone} onChange={e => setFormData(p => ({ ...p, owner_phone: e.target.value }))} className={inputClass} placeholder="Phone" /></div>
+          <motion.div key="form" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-7xl space-y-4">
+            <div className="flex items-center justify-between"><div><h1 className="text-xl font-black text-slate-900 tracking-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>{selectedStoreId ? 'Configure Hub' : 'Initialize Hub'}</h1></div><button onClick={() => navigate('/admin/pricing/service-stores')} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-slate-900 hover:text-slate-900 transition-all"><ArrowLeft size={14} /> Return</button></div>
+            <div className="grid gap-4 xl:grid-cols-[400px_minmax(0,1fr)]">
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
+                  <div className="flex items-center gap-3 mb-2"><div className="h-8 w-8 bg-slate-900 rounded-xl flex items-center justify-center text-white"><Building2 size={16} /></div><div><h3 className="text-lg font-bold text-slate-900" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Identity Details</h3><p className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Core Metadata</p></div></div>
+                  <div><label className={labelClass}>Store Name *</label><input type="text" value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} className={inputClass} placeholder="Hub Name" required /></div>
+                  <div><label className={labelClass}>Zone Association *</label><select value={formData.zone_id} onChange={e => handleZoneChange(e.target.value)} className={inputClass} required><option value="">Select Zone</option>{zones.map(z => <option key={z._id || z.id} value={z._id || z.id}>{z.name}</option>)}</select></div>
+                  <div><label className={labelClass}>Physical Address *</label><textarea value={formData.address} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} className={`${inputClass} min-h-[60px] py-2 resize-none leading-relaxed`} placeholder="Street address" required /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className={labelClass}>Status *</label><select value={formData.status} onChange={e => setFormData(p => ({ ...p, status: e.target.value }))} className={inputClass} required><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+                    <div><label className={labelClass}>Owner Contact *</label><input type="text" value={formData.owner_phone} onChange={e => setFormData(p => ({ ...p, owner_phone: e.target.value.replace(/[^0-9+]/g, '') }))} className={inputClass} placeholder="Phone number" required /></div>
                   </div>
-                  <button onClick={handleSave} disabled={saving} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm shadow-xl shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">{saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} COMMIT CONFIGURATION</button>
+                  <button onClick={handleSave} disabled={saving} className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-black text-xs shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} COMMIT CONFIGURATION</button>
                 </div>
               </div>
-              <div className="space-y-8">
-                <div className="rounded-[3rem] border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/40"><div className="relative h-[440px] w-full overflow-hidden rounded-[2.5rem]">{isLoaded ? <GoogleMap mapContainerStyle={{ width: '100%', height: '100%' }} center={mapCenter} zoom={14} onLoad={m => mapRef.current = m} options={{ disableDefaultUI: true }}>{(formData.latitude || formData.longitude) && <MarkerF position={{ lat: Number(formData.latitude || mapCenter.lat), lng: Number(formData.longitude || mapCenter.lng) }} draggable onDragEnd={e => updatePinnedLocation(e.latLng.lat(), e.latLng.lng())} />}{zoneBoundary.length > 0 && <Polygon paths={zoneBoundary} options={{ fillColor: '#0F172A', fillOpacity: 0.05, strokeColor: '#0F172A', strokeOpacity: 0.4, strokeWeight: 2 }} />}<div className="absolute left-6 top-6 w-[320px]"><Autocomplete onLoad={setAutocomplete} onPlaceChanged={handlePlaceChanged}><div className="relative"><Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" /><input type="text" placeholder="Search & Pin Location..." className="w-full rounded-2xl border-none bg-white/95 py-4 pl-12 pr-5 text-[13px] font-bold text-slate-900 shadow-2xl backdrop-blur-xl outline-none focus:ring-4 focus:ring-slate-900/10" /></div></Autocomplete></div></GoogleMap> : <div className="h-full bg-slate-50 flex items-center justify-center"><Loader2 className="animate-spin text-slate-300" /></div>}</div></div>
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-200 bg-white p-1 shadow-md"><div className="relative h-[280px] w-full overflow-hidden rounded-xl">{isLoaded ? <GoogleMap mapContainerStyle={{ width: '100%', height: '100%' }} center={mapCenter} zoom={14} onLoad={m => mapRef.current = m} options={{ disableDefaultUI: true }}>{(formData.latitude || formData.longitude) && <MarkerF position={{ lat: Number(formData.latitude || mapCenter.lat), lng: Number(formData.longitude || mapCenter.lng) }} draggable onDragEnd={e => updatePinnedLocation(e.latLng.lat(), e.latLng.lng())} />}{zoneBoundary.length > 0 && <Polygon paths={zoneBoundary} options={{ fillColor: '#0F172A', fillOpacity: 0.05, strokeColor: '#0F172A', strokeOpacity: 0.4, strokeWeight: 2 }} />}<div className="absolute left-4 top-4 w-[260px]"><Autocomplete onLoad={setAutocomplete} onPlaceChanged={handlePlaceChanged}><div className="relative"><Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input type="text" placeholder="Search & Pin Location..." className="w-full rounded-xl border-none bg-white/95 py-2.5 pl-9 pr-4 text-xs font-bold text-slate-900 shadow-md backdrop-blur-xl outline-none focus:ring-2 focus:ring-slate-900/10" /></div></Autocomplete></div></GoogleMap> : <div className="h-full bg-slate-50 flex items-center justify-center"><Loader2 className="animate-spin text-slate-300" /></div>}</div></div>
                 {selectedStoreId && (
-                  <div className="grid lg:grid-cols-2 gap-8">
-                    <div className="rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm">
-                      <div className="flex items-center justify-between mb-8"><div className="flex gap-4 items-center"><div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-900"><Users size={20} /></div><div><h3 className="font-bold text-slate-900">Personnel</h3><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Team Management</p></div></div><button onClick={() => setAddingStaff(!addingStaff)} className="h-8 w-8 bg-slate-900 text-white rounded-lg flex items-center justify-center transition-all hover:scale-110">{addingStaff ? <AlertCircle size={16} /> : <Plus size={16} />}</button></div>
+                  <div className="grid lg:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex items-center justify-between mb-4"><div className="flex gap-3 items-center"><div className="h-8 w-8 bg-slate-50 rounded-xl flex items-center justify-center text-slate-900"><Users size={16} /></div><div><h3 className="text-lg font-bold text-slate-900" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Personnel</h3><p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Team Management</p></div></div><button onClick={() => setAddingStaff(!addingStaff)} className="h-6 w-6 bg-slate-900 text-white rounded-md flex items-center justify-center transition-all hover:scale-110">{addingStaff ? <AlertCircle size={14} /> : <Plus size={14} />}</button></div>
                       <AnimatePresence>{addingStaff && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden mb-8"><div className="p-5 bg-slate-50 rounded-2xl space-y-4"><div><label className={labelClass}>Name</label><input type="text" value={staffFormData.name} onChange={e => setStaffFormData(p => ({ ...p, name: e.target.value }))} className={inputClass} placeholder="Staff Name" /></div><div><label className={labelClass}>Phone</label><input type="text" value={staffFormData.phone} onChange={e => setStaffFormData(p => ({ ...p, phone: e.target.value }))} className={inputClass} placeholder="10-digit number" /></div><button onClick={handleAddStaff} className="w-full py-3 bg-slate-900 text-white rounded-xl font-black text-xs transition-all hover:bg-slate-800">AUTHENTICATE & ADD</button></div></motion.div>}</AnimatePresence>
-                      <div className="space-y-3">{selectedStoreStaff.length === 0 ? <div className="py-8 text-center border-2 border-dashed border-slate-100 rounded-2xl text-[11px] text-slate-400 font-bold italic">No Personnel Registered</div> : selectedStoreStaff.map((s, i) => <div key={i} className="flex justify-between items-center p-4 bg-white border border-slate-100 rounded-2xl hover:border-slate-200 transition-all"><div className="flex gap-3 items-center"><div className="h-9 w-9 bg-slate-50 rounded-xl flex items-center justify-center text-[11px] font-black text-slate-400 border border-slate-100">{s.name?.[0]}</div><div><p className="text-[13px] font-bold text-slate-900">{s.name}</p><p className="text-[11px] text-slate-400 font-medium">{s.phone}</p></div></div><div className="flex items-center gap-2"><div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /><span className="text-[10px] font-black text-slate-300 uppercase">Live</span></div></div>)}</div>
+                      <div className="space-y-3">{selectedStoreStaff.length === 0 ? <div className="py-4 text-center border-2 border-dashed border-slate-100 rounded-xl text-[10px] text-slate-400 font-bold italic">No Personnel Registered</div> : selectedStoreStaff.map((s, i) => <div key={i} className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-xl hover:border-slate-200 transition-all"><div className="flex gap-3 items-center"><div className="h-8 w-8 bg-slate-50 rounded-lg flex items-center justify-center text-[10px] font-black text-slate-400 border border-slate-100">{s.name?.[0]}</div><div><p className="text-xs font-bold text-slate-900">{s.name}</p><p className="text-[10px] text-slate-400 font-medium">{s.phone}</p></div></div><div className="flex items-center gap-1.5"><div className="h-1.5 w-1.5 rounded-full bg-emerald-500" /><span className="text-[9px] font-black text-slate-300 uppercase">Live</span></div></div>)}</div>
                     </div>
-                    <div className="rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm">
-                      <div className="flex gap-4 items-center mb-8"><div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-900"><Car size={20} /></div><div><h3 className="font-bold text-slate-900">Active Fleet</h3><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Assigned Vehicles</p></div></div>
-                      <div className="space-y-3">{selectedStoreVehicles.length === 0 ? <div className="py-8 text-center border-2 border-dashed border-slate-100 rounded-2xl text-[11px] text-slate-400 font-bold italic">No Assets Assigned</div> : selectedStoreVehicles.map((v, i) => <div key={i} className="flex justify-between items-center p-4 bg-white border border-slate-100 rounded-2xl transition-all"><div className="flex gap-4 items-center"><div className="h-10 w-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-900/10"><Car size={16} /></div><div><p className="text-[13px] font-bold text-slate-900">{v.name}</p><p className="text-[11px] text-slate-400 font-medium">{v.vehicleCategory} · {v.capacity} Seats</p></div></div><ChevronRight size={14} className="text-slate-300" /></div>)}</div>
-                      <div className="mt-6 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] text-slate-400 font-medium italic leading-relaxed text-center uppercase tracking-widest">Update assets via Vehicle Types registry</div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <div className="flex gap-3 items-center mb-4"><div className="h-8 w-8 bg-slate-50 rounded-xl flex items-center justify-center text-slate-900"><Car size={16} /></div><div><h3 className="text-lg font-bold text-slate-900" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Active Fleet</h3><p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Assigned Vehicles</p></div></div>
+                      <div className="space-y-3">{selectedStoreVehicles.length === 0 ? <div className="py-4 text-center border-2 border-dashed border-slate-100 rounded-xl text-[10px] text-slate-400 font-bold italic">No vehicles assigned yet</div> : selectedStoreVehicles.map((v, i) => <div key={i} className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-xl transition-all"><div className="flex gap-3 items-center"><div className="h-8 w-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shadow-md shadow-slate-900/10"><Car size={14} /></div><div><p className="text-xs font-bold text-slate-900">{v.name}</p><p className="text-[10px] text-slate-400 font-medium">{v.vehicleCategory} · {v.capacity} Seats</p></div></div><ChevronRight size={12} className="text-slate-300" /></div>)}</div>
+                      <div className="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-xl text-[9px] text-slate-400 font-medium italic leading-relaxed text-center uppercase tracking-widest">Update assets via Vehicle Types registry</div>
                     </div>
                   </div>
                 )}

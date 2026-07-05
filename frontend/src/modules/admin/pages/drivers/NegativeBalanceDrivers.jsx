@@ -81,7 +81,7 @@ const NegativeBalanceDrivers = () => {
           <span className="text-gray-700">Negative Balance Drivers</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">Negative Balance Drivers</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Negative Balance Drivers</h1>
           <div className="text-sm text-gray-500">
             Total Outstanding: <span className="font-semibold text-rose-600">₹ {Number(summary.total_outstanding || 0).toFixed(2)}</span>
           </div>

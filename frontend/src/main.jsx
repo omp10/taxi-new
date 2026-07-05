@@ -8,9 +8,9 @@ try {
   const hasClassicWebViewMarker = /; wv\)/i.test(ua) || /Version\/[\d.]+/i.test(ua);
   const hasFlutterBridge = typeof window.flutter_inappwebview !== 'undefined'
     || typeof window.Flutter !== 'undefined'
-    || typeof window.__rydon24_native !== 'undefined'
-    || typeof window.AndroidBridge !== 'undefined'
-    || typeof window.Android !== 'undefined';
+    || typeof window.__Appzeto24_native !== 'undefined'
+      || typeof window.AndroidBridge !== 'undefined'
+      || typeof window.Android !== 'undefined';
   const isMobileUaWithoutBrowser = /Android.*Mobile/i.test(ua)
     && !/\bChrome\/[\d.]+\b.*\bSafari\/[\d.]+\b/.test(ua);
   const isStandaloneMode = typeof window.matchMedia === 'function'
@@ -21,21 +21,21 @@ try {
     || hasFlutterBridge
     || isMobileUaWithoutBrowser
     || isStandaloneMode
-    || window.__isRydon24WebView === true;
+    || window.__isAppzeto24WebView === true;
 
   if (isWebView) {
-    window.__isRydon24WebView = true;
+    window.__isAppzeto24WebView = true;
     const spoofedUa = ua
       .replace(/; wv\)/g, '')
       .replace(/Version\/[\d.]+\s*/g, '');
-    
+
     Object.defineProperty(navigator, 'userAgent', {
       get: function () {
         return spoofedUa;
       },
       configurable: true,
     });
-    
+
     Object.defineProperty(navigator, 'appVersion', {
       get: function () {
         return spoofedUa;

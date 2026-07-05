@@ -24,7 +24,7 @@ const legalContent = {
     title: 'Terms & Conditions',
     icon: ScrollText,
     intro:
-      'These terms are shown from the latest legal document provided for Rydon24 users and include the applicable bike, package, auto, and cab clauses.',
+      'These terms are shown from the latest legal document provided for Appzeto 24 users and include the applicable bike, package, auto, and cab clauses.',
     rawText: termsRawText,
   },
   privacy: {
@@ -32,7 +32,7 @@ const legalContent = {
     title: 'Privacy Policy',
     icon: ShieldCheck,
     intro:
-      'This privacy policy is shown from the latest legal document provided for Rydon24 users and explains how information is collected, used, processed, stored, and protected.',
+      'This privacy policy is shown from the latest legal document provided for Appzeto 24 users and explains how information is collected, used, processed, stored, and protected.',
     rawText: privacyRawText,
   },
   refund: {
@@ -40,7 +40,7 @@ const legalContent = {
     title: 'Refund & Cancellation Policy',
     icon: ReceiptText,
     intro:
-      'This page explains refund eligibility, cancellation timelines, and indicative prices for the main vehicle types available on the Rydon24  Trawler platform. Refunds are reviewed based on service status, time of cancellation, and payment mode.',
+      'This page explains refund eligibility, cancellation timelines, and indicative prices for the main vehicle types available on the Appzeto 24  Trawler platform. Refunds are reviewed based on service status, time of cancellation, and payment mode.',
     sections: [
       {
         title: 'When refunds may be approved',
@@ -54,7 +54,7 @@ const legalContent = {
       {
         title: 'Refund policy overview',
         body:
-          'Rydon24  Trawler reviews refund requests on a case-by-case basis to confirm whether the booking was completed, cancelled before service, cancelled after dispatch, or affected by a technical or payment issue. Approved refunds are returned only after internal verification of ride logs, payment status, and service records.',
+          'Appzeto 24  Trawler reviews refund requests on a case-by-case basis to confirm whether the booking was completed, cancelled before service, cancelled after dispatch, or affected by a technical or payment issue. Approved refunds are returned only after internal verification of ride logs, payment status, and service records.',
       },
       {
         title: 'Cancellation rules',
@@ -103,7 +103,7 @@ const legalContent = {
         bullets: [
           'Raise the issue through the support team with your booking ID, payment details, and reason for the request.',
           'Submit the request as early as possible after the cancelled or affected booking.',
-          'Rydon24   Trawler may ask for screenshots, transaction references, or additional verification before approval.',
+          'Appzeto 24   Trawler may ask for screenshots, transaction references, or additional verification before approval.',
         ],
       },
       {
@@ -122,7 +122,7 @@ const legalContent = {
     title: 'Cancellation Policy',
     icon: Scale,
     intro:
-      'This page summarizes how cancellations are handled across Rydon24  Trawler booking categories.',
+      'This page summarizes how cancellations are handled across Appzeto 24  Trawler booking categories.',
     sections: [
       {
         title: 'General policy',
@@ -162,9 +162,9 @@ const LegalPage = () => {
   const Icon = content.icon || FileText;
   const rawParagraphs = content.rawText
     ? content.rawText
-        .split(/\r?\n\r?\n/)
-        .map((block) => block.trim())
-        .filter(Boolean)
+      .split(/\r?\n\r?\n/)
+      .map((block) => block.trim())
+      .filter(Boolean)
     : [];
 
   return (
@@ -223,11 +223,10 @@ const LegalPage = () => {
                     {paragraph.split(/\r?\n/).filter(Boolean).map((line, lineIndex) => (
                       <p
                         key={`${index}-${lineIndex}-${line.slice(0, 16)}`}
-                        className={`break-words whitespace-pre-wrap ${
-                          isLegalHeadingLine(line)
+                        className={`break-words whitespace-pre-wrap ${isLegalHeadingLine(line)
                             ? 'text-lg font-black tracking-tight text-slate-900'
                             : 'text-sm font-medium leading-8 text-slate-700 md:text-base'
-                        }`}
+                          }`}
                       >
                         {line}
                       </p>

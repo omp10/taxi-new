@@ -24,16 +24,16 @@ const InputField = ({ icon: Icon, type, placeholder, value, onChange, id, ...pro
 
 const AdminLogin = () => {
   const { settings } = useSettings();
-  const [view, setView] = useState('login'); 
+  const [view, setView] = useState('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const appLogo = settings.general?.logo || settings.customization?.logo;
-  const appName = settings.general?.app_name || 'Rydon24';
+  const appName = settings.general?.app_name || 'Appzeto ';
 
   const resetMessages = () => {
     setError('');
@@ -60,8 +60,8 @@ const AdminLogin = () => {
     <div className="min-h-screen bg-[#F8F9FA] flex flex-col font-sans overflow-hidden">
       {/* Immersive Decorative Elements */}
       <div className="fixed inset-0 pointer-events-none">
-         <div className="absolute top-[-10%] right-[-5%] w-[60%] h-[60%] bg-white rounded-full blur-[160px] opacity-60" />
-         <div className="absolute bottom-[-10%] left-[-5%] w-[50%] h-[50%] bg-slate-100 rounded-full blur-[140px] opacity-40" />
+        <div className="absolute top-[-10%] right-[-5%] w-[60%] h-[60%] bg-white rounded-full blur-[160px] opacity-60" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[50%] h-[50%] bg-slate-100 rounded-full blur-[140px] opacity-40" />
       </div>
 
       <main className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
@@ -72,22 +72,22 @@ const AdminLogin = () => {
         >
           {/* Brand Header */}
           <div className="flex flex-col items-center text-center mb-12">
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.05 }}
               onClick={() => navigate('/')}
               className="cursor-pointer mb-8"
             >
               {appLogo ? (
                 <div className="bg-white p-4 rounded-[2.5rem] shadow-2xl shadow-slate-200/50">
-                   <img src={appLogo} alt={appName} className="h-12 w-auto object-contain" />
+                  <img src={appLogo} alt={appName} className="h-12 w-auto object-contain" />
                 </div>
               ) : (
                 <div className="w-20 h-20 bg-slate-900 rounded-[2.5rem] flex items-center justify-center text-white shadow-2xl shadow-slate-900/20">
-                   <ShieldCheck size={36} strokeWidth={2} />
+                  <ShieldCheck size={36} strokeWidth={2} />
                 </div>
               )}
             </motion.div>
-            
+
             <div className="space-y-2">
               <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">Terminal Access</h1>
               <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">{appName} Cloud Services</p>
@@ -96,79 +96,79 @@ const AdminLogin = () => {
 
           {/* Card Container */}
           <div className="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-2xl shadow-slate-200/40 relative">
-             <AnimatePresence mode="wait">
-               {error && (
-                 <motion.div 
-                   initial={{ opacity: 0, y: -10 }}
-                   animate={{ opacity: 1, y: 0 }}
-                   exit={{ opacity: 0, y: -10 }}
-                   className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600"
-                 >
-                   <AlertCircle size={18} className="shrink-0" />
-                   <p className="text-[12px] font-bold leading-tight">{error}</p>
-                 </motion.div>
-               )}
-             </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-600"
+                >
+                  <AlertCircle size={18} className="shrink-0" />
+                  <p className="text-[12px] font-bold leading-tight">{error}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-             <form onSubmit={handleLogin} className="space-y-6">
-               <div className="space-y-5">
-                 <InputField 
-                   id="admin-email"
-                   icon={Mail} 
-                   type="email" 
-                   placeholder="Administrative ID" 
-                   value={email}
-                   onChange={(e) => setEmail(e.target.value)}
-                   autoFocus
-                   required
-                 />
-                 <div className="space-y-3">
-                   <InputField 
-                     id="admin-password"
-                     icon={Lock} 
-                     type="password" 
-                     placeholder="Security Token" 
-                     value={password}
-                     onChange={(e) => setPassword(e.target.value)}
-                     required
-                   />
-                   <div className="flex justify-end">
-                     <button 
-                       type="button" 
-                       onClick={() => setView('forgot')}
-                       className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors"
-                     >
-                       Forgotten Identity?
-                     </button>
-                   </div>
-                 </div>
-               </div>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-5">
+                <InputField
+                  id="admin-email"
+                  icon={Mail}
+                  type="email"
+                  placeholder="Administrative ID"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoFocus
+                  required
+                />
+                <div className="space-y-3">
+                  <InputField
+                    id="admin-password"
+                    icon={Lock}
+                    type="password"
+                    placeholder="Security Token"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setView('forgot')}
+                      className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900 transition-colors"
+                    >
+                      Forgotten Identity?
+                    </button>
+                  </div>
+                </div>
+              </div>
 
-               <button
-                 type="submit"
-                 disabled={isLoading}
-                 className="group w-full py-5 bg-slate-900 text-white rounded-[1.5rem] text-[15px] font-black shadow-2xl shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
-               >
-                 {isLoading ? (
-                   <Loader2 className="animate-spin" size={20} />
-                 ) : (
-                   <>
-                     Authenticate Access
-                     <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" strokeWidth={2.5} />
-                   </>
-                 )}
-               </button>
-             </form>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group w-full py-5 bg-slate-900 text-white rounded-[1.5rem] text-[15px] font-black shadow-2xl shadow-slate-900/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+              >
+                {isLoading ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <>
+                    Authenticate Access
+                    <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" strokeWidth={2.5} />
+                  </>
+                )}
+              </button>
+            </form>
           </div>
 
           <div className="mt-12 flex flex-col items-center gap-4">
-             <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full border border-slate-200/50">
-                <ShieldCheck size={14} className="text-slate-400" />
-                <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Encrypted Terminal v4.0</span>
-             </div>
-             <p className="text-center text-[11px] text-slate-300 font-bold max-w-[280px]">
-                Authorized personnel only. All access attempts are monitored and logged to security infrastructure.
-             </p>
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full border border-slate-200/50">
+              <ShieldCheck size={14} className="text-slate-400" />
+              <span className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Encrypted Terminal v4.0</span>
+            </div>
+            <p className="text-center text-[11px] text-slate-300 font-bold max-w-[280px]">
+              Authorized personnel only. All access attempts are monitored and logged to security infrastructure.
+            </p>
           </div>
         </motion.div>
       </main>

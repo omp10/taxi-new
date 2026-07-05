@@ -19,7 +19,7 @@ export const normalizeAssetUrl = (url = '') => {
 const DEFAULT_SETTINGS_CONTEXT = {
   settings: {
     general: {
-      app_name: 'Rydon24 Trawler',
+      app_name: 'Appzeto 24 Trawler',
       logo: '',
       favicon: '',
     },
@@ -44,7 +44,7 @@ const DEFAULT_SETTINGS_CONTEXT = {
   },
   loading: true,
   hasBootstrapSettings: false,
-  refreshSettings: () => {},
+  refreshSettings: () => { },
 };
 const SettingsContext = createContext(DEFAULT_SETTINGS_CONTEXT);
 
@@ -215,7 +215,7 @@ export const SettingsProvider = ({ children }) => {
     try {
       const response = await api.get('/users/bootstrap');
       const data = response?.data?.data || response?.data || {};
-      
+
       const nextSettings = buildSettingsState({
         general: data.settings?.general || {},
         customization: data.settings?.customization || {},
@@ -257,7 +257,7 @@ export const SettingsProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const appName = settings.general?.app_name || 'Rydon24 Trawler';
+    const appName = settings.general?.app_name || 'Appzeto 24 Trawler';
     document.title = appName;
 
     const favicon = settings.general?.favicon || settings.customization?.favicon;
@@ -276,7 +276,7 @@ export const SettingsProvider = ({ children }) => {
       });
     }
 
-    return () => {};
+    return () => { };
   }, [settings.general?.app_name, settings.general?.favicon, settings.customization?.favicon]);
 
   useEffect(() => {

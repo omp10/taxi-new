@@ -142,7 +142,7 @@ const HeatMap = () => {
           <span className="text-gray-700">Heat Map</span>
         </div>
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Heat Map</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Heat Map</h1>
           <button 
              onClick={() => navigate('/admin/dashboard')}
              className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

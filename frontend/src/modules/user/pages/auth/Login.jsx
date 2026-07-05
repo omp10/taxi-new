@@ -59,17 +59,17 @@ const Login = () => {
   const { theme, toggleTheme } = useUserTheme();
   const phoneInputRef = useRef(null);
   const locationError = extractLoginErrorMessage(location.state?.error);
-  
+
   const [phoneNumber, setPhoneNumber] = useState(() => String(location.state?.phone || '').replace(/\D/g, '').slice(-10));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(() => (
     isBlockedAccountMessage(locationError) ? getFriendlyLoginError(locationError) : ''
   ));
   const [showInput, setShowInput] = useState(false);
-  
-  const appName = settings.general?.app_name || 'Rydon24';
+
+  const appName = settings.general?.app_name || 'Appzeto 24';
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
-  
+
   const userHomeRoute = useMemo(
     () => (location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '/user'),
     [location.pathname],
@@ -120,12 +120,12 @@ const Login = () => {
 
       {/* Immersive Top Background Image */}
       <div className="login-hero">
-        <motion.img 
+        <motion.img
           initial={{ opacity: 0, scale: 1.06 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.0, ease: "easeOut" }}
-          src={yellowTaxiLoginBg} 
-          alt="Taxi background" 
+          src={yellowTaxiLoginBg}
+          alt="Taxi background"
           className="login-hero-img"
         />
 
@@ -137,14 +137,14 @@ const Login = () => {
             className="flex items-center gap-2.5 bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 shadow-xl"
           >
             {appLogo ? (
-              <img 
-                src={appLogo} 
-                alt={appName} 
+              <img
+                src={appLogo}
+                alt={appName}
                 className="h-6 w-6 object-contain rounded-full bg-slate-950 p-0.5"
               />
             ) : (
               <div className="h-6 w-6 bg-[#FFB300] rounded-full flex items-center justify-center shadow-lg">
-                 <span className="text-[11px] font-black italic text-slate-950">{appName[0]?.toUpperCase() || 'R'}</span>
+                <span className="text-[11px] font-black italic text-slate-950">{appName[0]?.toUpperCase() || 'R'}</span>
               </div>
             )}
             <span className="text-[13px] font-black tracking-wide text-white uppercase">{appName}</span>
@@ -158,14 +158,14 @@ const Login = () => {
           </span>
           <h1 className="text-[28px] font-black leading-[1.15] tracking-tight uppercase text-white">
             <span className="login-accent-text">Experience a New</span> <br />
-            Standard with Rydon <br />
+            Standard with Appzeto  <br />
             <span className="login-accent-text">24</span>
           </h1>
         </div>
       </div>
 
       <main className="flex-1 flex flex-col justify-end">
-        <motion.div 
+        <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
@@ -173,7 +173,7 @@ const Login = () => {
         >
           <AnimatePresence mode="wait">
             {!showInput ? (
-              <motion.div 
+              <motion.div
                 key="welcome"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -182,13 +182,13 @@ const Login = () => {
                 className="space-y-8"
               >
                 <div className="space-y-2">
-                   <h2 className="text-[26px] font-black login-primary-text leading-tight">
-                     Explore new ways to <br/>travel with <span className="login-accent-text">{appName}</span>
-                   </h2>
-                   <p className="login-subtitle text-[14px] font-semibold">Premium rides for India, from Autos to Prime SUVs.</p>
+                  <h2 className="text-[26px] font-black login-primary-text leading-tight">
+                    Explore new ways to <br />travel with <span className="login-accent-text">{appName}</span>
+                  </h2>
+                  <p className="login-subtitle text-[14px] font-semibold">Premium rides for India, from Autos to Prime SUVs.</p>
                 </div>
 
-                <motion.button 
+                <motion.button
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
@@ -207,7 +207,7 @@ const Login = () => {
                 </p>
               </motion.div>
             ) : (
-              <motion.div 
+              <motion.div
                 key="input"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -216,7 +216,7 @@ const Login = () => {
                 className="space-y-8"
               >
                 <div className="flex items-center gap-4">
-                  <motion.button 
+                  <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setShowInput(false)}
                     className="p-2 -ml-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
@@ -227,18 +227,17 @@ const Login = () => {
                 </div>
 
                 <div className="space-y-4">
-                  <div className={`flex items-center gap-4 p-5 rounded-2xl transition-all border-2 ${
-                    error 
-                      ? 'border-rose-500/20 bg-rose-500/5' 
+                  <div className={`flex items-center gap-4 p-5 rounded-2xl transition-all border-2 ${error
+                      ? 'border-rose-500/20 bg-rose-500/5'
                       : 'border-zinc-200/50 bg-zinc-100/50 dark:border-white/5 dark:bg-white/5 focus-within:border-[#FFB300] focus-within:bg-zinc-50 dark:focus-within:bg-black/30 focus-within:shadow-xl'
-                  }`}>
+                    }`}>
                     <div className="flex items-center gap-3 pr-4 border-r border-zinc-200 dark:border-white/10">
                       <img src="https://flagcdn.com/w40/in.png" alt="India" className="w-5 h-3.5 object-cover rounded-sm" />
                       <span className="login-subtitle text-sm font-black">+91</span>
                     </div>
-                    <input 
+                    <input
                       ref={phoneInputRef}
-                      type="tel" 
+                      type="tel"
                       inputMode="numeric"
                       maxLength={10}
                       autoFocus
@@ -249,9 +248,8 @@ const Login = () => {
                         if (error) setError('');
                       }}
                       placeholder="Enter Mobile Number"
-                      className={`flex-1 bg-transparent border-none p-0 font-bold login-primary-text outline-none focus:ring-0 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all ${
-                        phoneNumber ? 'text-xl tracking-widest' : 'text-base tracking-normal'
-                      }`}
+                      className={`flex-1 bg-transparent border-none p-0 font-bold login-primary-text outline-none focus:ring-0 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 transition-all ${phoneNumber ? 'text-xl tracking-widest' : 'text-base tracking-normal'
+                        }`}
                     />
                   </div>
 
@@ -268,7 +266,7 @@ const Login = () => {
                   )}
                 </div>
 
-                <motion.button 
+                <motion.button
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleLogin}

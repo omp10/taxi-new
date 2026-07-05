@@ -214,7 +214,7 @@ const OwnerDetails = () => {
       <div className="relative mt-9 rounded border border-gray-200 bg-white p-7 shadow-sm">
         {activeTab === 'Owner Profile' ? (
           <>
-            <h2 className="mb-5 text-base font-medium text-slate-700">General Report</h2>
+            <h2 className="mb-5 text-base text-slate-700 font-bold">General Report</h2>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
               {reportCards.map((card) => (
                 <StatCard key={card.label} {...card} />
@@ -222,7 +222,7 @@ const OwnerDetails = () => {
             </div>
 
             <div className="mt-10">
-              <h2 className="mb-4 text-base font-medium text-slate-700">Map</h2>
+              <h2 className="mb-4 text-base text-slate-700 font-bold">Map</h2>
               <div className="flex h-64 items-center justify-center rounded border border-dashed border-gray-200 bg-gray-50 text-sm font-medium text-slate-400">
                 Map location is not available for this owner yet.
               </div>

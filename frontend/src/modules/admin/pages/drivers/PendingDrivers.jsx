@@ -240,7 +240,7 @@ const PendingDrivers = () => {
           <span className="text-gray-700">Pending Drivers</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">Pending Drivers</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Pending Drivers</h1>
           <button
             onClick={() => navigate('/admin/drivers/create')}
             className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"

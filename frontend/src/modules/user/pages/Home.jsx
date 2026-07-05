@@ -103,7 +103,7 @@ const PromoBannerImage = ({ promo, fallbackImage }) => {
 const FooterBannerImage = ({ footerSettings, fallbackImage }) => {
   const { theme } = useUserTheme();
   const isDark = theme === 'dark';
-  
+
   const hasCustomMedia = footerSettings?.uploadedImage || footerSettings?.imageUrl || footerSettings?.image;
   const resolved = hasCustomMedia ? getDynamicImageSrc(footerSettings, fallbackImage) : fallbackImage;
 
@@ -248,7 +248,7 @@ const defaultSettings = {
     { id: '4', title: 'Bike', image: '', route: '/taxi/user/ride/select-location', order: 4, status: 'active' }
   ],
   promos: [
-    { id: '1', title: 'Experience A New Standard With RYDON 24', subtitle: 'A premier private hire service where luxury and reliability converge.', image: '', route: '/taxi/user/ride/select-location', order: 1, status: 'active' },
+    { id: '1', title: 'Experience A New Standard With Appzeto ', subtitle: 'A premier private hire service where luxury and reliability converge.', image: '', route: '/taxi/user/ride/select-location', order: 1, status: 'active' },
     { id: '2', title: 'Need to Send Packages? Try Parcel!', subtitle: 'Fast and secure delivery across Indore at affordable prices.', image: '', route: '/taxi/user/parcel/type', order: 2, status: 'active' }
   ],
   goPlaces: [
@@ -257,7 +257,7 @@ const defaultSettings = {
     { id: '3', title: 'Ride to Bus Terminal', image: '', route: '/taxi/user/ride/select-location', order: 3, status: 'active' }
   ],
   footer: {
-    hashtag: '#goRydon24',
+    hashtag: '#goAppzeto 24',
     line1: 'Made for India',
     line2: 'Crafted for riders'
   }
@@ -420,7 +420,7 @@ const RecentLocationsList = ({ routePrefix }) => {
 
   const [recentLocations, setRecentLocations] = useState(() => {
     try {
-      const saved = window.localStorage.getItem('rydon24:recentLocations');
+      const saved = window.localStorage.getItem('Appzeto 24:recentLocations');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -456,7 +456,7 @@ const RecentLocationsList = ({ routePrefix }) => {
 
   const getSavedLocationCoords = () => {
     try {
-      const saved = JSON.parse(window.localStorage.getItem('rydon24:lastLocation') || '{}');
+      const saved = JSON.parse(window.localStorage.getItem('Appzeto 24:lastLocation') || '{}');
       const lat = Number(saved?.lat);
       const lon = Number(saved?.lon);
       if (Number.isFinite(lat) && Number.isFinite(lon)) {
@@ -469,7 +469,7 @@ const RecentLocationsList = ({ routePrefix }) => {
   useEffect(() => {
     const handleRefresh = () => {
       try {
-        const saved = window.localStorage.getItem('rydon24:recentLocations');
+        const saved = window.localStorage.getItem('Appzeto 24:recentLocations');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -479,10 +479,10 @@ const RecentLocationsList = ({ routePrefix }) => {
       } catch (e) { }
     };
     window.addEventListener('storage', handleRefresh);
-    window.addEventListener('rydon24:recent-locations-updated', handleRefresh);
+    window.addEventListener('Appzeto 24:recent-locations-updated', handleRefresh);
     return () => {
       window.removeEventListener('storage', handleRefresh);
-      window.removeEventListener('rydon24:recent-locations-updated', handleRefresh);
+      window.removeEventListener('Appzeto 24:recent-locations-updated', handleRefresh);
     };
   }, []);
 
@@ -547,7 +547,7 @@ const RecentLocationsList = ({ routePrefix }) => {
                   return loc;
                 });
                 setRecentLocations(updated);
-                localStorage.setItem('rydon24:recentLocations', JSON.stringify(updated));
+                localStorage.setItem('Appzeto 24:recentLocations', JSON.stringify(updated));
               }}
               className={`hover:text-rose-500 transition-colors px-1 shrink-0 ${item.favourite ? 'text-rose-500' : 'text-slate-400'
                 }`}
@@ -576,7 +576,7 @@ const Home = () => {
       if (settings?.userHomeSettings && Object.keys(settings.userHomeSettings).length > 0) {
         return settings.userHomeSettings;
       }
-      const saved = window.localStorage.getItem('rydon24:admin:user-app-settings');
+      const saved = window.localStorage.getItem('Appzeto 24:admin:user-app-settings');
       if (saved) return JSON.parse(saved);
     } catch (e) {
       console.error(e);
@@ -598,7 +598,7 @@ const Home = () => {
   useEffect(() => {
     const handleStorageChange = () => {
       try {
-        const saved = window.localStorage.getItem('rydon24:admin:user-app-settings');
+        const saved = window.localStorage.getItem('Appzeto 24:admin:user-app-settings');
         if (saved) {
           const parsed = JSON.parse(saved);
           setUiSettings(prev => {
@@ -632,7 +632,7 @@ const Home = () => {
   const [activeServices, setActiveServices] = useState([]);
   const [pickupAddress, setPickupAddress] = useState(() => {
     try {
-      const saved = JSON.parse(window.localStorage.getItem('rydon24:lastLocation') || '{}');
+      const saved = JSON.parse(window.localStorage.getItem('Appzeto 24:lastLocation') || '{}');
       return String(saved?.address || '').trim() || 'Indore, Madhya Pradesh';
     } catch (e) {
       return 'Indore, Madhya Pradesh';
@@ -640,7 +640,7 @@ const Home = () => {
   });
   const [isLocationLoading, setIsLocationLoading] = useState(() => {
     try {
-      const saved = JSON.parse(window.localStorage.getItem('rydon24:lastLocation') || '{}');
+      const saved = JSON.parse(window.localStorage.getItem('Appzeto 24:lastLocation') || '{}');
       return !saved?.address;
     } catch {
       return true;
@@ -650,18 +650,18 @@ const Home = () => {
   useEffect(() => {
     const handleLocationUpdate = () => {
       try {
-        const saved = JSON.parse(window.localStorage.getItem('rydon24:lastLocation') || '{}');
+        const saved = JSON.parse(window.localStorage.getItem('Appzeto 24:lastLocation') || '{}');
         setPickupAddress(String(saved?.address || '').trim() || 'Indore, Madhya Pradesh');
       } catch (e) { }
     };
     const handleLocationStatus = (e) => {
       setIsLocationLoading(e.detail === 'loading');
     };
-    window.addEventListener('rydon24:location-updated', handleLocationUpdate);
-    window.addEventListener('rydon24:location-status', handleLocationStatus);
+    window.addEventListener('Appzeto 24:location-updated', handleLocationUpdate);
+    window.addEventListener('Appzeto 24:location-status', handleLocationStatus);
     return () => {
-      window.removeEventListener('rydon24:location-updated', handleLocationUpdate);
-      window.removeEventListener('rydon24:location-status', handleLocationStatus);
+      window.removeEventListener('Appzeto 24:location-updated', handleLocationUpdate);
+      window.removeEventListener('Appzeto 24:location-status', handleLocationStatus);
     };
   }, []);
 
@@ -799,7 +799,24 @@ const Home = () => {
 
     if (targetRoute && targetRoute.trim() !== '') {
       setIsAllServicesOpen(false);
-      navigate(cleanRoute(targetRoute));
+
+      let vehicleType = '';
+      const tName = String(service.name || service.label || service.title || "").toLowerCase();
+      if (tName.includes('bike') || tName.includes('moto')) vehicleType = 'bike';
+      else if (tName.includes('auto')) vehicleType = 'auto';
+      else if (tName.includes('cab') || tName.includes('taxi') || tName.includes('car') || tName === 'book now' || tName === 'ride') vehicleType = 'cab';
+      else if (tName.includes('parcel') || tName.includes('delivery')) vehicleType = 'parcel';
+
+      console.log('--- TEMPORARY DEBUG LOG ---');
+      console.log('selectedVehicleType from home:', vehicleType);
+
+      if (vehicleType) {
+        localStorage.setItem('selectedVehicleType', vehicleType);
+        navigate(`/taxi/user/ride/select-vehicle?vehicleType=${vehicleType}`, { state: { selectedCategory: vehicleType } });
+      } else {
+        localStorage.removeItem('selectedVehicleType');
+        navigate(cleanRoute(targetRoute), { state: { selectedCategory: vehicleType } });
+      }
       return;
     }
 
@@ -812,7 +829,22 @@ const Home = () => {
 
     const definedPath = service.path;
     if (definedPath && definedPath.trim() !== '') {
-      navigate(cleanRoute(definedPath));
+      let vehicleType = '';
+      if (name.includes('bike') || name.includes('moto')) vehicleType = 'bike';
+      else if (name.includes('auto')) vehicleType = 'auto';
+      else if (name.includes('cab') || name.includes('taxi') || name.includes('car') || name === 'book now' || name === 'ride') vehicleType = 'cab';
+      else if (name.includes('parcel') || name.includes('delivery')) vehicleType = 'parcel';
+
+      console.log('--- TEMPORARY DEBUG LOG ---');
+      console.log('selectedVehicleType from home:', vehicleType);
+
+      if (vehicleType) {
+        localStorage.setItem('selectedVehicleType', vehicleType);
+        navigate(`/taxi/user/ride/select-vehicle?vehicleType=${vehicleType}`, { state: { selectedCategory: vehicleType } });
+      } else {
+        localStorage.removeItem('selectedVehicleType');
+        navigate(cleanRoute(definedPath), { state: { selectedCategory: vehicleType } });
+      }
       return;
     }
 
@@ -846,8 +878,14 @@ const Home = () => {
       return;
     }
 
+    // Extract category if it matches common ride types
+    let selectedCategory = '';
+    if (name.includes('bike') || name.includes('moto')) selectedCategory = 'bike';
+    else if (name.includes('auto')) selectedCategory = 'auto';
+    else if (name.includes('cab') || name.includes('taxi') || name.includes('car')) selectedCategory = 'cab';
+
     // Default ride / taxi / cab / bike flow
-    navigate("/taxi/user/ride/select-location");
+    navigate("/taxi/user/ride/select-location", { state: { selectedCategory } });
   };
 
   useEffect(() => {
@@ -1211,8 +1249,8 @@ const Home = () => {
               type="button"
               onClick={() => handleServiceClick(card)}
               className={`flex-shrink-0 w-[86px] h-[96px] rounded-[20px] border flex flex-col items-center justify-center p-2 text-center transition-all duration-300 group shadow-sm ${isDark
-                  ? 'bg-gradient-to-br from-[#121821] to-[#1A2332] border-[#222E42]/80 hover:border-yellow-500/20'
-                  : 'bg-[#F7F8FB] border-slate-200/80 hover:border-[#FFC400]/20'
+                ? 'bg-gradient-to-br from-[#121821] to-[#1A2332] border-[#222E42]/80 hover:border-yellow-500/20'
+                : 'bg-[#F7F8FB] border-slate-200/80 hover:border-[#FFC400]/20'
                 }`}
             >
               {/* Subtle accent blob behind icon */}
@@ -1274,7 +1312,7 @@ const Home = () => {
     };
 
     return (
-      <div 
+      <div
         className="pt-2 relative w-full overflow-hidden"
         onMouseEnter={() => setIsHoveringPromo(true)}
         onMouseLeave={() => setIsHoveringPromo(false)}
@@ -1283,7 +1321,7 @@ const Home = () => {
         onTouchEnd={handleTouchEnd}
       >
         <div className="promo-carousel border border-slate-200/60 dark:border-zinc-800 shadow-md bg-[#0B1220] transition-colors duration-300">
-          <div 
+          <div
             className="promo-track"
             style={{ transform: `translateX(-${currentPromoIndex * 100}%)` }}
           >
@@ -1291,9 +1329,9 @@ const Home = () => {
               const fallback = fallbackImages[idx % fallbackImages.length];
               const resolvedImgSrc = getDynamicImageSrc(item, fallback);
               return (
-                <div 
-                  key={item.id || item._id} 
-                  className="promo-slide cursor-pointer" 
+                <div
+                  key={item.id || item._id}
+                  className="promo-slide cursor-pointer"
                   onClick={() => {
                     if (item.route) {
                       const targetRoute = item.route;
@@ -1308,9 +1346,9 @@ const Home = () => {
                     }
                   }}
                 >
-                  <img 
-                    src={resolvedImgSrc} 
-                    alt={item.title || "Promo"} 
+                  <img
+                    src={resolvedImgSrc}
+                    alt={item.title || "Promo"}
                     className="w-full h-[150px] object-cover rounded-[22px] block"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent z-10 rounded-[22px]" />
@@ -1426,8 +1464,8 @@ const Home = () => {
                 }
               }}
               className={`flex-shrink-0 w-[156px] rounded-[24px] border overflow-hidden text-left transition-all duration-300 group shadow-sm flex flex-col ${isDark
-                  ? 'bg-gradient-to-br from-[#121821] to-[#1A2332] border-[#222E42]/85 hover:border-yellow-500/20'
-                  : 'bg-[#F7F8FB] border-slate-200/80 hover:border-[#FFC400]/20'
+                ? 'bg-gradient-to-br from-[#121821] to-[#1A2332] border-[#222E42]/85 hover:border-yellow-500/20'
+                : 'bg-[#F7F8FB] border-slate-200/80 hover:border-[#FFC400]/20'
                 }`}
             >
               {/* Header Image Area with subtle gradient */}
@@ -1507,13 +1545,13 @@ const Home = () => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ type: "spring", stiffness: 80, damping: 15 }}
           className={`go-appzeto-banner relative overflow-hidden min-h-[420px] pb-32 flex flex-col justify-center items-center text-center p-8 transition-all duration-300 border-t w-full rounded-[24px] ${isDark
-              ? 'border-zinc-800 bg-[#05070D] shadow-[0_-12px_36px_rgba(0,0,0,0.4)]'
-              : 'border-slate-200 bg-[#F8FAFC] shadow-[0_-8px_24px_rgba(15,23,42,0.04)]'
+            ? 'border-zinc-800 bg-[#05070D] shadow-[0_-12px_36px_rgba(0,0,0,0.4)]'
+            : 'border-slate-200 bg-[#F8FAFC] shadow-[0_-8px_24px_rgba(15,23,42,0.04)]'
             }`}
         >
           {/* Subtle neon glowing orb */}
-          <motion.div 
-            animate={{ 
+          <motion.div
+            animate={{
               scale: [1, 1.25, 1],
               opacity: [0.8, 1, 0.8]
             }}
@@ -1523,7 +1561,7 @@ const Home = () => {
               ease: "easeInOut"
             }}
             className={`absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full blur-2xl pointer-events-none ${isDark ? 'bg-[#FFC400]/20' : 'bg-[#FFC400]/10'
-            }`} 
+              }`}
           />
 
           {/* City highway background mask with smooth scrolling animation */}
@@ -1542,7 +1580,7 @@ const Home = () => {
             className="absolute inset-0 pointer-events-none z-[1] bg-gradient-to-b from-white/15 via-white/45 to-white/80"
           />
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -1551,11 +1589,11 @@ const Home = () => {
           >
             <motion.h3
               initial={{ opacity: 0, y: -15 }}
-              animate={{ 
-                opacity: 1, 
+              animate={{
+                opacity: 1,
                 y: [0, -4, 0]
               }}
-              transition={{ 
+              transition={{
                 opacity: { duration: 0.8 },
                 y: { duration: 4, repeat: Infinity, ease: "easeInOut" }
               }}
@@ -1569,7 +1607,7 @@ const Home = () => {
 
             {/* Holiday taxi inline image removed to show background image only */}
 
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -1578,7 +1616,7 @@ const Home = () => {
             >
               MADE FOR INDIA
             </motion.p>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -1610,13 +1648,13 @@ const Home = () => {
   }, [uiSettings?.footer, uiSettings?.homeSections?.enableFooter, isDark, settingsLoading]);
 
   return (
-    <div className="min-h-screen max-w-[430px] md:max-w-7xl mx-auto relative font-sans no-scrollbar overflow-x-hidden transition-colors duration-300 user-app-theme shadow-2xl">
+    <div className="min-h-screen w-full lg:max-w-7xl mx-auto relative font-sans no-scrollbar overflow-x-hidden transition-colors duration-300 user-app-theme shadow-2xl">
       <div className={`absolute -top-16 right-[-40px] h-44 w-44 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-orange-100/60'}`} />
       <div className={`absolute top-52 left-[-60px] h-52 w-52 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-emerald-100/60'}`} />
       <div className={`absolute bottom-28 right-[-40px] h-40 w-40 rounded-full blur-3xl pointer-events-none ${isDark ? 'bg-yellow-500/5' : 'bg-blue-100/60'}`} />
 
       {/* 1. MOBILE LAYOUT: Google Map component + Sticky Search Bar + HomeContent */}
-      <div className="block md:hidden">
+      <div className="block lg:hidden">
         <div className="user-home">
           {/* Map Background Layer */}
           <div className="map-header">
@@ -1649,7 +1687,7 @@ const Home = () => {
           {/* Content Sheet overlaying the sticky map */}
           <div className="home-sheet space-y-3">
             {/* Sticky Search Bar */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.05 }}
@@ -1660,8 +1698,8 @@ const Home = () => {
                 whileTap={{ scale: 0.99 }}
                 onClick={() => navigate(`${routePrefix}/ride/select-location`, { state: { activeInput: 'drop', flow: 'ride' } })}
                 className={`flex w-full items-center gap-3 rounded-full px-4 py-3.5 text-left transition-all relative overflow-hidden shadow-sm border ${isDark
-                    ? 'bg-[#111827] border-zinc-800 text-white'
-                    : 'bg-white border-slate-250 text-slate-900'
+                  ? 'bg-[#111827] border-zinc-800 text-white'
+                  : 'bg-white border-slate-250 text-slate-900'
                   }`}
               >
                 <Search size={18} className={isDark ? 'text-white' : 'text-slate-900'} strokeWidth={2.5} />
@@ -1682,7 +1720,7 @@ const Home = () => {
 
             {/* Compact Active Ride/Booking Banner */}
             {currentRide && String(currentRide?.status || '').toLowerCase() !== 'end_requested' && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: [0.21, 1.02, 0.43, 1.01], delay: 0.12 }}
@@ -1693,8 +1731,8 @@ const Home = () => {
                   whileTap={{ scale: 0.99 }}
                   onClick={() => navigate(trackingPath, { state: currentRide })}
                   className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border text-left shadow-sm transition-all duration-200 ${isDark
-                      ? 'bg-[#111827] border-zinc-800 text-white hover:bg-zinc-800'
-                      : 'bg-emerald-50/40 border-emerald-100/60 text-slate-900 hover:bg-emerald-50/75'
+                    ? 'bg-[#111827] border-zinc-800 text-white hover:bg-zinc-800'
+                    : 'bg-emerald-50/40 border-emerald-100/60 text-slate-900 hover:bg-emerald-50/75'
                     }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -1836,11 +1874,11 @@ const Home = () => {
         </div>
       </div>
 
-      {/* 2. DESKTOP LAYOUT (hidden md:grid) */}
-      <div className="hidden md:grid md:grid-cols-12 md:gap-8 md:px-6 md:pt-6 relative z-10">
+      {/* 2. DESKTOP LAYOUT (hidden lg:grid) */}
+      <div className="hidden lg:grid lg:grid-cols-12 lg:gap-8 lg:px-6 lg:pt-6 relative z-10">
 
         {/* Left Column (Greeting + Categories + Promos) */}
-        <div className="md:col-span-5 space-y-4">
+        <div className="lg:col-span-5 space-y-4">
           <HeaderGreeting />
 
           {/* Compact Active Ride/Booking Banner (Desktop) */}
@@ -1850,8 +1888,8 @@ const Home = () => {
               whileTap={{ scale: 0.99 }}
               onClick={() => navigate(trackingPath, { state: currentRide })}
               className={`w-full flex items-center justify-between px-5 py-4 rounded-[24px] border text-left shadow-md transition-all duration-200 ${isDark
-                  ? 'bg-slate-900 border-slate-800 text-white hover:bg-slate-850'
-                  : 'bg-emerald-50/40 border-emerald-100/60 text-slate-900 hover:bg-emerald-50/75'
+                ? 'bg-slate-900 border-slate-800 text-white hover:bg-slate-850'
+                : 'bg-emerald-50/40 border-emerald-100/60 text-slate-900 hover:bg-emerald-50/75'
                 }`}
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -1889,23 +1927,23 @@ const Home = () => {
         </div>
 
         {/* Right Column (Map) */}
-        <div className="md:col-span-7 space-y-6 md:sticky md:top-6 self-start">
+        <div className="lg:col-span-7 space-y-6 lg:sticky lg:top-6 self-start">
           {showDeferredSections ? (
-            <div className="md:h-[calc(100vh-14rem)] min-h-[480px]">
+            <div className="lg:h-[calc(100vh-14rem)] min-h-[480px]">
               <LocationMapSection />
             </div>
           ) : (
-            <div className="md:h-[calc(100vh-14rem)] min-h-[480px] h-[480px] animate-pulse rounded-[20px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
+            <div className="lg:h-[calc(100vh-14rem)] min-h-[480px] h-[480px] animate-pulse rounded-[20px] border border-white/80 bg-white/70 shadow-[0_10px_22px_rgba(15,23,42,0.05)]" />
           )}
 
           {/* Desktop Branding Footer */}
-          <div className="hidden md:block pt-6">
+          <div className="hidden lg:block pt-6">
             <div className="flex flex-col items-start px-2 py-2">
               <div className="text-[48px] font-[900] tracking-[-0.03em] text-[#FFC400] drop-shadow-[0_10px_30px_rgba(255,196,0,0.4)] leading-none uppercase">
-                RYDON 24
+                Appzeto
               </div>
               <div className="mt-2 text-[14px] font-sans italic font-bold tracking-[0.04em] text-slate-800 dark:text-slate-200">
-                #goRydon24
+                #goAppzeto 24
               </div>
               <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
                 Made for India, Crafted for riders.
@@ -1918,9 +1956,9 @@ const Home = () => {
 
       <AnimatePresence>
         {isAllServicesOpen && (
-          <AllServicesBottomSheet 
-            services={activeServices} 
-            onClose={() => setIsAllServicesOpen(false)} 
+          <AllServicesBottomSheet
+            services={activeServices}
+            onClose={() => setIsAllServicesOpen(false)}
             onServiceClick={handleServiceClick}
           />
         )}
@@ -1944,7 +1982,7 @@ const AllServicesBottomSheet = ({ services, onClose, onServiceClick }) => {
     if (document.body) {
       document.body.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     }
-    
+
     // Reset parent/global user app scroll container scroll heights
     const scrollables = document.querySelectorAll('.overflow-y-auto, [class*="overflow-y-auto"], .overflow-y-scroll, .no-scrollbar');
     scrollables.forEach(el => {
@@ -1984,8 +2022,8 @@ const AllServicesBottomSheet = ({ services, onClose, onServiceClick }) => {
         transition={{ type: 'spring', damping: 26, stiffness: 240 }}
         onClick={(e) => e.stopPropagation()}
         className={`all-services-sheet border-t shadow-2xl flex flex-col ${isDark
-            ? 'bg-[#0B1220] text-white border-zinc-800 shadow-[0_-12px_40px_rgba(0,0,0,0.8)]'
-            : 'bg-white text-slate-900 border-slate-200/80 shadow-[0_-12px_30px_rgba(15,23,42,0.12)]'
+          ? 'bg-[#0B1220] text-white border-zinc-800 shadow-[0_-12px_40px_rgba(0,0,0,0.8)]'
+          : 'bg-white text-slate-900 border-slate-200/80 shadow-[0_-12px_30px_rgba(15,23,42,0.12)]'
           }`}
       >
         {/* Pull Indicator */}
@@ -2040,9 +2078,8 @@ const AllServicesBottomSheet = ({ services, onClose, onServiceClick }) => {
                       />
                     </div>
                     {/* Service Name below */}
-                    <span className={`text-[10px] font-black tracking-wide text-center mt-2 leading-tight max-w-[76px] break-words whitespace-normal ${
-                      isDark ? 'text-zinc-300 group-hover:text-yellow-400' : 'text-slate-800 group-hover:text-[#FFB300]'
-                    }`}>
+                    <span className={`text-[10px] font-black tracking-wide text-center mt-2 leading-tight max-w-[76px] break-words whitespace-normal ${isDark ? 'text-zinc-300 group-hover:text-yellow-400' : 'text-slate-800 group-hover:text-[#FFB300]'
+                      }`}>
                       {label}
                     </span>
                   </button>

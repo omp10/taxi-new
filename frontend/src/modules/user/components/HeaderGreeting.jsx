@@ -18,11 +18,11 @@ const HeaderGreeting = ({ floating = false, hideSearch = false }) => {
   const location = useLocation();
   const routePrefix = location.pathname.startsWith('/taxi/user') ? '/taxi/user' : '';
   const { theme } = useUserTheme();
-  
+
   const { settings, loading, hasBootstrapSettings } = useSettings();
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
-  let appName = settings.general?.app_name || 'RYDON 24';
-  if (appName === 'Appzeto') appName = 'RYDON 24';
+  let appName = settings.general?.app_name || 'Appzeto ';
+  if (appName === 'Appzeto') appName = 'Appzeto ';
   const [locationLabel, setLocationLabel] = useState(getSavedLocationLabel);
   const showBrandingSkeleton = loading && !hasBootstrapSettings && !appLogo;
 
@@ -156,11 +156,10 @@ const HeaderGreeting = ({ floating = false, hideSearch = false }) => {
                 type="button"
                 whileTap={{ scale: 0.99 }}
                 onClick={() => navigate(`${routePrefix}/ride/select-location`, { state: { activeInput: 'drop', flow: 'ride' } })}
-                className={`flex w-full items-center gap-3 rounded-full text-left shadow-[0_12px_26px_rgba(15,23,42,0.06)] transition-all ${
-                  theme === 'dark' 
-                    ? 'search-button-dark' 
+                className={`flex w-full items-center gap-3 rounded-full text-left shadow-[0_12px_26px_rgba(15,23,42,0.06)] transition-all ${theme === 'dark'
+                    ? 'search-button-dark'
                     : 'bg-[#f1f3f6] border border-slate-200/40 text-slate-900'
-                }`}
+                  }`}
               >
                 <Search size={16} className={theme === 'dark' ? 'text-white' : 'text-slate-900'} strokeWidth={2.5} />
                 <span className={`min-w-0 flex-1 truncate text-[13px] font-semibold ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>

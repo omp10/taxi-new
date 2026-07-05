@@ -6,7 +6,7 @@ const LAST_NATIVE_FCM_KEY = 'lastNativeFcmRegistration';
 const LAST_NATIVE_FCM_DEBUG_KEY = 'lastNativeFcmDebugState';
 const NATIVE_FCM_GLOBAL_KEYS = [
   '__nativeFcmToken',
-  '__rydon24NativeFcmToken',
+  '__Appzeto 24NativeFcmToken',
   '__fcmToken',
   'nativeFcmToken',
   'fcmToken',
@@ -146,7 +146,7 @@ const persistDebugState = (payload) => {
       ...payload,
       updatedAt: new Date().toISOString(),
     }));
-  } catch {}
+  } catch { }
 };
 
 const normalizeBridgePayload = (payload = {}, fallbackPlatform = 'android') => {
@@ -401,7 +401,7 @@ export const installNativeFcmBridge = () => {
   };
 
   const retryPending = () => {
-    flushPendingRegistration().catch(() => {});
+    flushPendingRegistration().catch(() => { });
   };
 
   const handleMessageEvent = (event) => {
@@ -416,7 +416,7 @@ export const installNativeFcmBridge = () => {
       if (queueNativePayload(normalizedPayload)) {
         retryPending();
       }
-    } catch {}
+    } catch { }
   };
 
   window.addEventListener('focus', retryPending);
@@ -429,7 +429,7 @@ export const installNativeFcmBridge = () => {
     }
   });
 
-  drainQueuedCalls().catch(() => {});
+  drainQueuedCalls().catch(() => { });
   window.setTimeout(retryPending, 1500);
   window.setInterval(retryPending, 15000);
 };

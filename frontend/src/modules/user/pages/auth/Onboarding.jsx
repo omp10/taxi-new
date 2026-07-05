@@ -10,7 +10,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const { theme, toggleTheme } = useUserTheme();
-  const appName = settings.general?.app_name || 'Rydon24';
+  const appName = settings.general?.app_name || 'Appzeto 24';
   const appLogo = settings.general?.logo || settings.customization?.logo || settings.general?.favicon || '';
 
   useEffect(() => {
@@ -43,9 +43,9 @@ const Onboarding = () => {
       >
         {appLogo ? (
           <div className="p-4 rounded-[28px] bg-slate-900/10 dark:bg-white/5 border border-white/10 shadow-2xl mb-5 backdrop-blur-md">
-            <img 
-              src={appLogo} 
-              alt={appName} 
+            <img
+              src={appLogo}
+              alt={appName}
               className="h-20 w-20 object-contain rounded-2xl"
             />
           </div>
@@ -58,7 +58,7 @@ const Onboarding = () => {
           </div>
         )}
 
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
@@ -66,7 +66,7 @@ const Onboarding = () => {
         >
           {appName}
         </motion.h1>
-        
+
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.7 }}
@@ -80,7 +80,7 @@ const Onboarding = () => {
       {/* Loading Indicator at Bottom */}
       <div className="absolute bottom-16 left-0 right-0 flex justify-center">
         <div className="w-12 h-1 rounded-full bg-zinc-800/20 dark:bg-zinc-800 overflow-hidden relative">
-          <motion.div 
+          <motion.div
             initial={{ left: '-100%' }}
             animate={{ left: '100%' }}
             transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}

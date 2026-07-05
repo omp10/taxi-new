@@ -164,7 +164,7 @@ const findMatchingZone = (coords, zones = []) => {
 const saveRecentLocation = (address, coords) => {
   if (!address || address.trim().length === 0) return;
   try {
-    const key = 'rydon24:recentLocations';
+    const key = 'Appzeto 24:recentLocations';
     let list = [];
     const saved = localStorage.getItem(key);
     if (saved) {
@@ -183,7 +183,7 @@ const saveRecentLocation = (address, coords) => {
     list = list.slice(0, 5);
     localStorage.setItem(key, JSON.stringify(list));
     window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new Event('rydon24:recent-locations-updated'));
+    window.dispatchEvent(new Event('Appzeto 24:recent-locations-updated'));
   } catch (e) {
     console.error('Error saving recent location:', e);
   }
@@ -541,23 +541,23 @@ const SelectLocation = () => {
   const isInitialDefault = useMemo(() => {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return false;
-    
+
     if (activeInput === 'pickup') {
       const defaultPickup = String(routeState.pickup || '').trim();
       const currentSaved = String(savedPickupLabel || '').trim();
       return trimmedQuery === defaultPickup || trimmedQuery === currentSaved;
     }
-    
+
     if (activeInput === 'drop') {
       const defaultDrop = String(routeState.drop || '').trim();
       return trimmedQuery === defaultDrop;
     }
-    
+
     if (typeof activeInput === 'number') {
       const defaultStop = String(routeState.stops?.[activeInput] || '').trim();
       return trimmedQuery === defaultStop;
     }
-    
+
     return false;
   }, [query, activeInput, routeState.pickup, routeState.drop, routeState.stops, savedPickupLabel]);
 
@@ -740,14 +740,14 @@ const SelectLocation = () => {
     const center = mapInstanceRef.current.getCenter();
     const lat = center.lat();
     const lng = center.lng();
-    
+
     // Only update and geocode if the center has actually changed significantly
     const dist = Math.abs(lat - lastCenterRef.current.lat) + Math.abs(lng - lastCenterRef.current.lng);
     if (dist < 0.00001) {
       setIsDragging(false);
       return;
     }
-    
+
     lastCenterRef.current = { lat, lng };
     setIsDragging(false);
     const nextCenter = { lat, lng };
@@ -771,7 +771,7 @@ const SelectLocation = () => {
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) return;
     setIsLocating(true);
-    
+
     const handleSuccess = (pos) => {
       setIsLocating(false);
       const newCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -799,7 +799,7 @@ const SelectLocation = () => {
   const handleConfirmNavigate = async (optionalDrop, optionalDropCoords = null) => {
     const finalDrop = optionalDrop || drop;
     const finalPickup = pickup || 'Pipaliyahana, Indore';
-    
+
     if (!finalDrop || finalDrop.trim().length === 0) return;
 
     const resolvedPickupCoords = pickupCoords || await resolveCoords(finalPickup);
@@ -1051,22 +1051,26 @@ const SelectLocation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] max-w-lg mx-auto font-sans relative overflow-hidden pb-6">
-      <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-orange-100/55 blur-3xl pointer-events-none" />
-      <div className="absolute top-56 left-[-60px] h-56 w-56 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-16 right-[-40px] h-44 w-44 rounded-full bg-blue-100/50 blur-3xl pointer-events-none" />
-      <AnimatePresence>
-        {showMapPicker && (
-          <motion.div
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            className="fixed inset-0 z-[100] bg-white flex flex-col max-w-lg mx-auto"
-          >
-            {/* Map Header */}
-            <div className="absolute top-0 left-0 right-0 z-20 px-5 pt-10 pb-4 bg-gradient-to-b from-white via-white/80 to-transparent">
-               <div className="flex items-center gap-3">
-                  <button 
+    <div className="min-h-screen bg-[linear-gradient(180deg,#F8FAFC_0%,#F3F4F6_38%,#EEF2F7_100%)] w-full lg:max-w-7xl mx-auto font-sans relative overflow-hidden lg:grid lg:grid-cols-12 lg:gap-6 lg:bg-none lg:bg-slate-50">
+      
+      {/* LEFT COLUMN - CONTENT */}
+      <div className="lg:col-span-5 lg:h-screen lg:overflow-y-auto lg:border-r lg:border-slate-200 lg:bg-white lg:shadow-xl relative z-10 flex flex-col pb-6">
+        <div className="absolute -top-20 right-[-40px] h-48 w-48 rounded-full bg-orange-100/55 blur-3xl pointer-events-none lg:hidden" />
+        <div className="absolute top-56 left-[-60px] h-56 w-56 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none lg:hidden" />
+        <div className="absolute bottom-16 right-[-40px] h-44 w-44 rounded-full bg-blue-100/50 blur-3xl pointer-events-none lg:hidden" />
+        
+        <AnimatePresence>
+          {showMapPicker && (
+            <motion.div
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              className="fixed inset-0 z-[100] bg-white flex flex-col w-full lg:absolute lg:inset-0 lg:max-w-none"
+            >
+              {/* Map Header */}
+              <div className="absolute top-0 left-0 right-0 z-20 px-5 pt-10 pb-4 bg-gradient-to-b from-white via-white/80 to-transparent">
+                <div className="flex items-center gap-3">
+                  <button
                     onClick={handleMapBack}
                     className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border border-slate-100 active:scale-95 transition-all"
                   >
@@ -1078,391 +1082,423 @@ const SelectLocation = () => {
                       {isGeocoding ? 'Locating...' : pickedAddress}
                     </p>
                   </div>
-               </div>
-            </div>
-
-            {/* Map Area */}
-            <div className="flex-1 relative bg-slate-200">
-              {!HAS_VALID_GOOGLE_MAPS_KEY ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 px-6 text-center">
-                  <div className="rounded-3xl bg-white px-8 py-10 shadow-xl border border-slate-100">
-                    <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <X size={32} className="text-rose-400" />
-                    </div>
-                    <p className="text-[16px] font-bold text-slate-900">Config Error</p>
-                    <p className="mt-2 text-[13px] font-medium text-slate-500">
-                      Google Maps API Key is missing.
-                    </p>
-                  </div>
-                </div>
-              ) : loadError ? (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 px-6 text-center">
-                  <div className="rounded-3xl bg-white px-8 py-10 shadow-xl border border-slate-100">
-                    <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <AlertTriangle size={32} className="text-rose-400" />
-                    </div>
-                    <p className="text-[16px] font-bold text-slate-900">Load Failed</p>
-                    <p className="mt-2 text-[13px] font-medium text-slate-500">
-                      Map could not be loaded. Please check your browser console or network.
-                    </p>
-                  </div>
-                </div>
-              ) : isLoaded ? (
-                <GoogleMap
-                  mapContainerStyle={{ width: '100%', height: '100%' }}
-                  center={mapCenter}
-                  zoom={16}
-                  onLoad={(map) => (mapInstanceRef.current = map)}
-                  onIdle={handleMapIdle}
-                  onDragStart={() => setIsDragging(true)}
-                  options={{
-                    disableDefaultUI: true,
-                    clickableIcons: false,
-                    gestureHandling: 'greedy',
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50">
-                  <div className="relative">
-                    <LoaderCircle size={44} className="animate-spin text-slate-300" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <MapIcon size={18} className="text-slate-200" />
-                    </div>
-                  </div>
-                  <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400 animate-pulse">Initializing Maps</p>
-                </div>
-              )}
-
-              {/* Central Pin - Uber Style */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[100%] pointer-events-none z-10">
-                <div className="relative">
-                  <motion.div 
-                    animate={isDragging || isGeocoding ? { y: -12 } : { y: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    className="flex flex-col items-center"
-                  >
-                    <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center shadow-2xl rotate-45 border-2 border-white">
-                      <div className="-rotate-45">
-                        <MapIcon size={18} className="text-white fill-white/20" />
-                      </div>
-                    </div>
-                    {/* Stick */}
-                    <div className="w-1 h-5 bg-slate-900 -mt-2 shadow-2xl" />
-                  </motion.div>
-                  {/* Shadow Dot */}
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-1 bg-black/30 rounded-full blur-sm" />
                 </div>
               </div>
 
-              {/* Current Location FAB */}
-              <button 
-                onClick={handleUseCurrentLocation}
-                disabled={isLocating}
-                className="absolute bottom-6 right-5 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-slate-100 active:scale-90 transition-all z-20"
-              >
-                {isLocating ? (
-                  <LoaderCircle size={20} className="animate-spin text-slate-400" />
+              {/* Map Area */}
+              <div className="flex-1 relative bg-slate-200">
+                {!HAS_VALID_GOOGLE_MAPS_KEY ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 px-6 text-center">
+                    <div className="rounded-3xl bg-white px-8 py-10 shadow-xl border border-slate-100">
+                      <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <X size={32} className="text-rose-400" />
+                      </div>
+                      <p className="text-[16px] font-bold text-slate-900">Config Error</p>
+                      <p className="mt-2 text-[13px] font-medium text-slate-500">
+                        Google Maps API Key is missing.
+                      </p>
+                    </div>
+                  </div>
+                ) : loadError ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 px-6 text-center">
+                    <div className="rounded-3xl bg-white px-8 py-10 shadow-xl border border-slate-100">
+                      <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertTriangle size={32} className="text-rose-400" />
+                      </div>
+                      <p className="text-[16px] font-bold text-slate-900">Load Failed</p>
+                      <p className="mt-2 text-[13px] font-medium text-slate-500">
+                        Map could not be loaded. Please check your browser console or network.
+                      </p>
+                    </div>
+                  </div>
+                ) : isLoaded ? (
+                  <GoogleMap
+                    mapContainerStyle={{ width: '100%', height: '100%' }}
+                    center={mapCenter}
+                    zoom={16}
+                    onLoad={(map) => (mapInstanceRef.current = map)}
+                    onIdle={handleMapIdle}
+                    onDragStart={() => setIsDragging(true)}
+                    options={{
+                      disableDefaultUI: true,
+                      clickableIcons: false,
+                      gestureHandling: 'greedy',
+                    }}
+                  />
                 ) : (
-                  <Navigation size={20} className="text-slate-900 fill-slate-900/10" />
-                )}
-              </button>
-            </div>
-
-            {/* Confirm Actions */}
-            <div className="px-5 pt-4 pb-10 bg-white border-t border-slate-50 space-y-4">
-              <div className="flex items-center gap-3 py-1 px-1">
-                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-                    <MapPin size={20} className="text-slate-400" />
-                 </div>
-                 <div className="min-w-0 flex-1">
-                    <h4 className="text-[15px] font-bold text-slate-900 leading-none">Confirm Spot</h4>
-                    <p className="text-[12px] font-medium text-slate-400 mt-1 line-clamp-1">{pickedAddress}</p>
-                 </div>
-              </div>
-              <button
-                onClick={handleConfirmMapLocation}
-                disabled={isGeocoding}
-                className="w-full bg-slate-900 py-4 rounded-3xl text-white font-bold text-[15px] shadow-xl shadow-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
-              >
-                <Check size={18} strokeWidth={3} />
-                Confirm Location
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Header */}
-      <header className="sticky top-0 z-30">
-        <div className="bg-white/70 backdrop-blur-md border-b border-white/70 shadow-[0_10px_20px_rgba(15,23,42,0.05)]">
-          <div className="px-5 py-4 flex items-center gap-3">
-            <button onClick={handleScreenBack} className="p-2 -ml-2 active:scale-95 transition-all rounded-full">
-              <ArrowLeft size={22} className="text-slate-900" strokeWidth={3} />
-            </button>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ride</p>
-              <h1 className="mt-0.5 text-[20px] font-bold text-slate-900 tracking-tight leading-none truncate">Where to?</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Input Card */}
-      <div className="relative z-10 px-5 pt-4">
-        <div className="bg-white/80 backdrop-blur-md rounded-[22px] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.08)] border border-white/80">
-          <div className="space-y-3">
-
-            {/* Pickup Row */}
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-center gap-0.5 shrink-0">
-                <div className="w-5 h-5 rounded-full border-2 border-emerald-700 bg-white/70 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-700" />
-                </div>
-              </div>
-              <div
-                className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all ${activeInput === 'pickup' ? 'ring-2 ring-emerald-200' : ''}`}
-                onClick={() => setActiveInput('pickup')}
-              >
-                <input
-                  type="text"
-                  value={pickup}
-                  onChange={(e) => setPickup(sanitizeLocationInput(e.target.value))}
-                  onFocus={() => setActiveInput('pickup')}
-                  placeholder="Your pickup location"
-                  className="w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none placeholder:text-slate-300"
-                />
-                {pickup.length > 0 && (
-                  <button onClick={() => setPickup('')} className="ml-2 shrink-0">
-                    <X size={16} className="text-slate-300 hover:text-slate-600 transition-colors" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Dotted connector */}
-            <div className="ml-[9px] h-2 w-[1.5px] border-l-[1.5px] border-dotted border-slate-300/70" />
-
-            {/* Dynamic Stops */}
-            <AnimatePresence>
-              {stops.map((stop, idx) => (
-                <motion.div
-                  key={`stop-${idx}`}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-center gap-0.5 shrink-0">
-                      <div className="w-5 h-5 rounded-full border-2 border-indigo-500 bg-white/70 flex items-center justify-center">
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50">
+                    <div className="relative">
+                      <LoaderCircle size={44} className="animate-spin text-slate-300" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <MapIcon size={18} className="text-slate-200" />
                       </div>
                     </div>
-                    <div
-                      className={`flex-1 flex items-center rounded-xl px-3 py-2.5 transition-all ${
-                        stop.trim().length > 0
-                          ? 'bg-white/90 border border-indigo-200 shadow-[0_10px_24px_rgba(99,102,241,0.10)]'
-                          : 'bg-indigo-50/70 border border-indigo-100/70'
-                      } ${activeInput === idx ? 'ring-2 ring-indigo-200' : ''}`}
-                      onClick={() => setActiveInput(idx)}
-                    >
-                      <input
-                        type="text"
-                        value={stop}
-                        autoFocus={activeInput === idx}
-                        placeholder={`Stop ${idx + 1} location...`}
-                        onFocus={() => setActiveInput(idx)}
-                        onChange={(e) => updateStop(idx, sanitizeLocationInput(e.target.value))}
-                        className={`w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none ${
-                          stop.trim().length > 0 ? 'placeholder:text-slate-300' : 'placeholder:text-indigo-300'
-                        }`}
-                      />
-                      {stop.length > 0 && (
-                        <button onClick={() => updateStop(idx, '')} className="ml-2 shrink-0">
-                          <X size={16} className="text-indigo-300 hover:text-indigo-600 transition-colors" />
-                        </button>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => removeStop(idx)}
-                      className="w-7 h-7 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0 active:scale-95 transition-all"
-                    >
-                      <Minus size={14} className="text-rose-500" strokeWidth={3} />
-                    </button>
+                    <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400 animate-pulse">Initializing Maps</p>
                   </div>
-                  {/* Connector after each stop */}
-                  <div className="ml-[9px] mt-3 h-2 w-[1.5px] border-l-[1.5px] border-dotted border-slate-300/70" />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {/* Drop Row */}
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-center gap-0.5 shrink-0">
-                <div className="w-5 h-5 rounded-full border-2 border-orange-600 bg-white/70 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-orange-600" />
-                </div>
-              </div>
-              <div
-                className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all ${activeInput === 'drop' ? 'ring-2 ring-orange-200' : ''}`}
-                onClick={() => setActiveInput('drop')}
-              >
-                <input
-                  type="text"
-                  value={drop}
-                  autoFocus={activeInput === 'drop'}
-                  placeholder="Enter drop location..."
-                  onFocus={() => setActiveInput('drop')}
-                  onChange={(e) => setDrop(sanitizeLocationInput(e.target.value))}
-                  className="w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none placeholder:text-slate-300"
-                />
-                {drop.length > 0 && (
-                  <button onClick={() => setDrop('')} className="ml-2 shrink-0">
-                    <X size={16} className="text-slate-300 hover:text-slate-600 transition-colors" />
-                  </button>
                 )}
-              </div>
-            </div>
 
-          </div>
-        </div>
-      </div>
+                {/* Central Pin - Uber Style */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[100%] pointer-events-none z-10">
+                  <div className="relative">
+                    <motion.div
+                      animate={isDragging || isGeocoding ? { y: -12 } : { y: 0 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                      className="flex flex-col items-center"
+                    >
+                      <div className="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center shadow-2xl rotate-45 border-2 border-white">
+                        <div className="-rotate-45">
+                          <MapIcon size={18} className="text-white fill-white/20" />
+                        </div>
+                      </div>
+                      {/* Stick */}
+                      <div className="w-1 h-5 bg-slate-900 -mt-2 shadow-2xl" />
+                    </motion.div>
+                    {/* Shadow Dot */}
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-1 bg-black/30 rounded-full blur-sm" />
+                  </div>
+                </div>
 
-      {/* Action Pills */}
-      <div className="relative z-10 flex gap-3 px-5 my-4">
-        <button
-          onClick={showMapToast}
-          className="flex-1 flex items-center justify-center gap-2 bg-white/75 backdrop-blur-md border border-white/80 rounded-full py-2.5 shadow-[0_12px_26px_rgba(15,23,42,0.06)] active:scale-95 transition-all text-[13px] font-bold text-slate-800"
-        >
-          <MapPin size={16} className="text-slate-900" />
-          <span>Select on map</span>
-        </button>
-        <button
-          onClick={addStop}
-          className="flex-1 flex items-center justify-center gap-2 rounded-full py-2.5 shadow-[0_12px_26px_rgba(15,23,42,0.06)] active:scale-95 transition-all text-[13px] font-bold bg-white/75 backdrop-blur-md border border-white/80 text-slate-800"
-        >
-          <div className="w-4 h-4 rounded bg-indigo-500 flex items-center justify-center">
-            <Plus size={12} className="text-white" strokeWidth={3} />
-          </div>
-          <span>Add stop {stops.length > 0 ? `(${stops.length})` : ''}</span>
-        </button>
-      </div>
-
-      {/* Stop count chips */}
-      {stops.length > 0 && (
-        <div className="relative z-10 px-5 mb-2">
-          <div className="flex gap-2 flex-wrap">
-            {stops.map((s, idx) => (
-              <div key={idx} className="flex items-center gap-1.5 bg-white/75 backdrop-blur-md border border-white/80 rounded-full px-3 py-1 shadow-sm">
-                <div className="w-2 h-2 rounded-full bg-indigo-400" />
-                <span className="text-[12px] font-bold text-slate-700 truncate max-w-[110px]">
-                  {s.trim() || `Stop ${idx + 1}`}
-                </span>
-                <button onClick={() => removeStop(idx)}>
-                  <X size={11} className="text-slate-400 hover:text-slate-700" strokeWidth={3} />
+                {/* Current Location FAB */}
+                <button
+                  onClick={handleUseCurrentLocation}
+                  disabled={isLocating}
+                  className="absolute bottom-6 right-5 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-slate-100 active:scale-90 transition-all z-20"
+                >
+                  {isLocating ? (
+                    <LoaderCircle size={20} className="animate-spin text-slate-400" />
+                  ) : (
+                    <Navigation size={20} className="text-slate-900 fill-slate-900/10" />
+                  )}
                 </button>
               </div>
-            ))}
+
+              {/* Confirm Actions */}
+              <div className="px-5 pt-4 pb-10 bg-white border-t border-slate-50 space-y-4">
+                <div className="flex items-center gap-3 py-1 px-1">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                    <MapPin size={20} className="text-slate-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-[15px] font-bold text-slate-900 leading-none">Confirm Spot</h4>
+                    <p className="text-[12px] font-medium text-slate-400 mt-1 line-clamp-1">{pickedAddress}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleConfirmMapLocation}
+                  disabled={isGeocoding}
+                  className="w-full bg-slate-900 py-4 rounded-3xl text-white font-bold text-[15px] shadow-xl shadow-slate-200 flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  <Check size={18} strokeWidth={3} />
+                  Confirm Location
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Header */}
+        <header className="sticky top-0 z-30 lg:bg-white lg:pt-4 lg:px-2">
+          <div className="bg-white/70 backdrop-blur-md border-b border-white/70 shadow-[0_10px_20px_rgba(15,23,42,0.05)] lg:rounded-[24px] lg:border lg:border-slate-100">
+            <div className="px-5 py-4 flex items-center gap-3">
+              <button onClick={handleScreenBack} className="p-2 -ml-2 active:scale-95 transition-all rounded-full">
+                <ArrowLeft size={22} className="text-slate-900" strokeWidth={3} />
+              </button>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ride</p>
+                <h1 className="mt-0.5 text-[20px] font-bold text-slate-900 tracking-tight leading-none truncate">Where to?</h1>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Input Card */}
+        <div className="relative z-10 px-5 pt-4">
+          <div className="bg-white/80 backdrop-blur-md rounded-[22px] p-4 shadow-[0_18px_44px_rgba(15,23,42,0.08)] border border-white/80 lg:shadow-none lg:border-slate-100 lg:bg-slate-50/50">
+            <div className="space-y-3">
+
+              {/* Pickup Row */}
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center gap-0.5 shrink-0">
+                  <div className="w-5 h-5 rounded-full border-2 border-emerald-700 bg-white/70 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-700" />
+                  </div>
+                </div>
+                <div
+                  className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all lg:bg-white ${activeInput === 'pickup' ? 'ring-2 ring-emerald-200 lg:ring-emerald-400/50' : 'lg:border-slate-200'}`}
+                  onClick={() => setActiveInput('pickup')}
+                >
+                  <input
+                    type="text"
+                    value={pickup}
+                    onChange={(e) => setPickup(sanitizeLocationInput(e.target.value))}
+                    onFocus={() => setActiveInput('pickup')}
+                    placeholder="Your pickup location"
+                    className="w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none placeholder:text-slate-300"
+                  />
+                  {pickup.length > 0 && (
+                    <button onClick={() => setPickup('')} className="ml-2 shrink-0">
+                      <X size={16} className="text-slate-300 hover:text-slate-600 transition-colors" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Dotted connector */}
+              <div className="ml-[9px] h-2 w-[1.5px] border-l-[1.5px] border-dotted border-slate-300/70" />
+
+              {/* Dynamic Stops */}
+              <AnimatePresence>
+                {stops.map((stop, idx) => (
+                  <motion.div
+                    key={`stop-${idx}`}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-col items-center gap-0.5 shrink-0">
+                        <div className="w-5 h-5 rounded-full border-2 border-indigo-500 bg-white/70 flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                        </div>
+                      </div>
+                      <div
+                        className={`flex-1 flex items-center rounded-xl px-3 py-2.5 transition-all lg:bg-white lg:border-slate-200 ${stop.trim().length > 0
+                            ? 'bg-white/90 border border-indigo-200 shadow-[0_10px_24px_rgba(99,102,241,0.10)] lg:shadow-none'
+                            : 'bg-indigo-50/70 border border-indigo-100/70'
+                          } ${activeInput === idx ? 'ring-2 ring-indigo-200 lg:ring-indigo-400/50' : ''}`}
+                        onClick={() => setActiveInput(idx)}
+                      >
+                        <input
+                          type="text"
+                          value={stop}
+                          autoFocus={activeInput === idx}
+                          placeholder={`Stop ${idx + 1} location...`}
+                          onFocus={() => setActiveInput(idx)}
+                          onChange={(e) => updateStop(idx, sanitizeLocationInput(e.target.value))}
+                          className={`w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none ${stop.trim().length > 0 ? 'placeholder:text-slate-300' : 'placeholder:text-indigo-300'
+                            }`}
+                        />
+                        {stop.length > 0 && (
+                          <button onClick={() => updateStop(idx, '')} className="ml-2 shrink-0">
+                            <X size={16} className="text-indigo-300 hover:text-indigo-600 transition-colors" />
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeStop(idx)}
+                        className="w-7 h-7 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0 active:scale-95 transition-all"
+                      >
+                        <Minus size={14} className="text-rose-500" strokeWidth={3} />
+                      </button>
+                    </div>
+                    {/* Connector after each stop */}
+                    <div className="ml-[9px] mt-3 h-2 w-[1.5px] border-l-[1.5px] border-dotted border-slate-300/70" />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {/* Drop Row */}
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center gap-0.5 shrink-0">
+                  <div className="w-5 h-5 rounded-full border-2 border-orange-600 bg-white/70 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-600" />
+                  </div>
+                </div>
+                <div
+                  className={`flex-1 flex items-center bg-white/70 border border-white/80 rounded-xl px-3 py-2.5 transition-all lg:bg-white lg:border-slate-200 ${activeInput === 'drop' ? 'ring-2 ring-orange-200 lg:ring-orange-400/50' : ''}`}
+                  onClick={() => setActiveInput('drop')}
+                >
+                  <input
+                    type="text"
+                    value={drop}
+                    autoFocus={activeInput === 'drop'}
+                    placeholder="Enter drop location..."
+                    onFocus={() => setActiveInput('drop')}
+                    onChange={(e) => setDrop(sanitizeLocationInput(e.target.value))}
+                    className="w-full bg-transparent border-none text-[15px] font-medium text-slate-900 focus:outline-none placeholder:text-slate-300"
+                  />
+                  {drop.length > 0 && (
+                    <button onClick={() => setDrop('')} className="ml-2 shrink-0">
+                      <X size={16} className="text-slate-300 hover:text-slate-600 transition-colors" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Search Results */}
-      <div className="relative z-10 px-5 mb-4">
-        <h2 className="text-[14px] font-bold text-slate-400 mb-3 ml-1 uppercase tracking-widest">
-          {query.trim().length > 0 ? 'Search Results' : currentZone?.name ? `${currentZone.name} Suggestions` : 'Popular Locations'}
-        </h2>
+        {/* Action Pills */}
+        <div className="relative z-10 flex gap-3 px-5 my-4">
+          <button
+            onClick={showMapToast}
+            className="flex-1 flex items-center justify-center gap-2 bg-white/75 backdrop-blur-md border border-white/80 lg:bg-white lg:border-slate-200 rounded-full py-2.5 shadow-[0_12px_26px_rgba(15,23,42,0.06)] lg:shadow-sm active:scale-95 transition-all text-[13px] font-bold text-slate-800"
+          >
+            <MapPin size={16} className="text-slate-900" />
+            <span>Select on map</span>
+          </button>
+          <button
+            onClick={addStop}
+            className="flex-1 flex items-center justify-center gap-2 rounded-full py-2.5 shadow-[0_12px_26px_rgba(15,23,42,0.06)] lg:shadow-sm active:scale-95 transition-all text-[13px] font-bold bg-white/75 backdrop-blur-md border border-white/80 lg:bg-white lg:border-slate-200 text-slate-800"
+          >
+            <div className="w-4 h-4 rounded bg-indigo-500 flex items-center justify-center">
+              <Plus size={12} className="text-white" strokeWidth={3} />
+            </div>
+            <span>Add stop {stops.length > 0 ? `(${stops.length})` : ''}</span>
+          </button>
+        </div>
 
-        {searchResults.length > 0 ? (
-          <div className="bg-white/75 backdrop-blur-md rounded-2xl border border-white/80 overflow-hidden shadow-[0_14px_34px_rgba(15,23,42,0.06)]">
-            {/* Quick Go to Current Location */}
-            <motion.button
-              whileTap={{ scale: 0.99 }}
-              onClick={handleUseCurrentLocationResult}
-              className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b border-white/70 bg-emerald-50/30 hover:bg-emerald-50/50 transition-colors group"
-            >
-               <div className="w-10 h-10 rounded-2xl bg-white border border-emerald-100 shadow-sm flex items-center justify-center shrink-0">
+        {/* Stop count chips */}
+        {stops.length > 0 && (
+          <div className="relative z-10 px-5 mb-2">
+            <div className="flex gap-2 flex-wrap">
+              {stops.map((s, idx) => (
+                <div key={idx} className="flex items-center gap-1.5 bg-white/75 backdrop-blur-md border border-white/80 lg:bg-slate-50 lg:border-slate-200 rounded-full px-3 py-1 shadow-sm">
+                  <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                  <span className="text-[12px] font-bold text-slate-700 truncate max-w-[110px]">
+                    {s.trim() || `Stop ${idx + 1}`}
+                  </span>
+                  <button onClick={() => removeStop(idx)}>
+                    <X size={11} className="text-slate-400 hover:text-slate-700" strokeWidth={3} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search Results */}
+        <div className="relative z-10 px-5 mb-4 pb-20 lg:pb-4">
+          <h2 className="text-[14px] font-bold text-slate-400 mb-3 ml-1 uppercase tracking-widest">
+            {query.trim().length > 0 ? 'Search Results' : currentZone?.name ? `${currentZone.name} Suggestions` : 'Popular Locations'}
+          </h2>
+
+          {searchResults.length > 0 ? (
+            <div className="bg-white/75 backdrop-blur-md rounded-2xl border border-white/80 lg:bg-white lg:border-slate-100 overflow-hidden shadow-[0_14px_34px_rgba(15,23,42,0.06)] lg:shadow-sm">
+              {/* Quick Go to Current Location */}
+              <motion.button
+                whileTap={{ scale: 0.99 }}
+                onClick={handleUseCurrentLocationResult}
+                className="w-full text-left flex items-center gap-3 px-4 py-3.5 border-b border-white/70 lg:border-slate-100 bg-emerald-50/30 hover:bg-emerald-50/50 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-2xl bg-white border border-emerald-100 shadow-sm flex items-center justify-center shrink-0">
                   {isLocating ? (
-                     <LoaderCircle size={18} className="animate-spin text-emerald-500" />
+                    <LoaderCircle size={18} className="animate-spin text-emerald-500" />
                   ) : (
-                     <Navigation size={18} className="text-emerald-500 fill-emerald-50" />
+                    <Navigation size={18} className="text-emerald-500 fill-emerald-50" />
                   )}
-               </div>
-               <div className="flex-1">
+                </div>
+                <div className="flex-1">
                   <h4 className="text-[15px] font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors">Use Current Location</h4>
                   <p className="text-[12px] text-slate-400 font-medium mt-0.5">Perfect for accurate pickup</p>
-               </div>
-               <ChevronRight size={16} className="text-slate-300" />
-            </motion.button>
-
-            {searchResults.map((result, idx) => (
-              <motion.button
-                key={idx}
-                type="button"
-                whileTap={{ scale: 0.99 }}
-                onClick={() => handleSelectResult(result)}
-                className="w-full text-left flex items-start gap-3 px-4 py-3 border-b border-white/70 last:border-none hover:bg-white/60 transition-colors"
-              >
-                <div className="mt-0.5 w-10 h-10 rounded-2xl bg-white/70 border border-white/80 shadow-sm flex items-center justify-center shrink-0 text-slate-500">
-                  <MapPin size={18} strokeWidth={2.6} />
                 </div>
-                <div className="min-w-0">
-                  <h4 className="text-[15px] font-semibold text-slate-900 leading-tight">{result.title}</h4>
-                  <p className="text-[13px] text-slate-500 font-medium mt-1 line-clamp-1">{result.address}</p>
-                </div>
+                <ChevronRight size={16} className="text-slate-300" />
               </motion.button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-14 h-14 rounded-3xl bg-white/80 border border-white/80 shadow-sm flex items-center justify-center mx-auto text-slate-400 text-[22px] font-bold">
-              —
+
+              {searchResults.map((result, idx) => (
+                <motion.button
+                  key={idx}
+                  type="button"
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => handleSelectResult(result)}
+                  className="w-full text-left flex items-start gap-3 px-4 py-3 border-b border-white/70 lg:border-slate-100 last:border-none hover:bg-white/60 transition-colors"
+                >
+                  <div className="mt-0.5 w-10 h-10 rounded-2xl bg-white/70 lg:bg-slate-50 border border-white/80 lg:border-slate-100 shadow-sm flex items-center justify-center shrink-0 text-slate-500">
+                    <MapPin size={18} strokeWidth={2.6} />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-[15px] font-semibold text-slate-900 leading-tight">{result.title}</h4>
+                    <p className="text-[13px] text-slate-500 font-medium mt-1 line-clamp-1">{result.address}</p>
+                  </div>
+                </motion.button>
+              ))}
             </div>
-            <p className="mt-3 text-[15px] font-semibold text-slate-600">
-              No results for <span className="text-slate-900">"{query}"</span>
-            </p>
-            <p className="text-[13px] font-medium text-slate-400 mt-1">Try a different search term</p>
-          </div>
-        )}
-        {query.trim().length >= 3 && (
-          <div className="mt-3 px-1">
-            <p className="text-[11px] font-bold text-slate-400">
-              {isSearchingLocations
-                ? 'Searching locations inside your service zone...'
-                : zonePaths.length
-                  ? 'Showing zone-prioritized results after 3+ characters.'
-                  : 'Showing optimized search results after 3+ characters.'}
-            </p>
-          </div>
-        )}
-        {!query.trim().length && currentZone?.name && (
-          <div className="mt-3 px-1">
-            <p className="text-[11px] font-bold text-slate-400">
-              Popular suggestions are pulled from the admin-created stores in the <span className="text-slate-600">{currentZone.name}</span> zone.
-            </p>
-          </div>
-        )}
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-14 h-14 rounded-3xl bg-white/80 border border-white/80 shadow-sm flex items-center justify-center mx-auto text-slate-400 text-[22px] font-bold">
+                —
+              </div>
+              <p className="mt-3 text-[15px] font-semibold text-slate-600">
+                No results for <span className="text-slate-900">"{query}"</span>
+              </p>
+              <p className="text-[13px] font-medium text-slate-400 mt-1">Try a different search term</p>
+            </div>
+          )}
+          {query.trim().length >= 3 && (
+            <div className="mt-3 px-1">
+              <p className="text-[11px] font-bold text-slate-400">
+                {isSearchingLocations
+                  ? 'Searching locations inside your service zone...'
+                  : zonePaths.length
+                    ? 'Showing zone-prioritized results after 3+ characters.'
+                    : 'Showing optimized search results after 3+ characters.'}
+              </p>
+            </div>
+          )}
+          {!query.trim().length && currentZone?.name && (
+            <div className="mt-3 px-1">
+              <p className="text-[11px] font-bold text-slate-400">
+                Popular suggestions are pulled from the admin-created stores in the <span className="text-slate-600">{currentZone.name}</span> zone.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Persistent Confirm Button */}
+        <AnimatePresence>
+          {pickup && drop && (
+            <motion.div
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 80, opacity: 0 }}
+              className="fixed bottom-6 left-5 right-5 z-40 lg:absolute lg:bottom-6 lg:left-6 lg:right-6"
+            >
+              <button
+                onClick={() => handleConfirmNavigate()}
+                className="w-full bg-[#f8e001] py-4 rounded-3xl text-slate-900 font-bold text-[16px] shadow-[0_8px_30px_rgba(248,224,1,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+              >
+                Confirm & Proceed
+                <ChevronRight size={18} strokeWidth={3} className="opacity-60" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Persistent Confirm Button */}
-      <AnimatePresence>
-        {pickup && drop && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-6 left-5 right-5 z-40"
-          >
-            <button
-              onClick={() => handleConfirmNavigate()}
-              className="w-full bg-[#f8e001] py-4 rounded-3xl text-slate-900 font-bold text-[16px] shadow-[0_8px_30px_rgba(248,224,1,0.3)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-            >
-              Confirm & Proceed
-              <ChevronRight size={18} strokeWidth={3} className="opacity-60" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* RIGHT COLUMN - MAP (DESKTOP ONLY) */}
+      <div className="hidden lg:block lg:col-span-7 lg:relative lg:h-screen lg:bg-slate-100 lg:rounded-l-3xl lg:overflow-hidden lg:shadow-inner">
+        <div className="absolute inset-0 bg-slate-200 flex flex-col items-center justify-center">
+           {/* We can show a placeholder or load the GoogleMap if key exists */}
+           {!HAS_VALID_GOOGLE_MAPS_KEY ? (
+              <div className="flex flex-col items-center text-slate-400">
+                <MapIcon size={48} className="mb-4 opacity-50" />
+                <p className="font-bold uppercase tracking-widest text-[13px]">Map View</p>
+              </div>
+           ) : isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                center={mapCenter}
+                zoom={14}
+                options={{
+                  disableDefaultUI: true,
+                  clickableIcons: false,
+                  gestureHandling: 'greedy',
+                }}
+              />
+           ) : (
+             <div className="flex flex-col items-center justify-center text-slate-400">
+               <LoaderCircle size={44} className="animate-spin mb-4" />
+               <p className="font-bold uppercase tracking-widest text-[13px]">Loading Map...</p>
+             </div>
+           )}
+           {/* Overlay overlaying the map with branding */}
+           <div className="absolute top-6 right-6 bg-white/90 backdrop-blur px-4 py-2 rounded-2xl shadow-lg border border-slate-100 font-black text-[#FFC400] text-[18px] tracking-tight flex items-center gap-2">
+             <MapPin className="text-[#FFC400]" size={20} fill="currentColor" /> Appzeto
+           </div>
+        </div>
+      </div>
     </div>
   );
 };

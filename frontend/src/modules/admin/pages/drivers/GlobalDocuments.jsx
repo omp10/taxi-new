@@ -219,7 +219,7 @@ const GlobalDocuments = () => {
         </div>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Driver Onboarding Config</h1>
+            <h1 className="text-xl text-gray-900 font-bold">Driver Onboarding Config</h1>
             <p className="mt-1 text-sm text-gray-500">
               Manage both driver document templates and the dynamic fields shown on the vehicle onboarding step.
             </p>
@@ -283,7 +283,7 @@ const GlobalDocuments = () => {
       <div className="space-y-6">
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-base font-semibold text-gray-900">Driver Needed Documents</h2>
+            <h2 className="text-base text-gray-900 font-bold">Driver Needed Documents</h2>
             <p className="mt-1 text-sm text-gray-500">
               Templates used by the documents step of onboarding. Turn a document inactive here to hide it from `/taxi/driver/step-documents`.
             </p>
@@ -326,7 +326,7 @@ const GlobalDocuments = () => {
 
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
           <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-base font-semibold text-gray-900">Vehicle Step Fields</h2>
+            <h2 className="text-base text-gray-900 font-bold">Vehicle Step Fields</h2>
             <p className="mt-1 text-sm text-gray-500">
               These control which fields appear on `/taxi/driver/step-vehicle`, their labels, placeholders, order, and required state.
             </p>

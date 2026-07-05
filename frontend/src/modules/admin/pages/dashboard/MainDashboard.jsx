@@ -196,11 +196,11 @@ const MainDashboard = () => {
               </span>
             </div>
             <button
-              onClick={() => fetchData()}
-              className="admin-btn-secondary h-9 w-9 !p-0"
+              onClick={() => fetchData(true)}
+              className="flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 transition-colors h-9 w-9 rounded-lg"
               title="Sync Cloud Data"
             >
-              <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
+              <RefreshCw size={15} className={isRefreshing ? 'animate-spin text-slate-900' : 'text-slate-600'} />
             </button>
           </div>
         </div>
@@ -220,25 +220,25 @@ const MainDashboard = () => {
         {/* 1. LIVE PLATFORM OVERVIEW (10 KPI Cards) */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {[
-            { label: "Total Customers", value: totalUsers, icon: Users, color: "text-[#3B82F6]", bg: "bg-blue-50/50" },
-            { label: "Total Drivers", value: totalDrivers, icon: Car, color: "text-slate-800", bg: "bg-slate-50/60" },
-            { label: "Active Drivers", value: approvedDrivers, icon: UserCheck, color: "text-[#22C55E]", bg: "bg-emerald-50/60" },
-            { label: "Active Vendors", value: totalOwners, icon: Building2, color: "text-[#8B5CF6]", bg: "bg-purple-50/50" },
-            { label: "Online Customers", value: Math.max(1, Math.round(totalUsers * 0.15)), icon: Sparkles, color: "text-amber-500", bg: "bg-amber-50/50" },
-            { label: "Ongoing Trips", value: todayTrips.scheduled || 0, icon: Activity, color: "text-sky-500", bg: "bg-sky-50/50" },
-            { label: "Today's Revenue", value: `₹${currency(todayEarnings.total)}`, icon: IndianRupee, color: "text-emerald-600", bg: "bg-emerald-50/70" },
-            { label: "Platform Uptime", value: "99.98%", icon: Server, color: "text-indigo-600", bg: "bg-indigo-50/50" },
-            { label: "Fleet Utilization", value: `${fleetUtilization}%`, icon: TrendingUp, color: "text-teal-600", bg: "bg-teal-50/50" },
-            { label: "Pending Approvals", value: declinedDrivers, icon: Clock, color: "text-rose-500", bg: "bg-rose-50/50" }
+            { label: "Total Customers", value: totalUsers, icon: Users, cardBg: "!bg-violet-500" },
+            { label: "Total Drivers", value: totalDrivers, icon: Car, cardBg: "!bg-sky-500" },
+            { label: "Active Drivers", value: approvedDrivers, icon: UserCheck, cardBg: "!bg-emerald-500" },
+            { label: "Active Vendors", value: totalOwners, icon: Building2, cardBg: "!bg-rose-500" },
+            { label: "Online Customers", value: Math.max(1, Math.round(totalUsers * 0.15)), icon: Sparkles, cardBg: "!bg-orange-500" },
+            { label: "Ongoing Trips", value: todayTrips.scheduled || 0, icon: Activity, cardBg: "!bg-blue-500" },
+            { label: "Today's Revenue", value: `₹${currency(todayEarnings.total)}`, icon: IndianRupee, cardBg: "!bg-emerald-500" },
+            { label: "Platform Uptime", value: "99.98%", icon: Server, cardBg: "!bg-violet-500" },
+            { label: "Fleet Utilization", value: `${fleetUtilization}%`, icon: TrendingUp, cardBg: "!bg-teal-500" },
+            { label: "Pending Approvals", value: declinedDrivers, icon: Clock, cardBg: "!bg-red-500" }
           ].map((kpi, idx) => (
-            <div key={idx} className="admin-card !p-4 bg-white hover:scale-[1.02] transition-transform hover:shadow-md">
+            <div key={idx} className={`admin-card !p-4 border-none !text-white hover:scale-[1.02] transition-transform shadow-lg ${kpi.cardBg}`}>
               <div className="flex items-center justify-between mb-2">
-                <span className="card-label text-[9px] font-semibold text-[#64748B] uppercase tracking-wider">{kpi.label}</span>
-                <div className={`p-2 rounded-lg ${kpi.bg} ${kpi.color}`}>
-                  <kpi.icon size={15} />
+                <span className="card-label text-[10px] font-bold opacity-80 uppercase tracking-wider">{kpi.label}</span>
+                <div className="p-2 rounded-full bg-white/20 backdrop-blur-sm">
+                  <kpi.icon size={16} strokeWidth={2.5} />
                 </div>
               </div>
-              <h4 className="text-lg font-bold text-[#0B1220] tracking-tight mt-1">{isLoading ? '...' : kpi.value}</h4>
+              <h4 className="text-xl font-black tracking-tight mt-1">{isLoading ? '...' : kpi.value}</h4>
             </div>
           ))}
         </div>
@@ -251,7 +251,7 @@ const MainDashboard = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider">Revenue Analytics</h3>
+                  <h3 className="text-xs text-[#0B1220] uppercase tracking-wider font-bold">Revenue Analytics</h3>
                   <div className="h-1.5 w-1.5 rounded-full bg-[#FFC400]" />
                 </div>
                 <div className="flex gap-1">
@@ -292,9 +292,9 @@ const MainDashboard = () => {
 
             {/* Interactive SVG Area Chart */}
             {revenueChartData.length === 0 ? (
-              <div className="h-[150px] flex flex-col items-center justify-center border border-dashed border-[#E5E7EB] rounded-2xl bg-slate-50/50 p-4 my-2">
-                <p className="text-xs font-semibold text-[#0B1220] modal-title !text-sm">No historical data available</p>
-                <p className="text-[10px] text-[#64748B] mt-1">Transaction growth telemetry will automatically sync here.</p>
+              <div className="h-[150px] flex flex-col items-center justify-center border border-dashed border-[#E5E7EB] rounded-2xl bg-slate-50/50 p-4 my-2 text-center">
+                <p className="text-sm font-semibold text-[#0B1220] whitespace-normal">No historical data available</p>
+                <p className="text-[10px] text-[#64748B] mt-1 whitespace-normal">Transaction growth telemetry will automatically sync here.</p>
               </div>
             ) : (
               <>
@@ -320,7 +320,7 @@ const MainDashboard = () => {
 
                   {hoveredRevenueIndex !== null && revenuePoints[hoveredRevenueIndex] && (
                     <div
-                      className="absolute bg-slate-900 text-white rounded p-2 text-[10px] pointer-events-none shadow-xl border border-slate-800"
+                      className="absolute bg-slate-900 !text-white rounded p-2 text-[10px] pointer-events-none shadow-xl border border-slate-800"
                       style={{
                         left: `${(revenuePoints[hoveredRevenueIndex].x / chartWidth) * 100}%`,
                         top: `${(revenuePoints[hoveredRevenueIndex].y / chartHeight) * 100 - 35}%`,
@@ -345,14 +345,14 @@ const MainDashboard = () => {
           {/* 3. Booking Analytics & Distribution */}
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider mb-1">Booking Analytics</h3>
+              <h3 className="text-xs text-[#0B1220] uppercase tracking-wider mb-1 font-bold">Booking Analytics</h3>
               <p className="text-[11px] text-[#64748B] mb-3">Trips distribution today.</p>
             </div>
 
             {bookingDonutData.length === 0 ? (
-              <div className="h-[150px] flex flex-col items-center justify-center border border-dashed border-[#E5E7EB] rounded-2xl bg-slate-50/50 p-4 my-2">
-                <p className="text-xs font-semibold text-[#0B1220] modal-title !text-sm">No historical data available</p>
-                <p className="text-[10px] text-[#64748B] mt-1">Daily booking records and trip statistics will populate here.</p>
+              <div className="h-[150px] flex flex-col items-center justify-center border border-dashed border-[#E5E7EB] rounded-2xl bg-slate-50/50 p-4 my-2 text-center">
+                <p className="text-sm font-semibold text-[#0B1220] whitespace-normal">No historical data available</p>
+                <p className="text-[10px] text-[#64748B] mt-1 whitespace-normal">Daily booking records and trip statistics will populate here.</p>
               </div>
             ) : (
               <>
@@ -404,7 +404,7 @@ const MainDashboard = () => {
           {/* 16. Platform Health Diagnostics */}
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider mb-1">Platform Diagnostic Health</h3>
+              <h3 className="text-xs text-[#0B1220] uppercase tracking-wider mb-1 font-bold">Platform Diagnostic Health</h3>
               <p className="text-[11px] text-[#64748B] mb-3">Real-time gateway status checks.</p>
             </div>
 
@@ -438,7 +438,7 @@ const MainDashboard = () => {
           {/* Driver & Vendor Performance Leaderboard */}
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
-              <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider mb-3 flex items-center gap-1">
+              <h3 className="text-xs text-[#0B1220] uppercase tracking-wider mb-3 flex items-center gap-1 font-bold">
                 <Award size={14} className="text-[#FFC400]" />
                 <span>Performance Leaderboard</span>
               </h3>
@@ -471,7 +471,7 @@ const MainDashboard = () => {
           <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-xs text-[#0B1220] uppercase tracking-wider flex items-center gap-1.5 font-bold">
                   <Shield size={14} className="text-rose-500" />
                   <span>SOS Response Center</span>
                 </h3>
@@ -508,7 +508,7 @@ const MainDashboard = () => {
 
             <button
               onClick={() => navigate('/admin/safety')}
-              className="admin-btn-primary h-9 text-xs justify-center gap-1.5 mt-3 !bg-rose-600 !text-white hover:bg-rose-700"
+              className="admin-btn-primary h-9 text-xs justify-center gap-1.5 mt-3 !bg-rose-600 !!text-white hover:bg-rose-700"
             >
               <AlertTriangle size={13} />
               <span>Enter Emergency Terminal</span>
@@ -516,10 +516,10 @@ const MainDashboard = () => {
           </div>
 
           {/* AI Insights & Anomalies Panel */}
-          <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow bg-slate-900 text-white border-0">
+          <div className="admin-card flex flex-col justify-between hover:shadow-md transition-shadow bg-slate-900 !text-white border-0">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-xs !text-white uppercase tracking-wider flex items-center gap-1.5 font-bold">
                   <Sparkles size={14} className="text-[#FFC400]" />
                   <span>AI Operations Insights</span>
                 </h3>
@@ -540,7 +540,7 @@ const MainDashboard = () => {
 
             <button
               onClick={() => toast.success('Dispatching operational targets to city hubs.')}
-              className="w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-white text-[10px] font-bold uppercase tracking-wider transition-all mt-4 border border-slate-700"
+              className="w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-750 !text-white text-[10px] font-bold uppercase tracking-wider transition-all mt-4 border border-slate-700"
             >
               Dispatch System Recommendations
             </button>
@@ -549,7 +549,7 @@ const MainDashboard = () => {
 
         {/* GOOGLE MAPS DISTRIBUTION & DEMAND */}
         <div className="admin-card">
-          <h3 className="text-xs font-semibold text-[#0B1220] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <h3 className="text-xs text-[#0B1220] uppercase tracking-wider mb-2 flex items-center gap-1.5 font-bold">
             <MapPin size={14} className="text-[#FFC400]" />
             <span>Operational Demand Distribution</span>
           </h3>

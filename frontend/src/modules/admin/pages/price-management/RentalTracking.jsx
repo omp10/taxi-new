@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, CarFront, Loader2, Radio, Search, ShieldAlert, WifiOff } from 'lucide-react';
+import { AlertTriangle, CarFront, Loader2, Radio, Search, ShieldAlert, WifiOff, Filter, User2, Phone, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import AdminPageHeader from '../../components/ui/AdminPageHeader';
@@ -8,8 +8,9 @@ import { adminService } from '../../services/adminService';
 
 const statusTone = {
   active: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  location_off: 'bg-amber-50 text-amber-700 border-amber-100',
-  tracking_stopped: 'bg-rose-50 text-rose-700 border-rose-100',
+  idle: 'bg-amber-50 text-amber-700 border-amber-100',
+  location_off: 'bg-rose-50 text-rose-700 border-rose-100',
+  tracking_stopped: 'bg-slate-50 text-slate-700 border-slate-200',
   inactive: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
@@ -50,26 +51,12 @@ const mapTrackingResults = (response) => {
   const payload = response?.data?.data || response?.data || {};
   return {
     results: Array.isArray(payload?.results) ? payload.results : [],
-    stats: payload?.stats || {
-      total: 0,
-      live: 0,
-      locationOff: 0,
-      outsideZone: 0,
-      alerts: 0,
-    },
   };
 };
 
 const RentalTracking = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    live: 0,
-    locationOff: 0,
-    outsideZone: 0,
-    alerts: 0,
-  });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -88,7 +75,6 @@ const RentalTracking = () => {
           return;
         }
         setItems(nextState.results);
-        setStats(nextState.stats);
       } catch (error) {
         if (mounted) {
           toast.error(error?.message || 'Could not load rental tracking dashboard.');
@@ -157,7 +143,7 @@ const RentalTracking = () => {
 
   const derivedStats = useMemo(() => {
     if (items.length === 0) {
-      return stats;
+      return { total: 0, live: 0, idle: 0, offline: 0, gpsLost: 0, geofenceViolations: 0, activeTrips: 0 };
     }
 
     return items.reduce(
@@ -166,26 +152,31 @@ const RentalTracking = () => {
 
         const trackingStatus = String(item?.rentalTracking?.trackingStatus || '').toLowerCase();
         const zoneStatus = String(item?.rentalTracking?.zoneStatus || '').toLowerCase();
-        const hasAlert = Array.isArray(item?.rentalTracking?.alerts) && item.rentalTracking.alerts.length > 0;
+        const speed = Number(item?.rentalTracking?.speed || 0);
 
         if (trackingStatus === 'active') {
-          summary.live += 1;
+          if (speed > 0) {
+            summary.live += 1;
+          } else {
+            summary.idle += 1;
+          }
+          summary.activeTrips += 1;
+        } else if (trackingStatus === 'location_off') {
+          summary.gpsLost += 1;
+          summary.activeTrips += 1;
+        } else {
+          summary.offline += 1;
         }
-        if (trackingStatus === 'location_off' || trackingStatus === 'tracking_stopped') {
-          summary.locationOff += 1;
-        }
+        
         if (zoneStatus === 'outside') {
-          summary.outsideZone += 1;
-        }
-        if (hasAlert) {
-          summary.alerts += 1;
+          summary.geofenceViolations += 1;
         }
 
         return summary;
       },
-      { total: 0, live: 0, locationOff: 0, outsideZone: 0, alerts: 0 },
+      { total: 0, live: 0, idle: 0, offline: 0, gpsLost: 0, geofenceViolations: 0, activeTrips: 0 },
     );
-  }, [items, stats]);
+  }, [items]);
 
   const filteredItems = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -211,55 +202,77 @@ const RentalTracking = () => {
   return (
     <div className="min-h-screen bg-[#f6f7fb] p-6 lg:p-8">
       <AdminPageHeader
-        module="Pricing"
-        page="Rental Tracking"
-        title="Track Vehicles"
+        module="Operations"
+        page="Fleet Dashboard"
+        title="Fleet Tracking Dashboard"
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 xl:grid-cols-5">
-        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Total</p>
-          <p className="mt-2 text-2xl font-black text-slate-900">{derivedStats.total}</p>
+      {/* KPI Cards */}
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-7">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold text-slate-500">Total Vehicles</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">{derivedStats.total}</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Active</p>
-          <p className="mt-2 text-2xl font-black text-emerald-600">{derivedStats.live}</p>
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-emerald-700">Live Vehicles</p>
+          <p className="mt-1 flex items-center gap-2 text-2xl font-black text-emerald-900">
+            {derivedStats.live} <Radio size={16} className="text-emerald-600 animate-pulse" />
+          </p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Location Off</p>
-          <p className="mt-2 text-2xl font-black text-amber-600">{derivedStats.locationOff}</p>
+        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-amber-700">Idle Vehicles</p>
+          <p className="mt-1 text-2xl font-black text-amber-900">{derivedStats.idle}</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Outside Zone</p>
-          <p className="mt-2 text-2xl font-black text-rose-600">{derivedStats.outsideZone}</p>
+        <div className="rounded-2xl border border-slate-200 bg-slate-100 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-slate-600">Offline</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">{derivedStats.offline}</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Alerts</p>
-          <p className="mt-2 text-2xl font-black text-slate-900">{derivedStats.alerts}</p>
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-rose-700">GPS Lost</p>
+          <p className="mt-1 text-2xl font-black text-rose-900">{derivedStats.gpsLost}</p>
+        </div>
+        <div className="rounded-2xl border border-orange-100 bg-orange-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-orange-700">Geofence Violations</p>
+          <p className="mt-1 text-2xl font-black text-orange-900">{derivedStats.geofenceViolations}</p>
+        </div>
+        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold text-blue-700">Active Trips</p>
+          <p className="mt-1 text-2xl font-black text-blue-900">{derivedStats.activeTrips}</p>
+        </div>
+      </div>
+
+      {/* Advanced Filters */}
+      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-500">
+          <Filter size={16} />
+          <span className="font-semibold">Filters:</span>
+        </div>
+        <select className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition hover:bg-slate-50">
+          <option>All Stores</option>
+        </select>
+        <select className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition hover:bg-slate-50">
+          <option>All Zones</option>
+        </select>
+        <select className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition hover:bg-slate-50">
+          <option>All Vehicle Types</option>
+        </select>
+        <select className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 outline-none transition hover:bg-slate-50">
+          <option>All Statuses</option>
+        </select>
+        <div className="relative ml-auto w-full max-w-xs">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search booking, driver, vehicle..."
+            className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-slate-300 focus:ring-2 focus:ring-slate-100"
+          />
         </div>
       </div>
 
       <div className="rounded-[28px] border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-lg font-black text-slate-900">Rental Tracking Queue</h2>
-            <p className="mt-1 text-sm font-medium text-slate-500">
-              Open a rental to view its live location stream, zone status, and customer tracking details.
-            </p>
-          </div>
-          <div className="relative w-full max-w-md">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search booking, customer, vehicle, status"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-slate-300 focus:bg-white"
-            />
-          </div>
-        </div>
-
-        <div className="p-6">
+        <div className="p-1">
           {loading ? (
             <div className="flex min-h-[320px] items-center justify-center">
               <Loader2 size={30} className="animate-spin text-slate-400" />
@@ -267,82 +280,129 @@ const RentalTracking = () => {
           ) : filteredItems.length === 0 ? (
             <div className="rounded-[24px] border border-dashed border-slate-200 bg-slate-50/70 px-6 py-16 text-center">
               <CarFront size={34} className="mx-auto text-slate-300" />
-              <h2 className="mt-4 text-xl font-black text-slate-900">No tracked rentals found</h2>
+              <h2 className="mt-4 text-xl font-black text-slate-900">No vehicles found</h2>
               <p className="mt-2 text-sm font-medium text-slate-500">
-                Tracking items will appear here after a rental booking is assigned and starts sending location updates.
+                Active vehicles and trips will appear here on the fleet dashboard.
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px] border-collapse">
+            <div className="overflow-x-auto rounded-[24px]">
+              <table className="w-full min-w-[1300px] border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 text-left">
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Booking</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Customer</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Vehicle</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Tracking</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Zone</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Last Ping</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Alerts</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-400 text-right">Action</th>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-left">
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Booking ID</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Vehicle</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Driver</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Customer</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Trip Status</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Tracking</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Zone</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Last Ping</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500">Alerts</th>
+                    <th className="px-5 py-4 text-xs font-bold text-slate-500 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {filteredItems.map((item) => {
                     const tracking = item?.rentalTracking || {};
                     const activeAlerts = Array.isArray(tracking.alerts) ? tracking.alerts : [];
+                    const speed = Number(tracking.speed || 0);
+
+                    // Mock Trip Status derivation
+                    let tripStatus = 'Booked';
+                    let tripColor = 'bg-slate-100 text-slate-700';
+                    if (tracking.trackingStatus === 'active') {
+                      tripStatus = speed > 0 ? 'On Trip' : 'Started';
+                      tripColor = speed > 0 ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200';
+                    }
+
+                    // Derived Tracking Status
+                    let refinedTrackingStatus = tracking.trackingStatus || 'inactive';
+                    if (refinedTrackingStatus === 'active' && speed === 0) {
+                       refinedTrackingStatus = 'idle';
+                    }
+                    const displayTone = statusTone[refinedTrackingStatus] || statusTone.inactive;
 
                     return (
-                      <tr key={item.id} className="border-b border-slate-50 last:border-0">
-                        <td className="px-4 py-4">
-                          <p className="text-sm font-black text-slate-900">{item.bookingReference || 'Rental booking'}</p>
-                          <p className="mt-1 text-xs font-semibold text-slate-400">{item.serviceLocation?.name || 'Rental hub'}</p>
+                      <tr key={item.id} className="transition hover:bg-slate-50/50">
+                        <td className="px-5 py-4 align-top">
+                          <p className="text-sm font-bold text-slate-900">{item.bookingReference || 'BKG-0000'}</p>
+                          <p className="mt-1 text-xs font-semibold text-slate-500">{item.serviceLocation?.name || 'Hub'}</p>
                         </td>
-                        <td className="px-4 py-4">
-                          <p className="text-sm font-bold text-slate-800">{item.user?.name || 'Customer'}</p>
-                          <p className="mt-1 text-xs font-semibold text-slate-400">{item.user?.phone || 'No phone'}</p>
+                        <td className="px-5 py-4 align-top">
+                          <p className="text-sm font-bold text-slate-900">{item.vehicle?.name || 'Assigned Vehicle'}</p>
+                          <p className="mt-0.5 text-xs font-semibold text-slate-500">{item.vehicle?.registrationNumber || 'XX-00-XX-0000'}</p>
+                          <span className="mt-1.5 inline-block rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">{item.vehicle?.category || 'Rental Type'}</span>
                         </td>
-                        <td className="px-4 py-4">
-                          <p className="text-sm font-bold text-slate-800">{item.vehicle?.name || 'Assigned Vehicle'}</p>
-                          <p className="mt-1 text-xs font-semibold text-slate-400">{item.vehicle?.category || 'Rental'}</p>
+                        <td className="px-5 py-4 align-top">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-500 overflow-hidden">
+                               <User2 size={16} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-slate-900">{item.driver?.name || 'Unassigned'}</p>
+                              <p className="text-xs font-semibold text-slate-500">{item.driver?.phone || 'No phone'}</p>
+                            </div>
+                          </div>
                         </td>
-                        <td className="px-4 py-4">
-                          <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${statusTone[tracking.trackingStatus] || statusTone.inactive}`}>
-                            {tracking.trackingStatus === 'active' ? <Radio size={12} /> : <WifiOff size={12} />}
-                            {tracking.trackingStatus || 'inactive'}
+                        <td className="px-5 py-4 align-top">
+                          <p className="text-sm font-bold text-slate-900">{item.user?.name || 'Customer Name'}</p>
+                          <p className="mt-0.5 text-xs font-semibold text-slate-500">{item.user?.phone || 'No phone'}</p>
+                        </td>
+                        <td className="px-5 py-4 align-top">
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${tripColor}`}>
+                            {tripStatus}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
-                          <div className="space-y-1">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${zoneTone[tracking.zoneStatus] || zoneTone.unknown}`}>
+                        <td className="px-5 py-4 align-top">
+                          <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${displayTone}`}>
+                            {refinedTrackingStatus === 'active' ? <Radio size={12} /> : <WifiOff size={12} />}
+                            {refinedTrackingStatus.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 align-top">
+                          <div className="space-y-1.5">
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold capitalize ${zoneTone[tracking.zoneStatus] || zoneTone.unknown}`}>
                               <ShieldAlert size={12} />
                               {tracking.zoneStatus || 'unknown'}
                             </span>
-                            <p className="text-xs font-semibold text-slate-400">{tracking.matchedZoneName || tracking.hubName || 'Rental zone'}</p>
                           </div>
                         </td>
-                        <td className="px-4 py-4">
-                          <p className="text-sm font-black text-slate-900">{formatMinutesAgo(tracking.lastLocationAt)}</p>
-                          <p className="mt-1 text-xs font-semibold text-slate-400">{formatDateTime(tracking.lastLocationAt)}</p>
+                        <td className="px-5 py-4 align-top">
+                          <p className="text-sm font-bold text-slate-900">{formatMinutesAgo(tracking.lastLocationAt)}</p>
+                          <p className="mt-0.5 text-xs text-slate-500">{formatDateTime(tracking.lastLocationAt)}</p>
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="px-5 py-4 align-top">
                           {activeAlerts.length > 0 ? (
-                            <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-rose-700">
-                              <AlertTriangle size={12} />
-                              {activeAlerts.length} active
+                            <div className="flex flex-col gap-1.5">
+                              {activeAlerts.map((alertItem, idx) => (
+                                <span key={idx} className="inline-flex w-fit items-center gap-1.5 rounded-md bg-rose-50 px-2 py-1 text-[10px] font-bold text-rose-700">
+                                  <AlertTriangle size={10} />
+                                  {alertItem.type || 'Alert'}
+                                </span>
+                              ))}
                             </div>
                           ) : (
-                            <span className="text-xs font-semibold text-emerald-600">Clear</span>
+                            <span className="text-xs font-semibold text-slate-400">Clear</span>
                           )}
                         </td>
-                        <td className="px-4 py-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/admin/pricing/rental-tracking/${item.id}`, { state: { item } })}
-                            className="inline-flex items-center rounded-xl bg-slate-900 px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] text-white shadow-sm transition hover:bg-black"
-                          >
-                            Track
-                          </button>
+                        <td className="px-5 py-4 align-top text-right">
+                          <div className="flex items-center justify-end gap-2">
+                             <button
+                               type="button"
+                               title="Call Driver"
+                               className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                             >
+                               <Phone size={14} />
+                             </button>
+                             <button
+                               type="button"
+                               onClick={() => navigate(`/admin/pricing/rental-tracking/${item.id}`, { state: { item } })}
+                               className="inline-flex h-8 items-center rounded-full bg-slate-900 px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-black"
+                             >
+                               Track
+                             </button>
+                           </div>
                         </td>
                       </tr>
                     );
@@ -358,3 +418,4 @@ const RentalTracking = () => {
 };
 
 export default RentalTracking;
+

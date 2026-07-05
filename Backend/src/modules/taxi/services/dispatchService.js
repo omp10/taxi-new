@@ -1043,7 +1043,11 @@ export const startDispatchFlow = async (ride) => {
     return;
   }
 
-  await dispatchAttempt(ride._id, 0);
+  try {
+    await dispatchAttempt(ride._id, 0);
+  } catch (error) {
+    console.error('Initial dispatch attempt failed', error);
+  }
 };
 
 export const restoreScheduledDispatches = async () => {

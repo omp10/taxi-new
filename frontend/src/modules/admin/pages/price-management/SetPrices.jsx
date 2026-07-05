@@ -29,15 +29,16 @@ import {
   ChevronDown,
   Globe,
   Eye,
-  Menu
+  Menu,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { API_BASE_URL } from '../../../../shared/api/runtimeConfig';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 
-const inputClass = "w-full border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-800 bg-white focus:border-indigo-500 transition-all outline-none";
-const labelClass = "block text-[13px] font-semibold text-gray-700 mb-2.5";
+const inputClass = "w-full border border-gray-200 rounded-md px-2 py-0.5 text-xs text-gray-800 bg-white hover:border-indigo-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 transition-all outline-none shadow-sm";
+const labelClass = "block text-[10px] font-semibold text-gray-700 mb-0";
 const paymentTypeOptions = [
   { value: 'cash', label: 'Cash' },
   { value: 'online', label: 'Online' },
@@ -268,6 +269,7 @@ const SetPrices = ({ mode }) => {
   const [zones, setZones] = useState([]);
   const [vehicleTypes, setVehicleTypes] = useState([]);
   const [formData, setFormData] = useState(initialFormState);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const selectedVehicleType = React.useMemo(
     () => vehicleTypes.find((vehicle) => String(vehicle._id || vehicle.id) === String(formData.vehicle_type || '')) || null,
     [formData.vehicle_type, vehicleTypes],
@@ -403,6 +405,39 @@ const SetPrices = ({ mode }) => {
 
   const handleSave = async (e) => {
     if(e) e.preventDefault();
+    if (!formData.zone_id) { alert("Zone is required."); return; }
+    if (!formData.vehicle_type) { alert("Vehicle Type is required."); return; }
+    if (normalizePaymentTypes(formData.payment_type).length === 0) { alert("At least one payment type is required."); return; }
+    
+    const numericFields = [
+      { name: 'Admin Commission From Driver', val: formData.admin_commission_from_driver },
+      { name: 'Admin Commission From Owner', val: formData.admin_commission_for_owner },
+      { name: 'Service Tax', val: formData.service_tax },
+      { name: 'Base Price', val: formData.base_price },
+      { name: 'Base Distance', val: formData.base_distance },
+      { name: 'Price Per Distance', val: formData.price_per_distance },
+      { name: 'Time Price', val: formData.time_price },
+      { name: 'Waiting Charge', val: formData.waiting_charge },
+      { name: 'User Cancellation Fee', val: formData.user_cancellation_fee },
+      { name: 'Driver Cancellation Fee', val: formData.driver_cancellation_fee },
+      ...(formData.enable_airport_ride ? [
+        { name: 'Airport Surge Fee', val: formData.airport_surge },
+        { name: 'Support Airport Fee', val: formData.support_airport_fee }
+      ] : []),
+      ...(formData.enable_outstation_ride ? [
+        { name: 'Outstation Base Price', val: formData.outstation_base_price },
+        { name: 'Outstation Base Distance', val: formData.outstation_base_distance },
+        { name: 'Outstation Price Per Distance', val: formData.outstation_price_per_distance },
+        { name: 'Outstation Time Price', val: formData.outstation_time_price }
+      ] : [])
+    ];
+    for (const field of numericFields) {
+      if (field.val !== '' && Number(field.val) < 0) {
+        alert(`${field.name} cannot be negative.`);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const normalizedPaymentTypes = normalizePaymentTypes(formData.payment_type).length
@@ -484,11 +519,11 @@ const SetPrices = ({ mode }) => {
         {view === 'list' ? (
           <motion.div 
             key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="p-6 lg:p-8 space-y-4"
+            className="p-3 lg:p-4 space-y-3"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-6">
-               <h1 className="text-sm font-bold text-[#1E293B] uppercase tracking-[0.15em]">SET PRICES</h1>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
+               <h1 className="text-2xl font-bold text-[#1E293B]" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Set Prices</h1>
                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium tracking-tight">
                   <span className="hover:text-slate-600 transition-colors cursor-pointer" onClick={() => fetchInitialData()}>Set Prices</span>
                   <ChevronRight size={10} className="text-slate-300" />
@@ -497,7 +532,7 @@ const SetPrices = ({ mode }) => {
             </div>
 
             <div className="bg-white rounded-md border border-gray-100 shadow-sm overflow-hidden">
-               <div className="border-b border-gray-50 bg-white px-8 py-5 space-y-4">
+               <div className="border-b border-gray-50 bg-white px-4 py-3 space-y-2">
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400 font-medium">
                     <span>show</span>
@@ -520,8 +555,8 @@ const SetPrices = ({ mode }) => {
                     </div>
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <div className="relative min-w-[260px]">
-                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <div className="relative min-w-[200px]">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
                           type="text"
                           value={searchTerm}
@@ -530,24 +565,24 @@ const SetPrices = ({ mode }) => {
                             setPage(1);
                           }}
                           placeholder="Search zone, vehicle, location..."
-                          className="w-full rounded-md border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all focus:border-indigo-500"
+                          className="w-full rounded-md border border-gray-200 bg-white py-1.5 pl-8 pr-3 text-xs text-slate-700 outline-none transition-all focus:border-indigo-500"
                         />
                       </div>
                       <button
                         onClick={() => fetchInitialData()}
-                        className={`w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-full text-slate-400 hover:text-indigo-600 transition-all shadow-sm ${loading ? 'animate-spin' : ''}`}
+                        className={`w-8 h-8 flex items-center justify-center bg-white border border-gray-200 rounded-full text-slate-400 hover:text-indigo-600 transition-all shadow-sm ${loading ? 'animate-spin' : ''}`}
                       >
-                        {loading ? <Loader2 size={18} /> : <Search size={18} />}
+                        {loading ? <Loader2 size={14} /> : <Search size={14} />}
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowFilters((current) => !current)}
-                        className={`flex items-center gap-2 px-6 py-2 rounded text-sm font-bold shadow-sm transition-colors ${showFilters ? 'bg-slate-900 text-white' : 'bg-[#F37048] text-white'}`}
+                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded text-xs font-bold shadow-sm transition-colors ${showFilters ? 'bg-slate-900 text-white' : 'bg-[#F37048] text-white'}`}
                       >
-                        <Filter size={16} /> Filters
+                        <Filter size={14} /> Filters
                       </button>
-                      <button onClick={() => navigate('/admin/pricing/set-price/create')} className="flex items-center gap-2 px-6 py-2 bg-[#44516F] text-white rounded text-sm font-bold shadow-sm">
-                        <Plus size={18} /> Add Set Price
+                      <button onClick={() => navigate('/admin/pricing/set-price/create')} className="flex items-center gap-1.5 px-4 py-1.5 bg-[#44516F] text-white rounded text-xs font-bold shadow-sm">
+                        <Plus size={14} /> Add Set Price
                       </button>
                     </div>
                   </div>
@@ -646,28 +681,28 @@ const SetPrices = ({ mode }) => {
                 <div className="overflow-x-auto">
                  <table className="w-full text-left">
                    <thead className="bg-[#FBFCFF]">
-                     <tr className="border-b border-gray-100 text-[11px] text-slate-800 uppercase font-black tracking-[0.1em]">
-                        <th className="px-8 py-5">Zone</th>
-                        <th className="px-8 py-5">Transport Type</th>
-                        <th className="px-8 py-5">Vehicle Type</th>
-                        <th className="px-8 py-5">Status</th>
-                        <th className="px-8 py-5 text-right pr-12">Action</th>
+                     <tr className="border-b border-gray-100 text-[10px] text-slate-800 uppercase font-black tracking-[0.05em]">
+                        <th className="px-4 py-2">Zone</th>
+                        <th className="px-4 py-2">Transport Type</th>
+                        <th className="px-4 py-2">Vehicle Type</th>
+                        <th className="px-4 py-2">Status</th>
+                        <th className="px-4 py-2 text-right pr-6">Action</th>
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-gray-50">
                     {loading && prizes.length === 0 ? (
-                       <tr><td colSpan="5" className="py-24 text-center text-slate-300 font-bold uppercase tracking-widest text-xs animate-pulse">Syncing Price Matrix...</td></tr>
+                       <tr><td colSpan="5" className="py-12 text-center text-slate-300 font-bold uppercase tracking-widest text-xs animate-pulse">Syncing Price Matrix...</td></tr>
                     ) : prizes.length === 0 ? (
-                       <tr><td colSpan="5" className="py-24 text-center text-slate-400 italic">No price rules matched the current search or filters.</td></tr>
+                       <tr><td colSpan="5" className="py-12 text-center text-slate-400 italic text-xs">No price rules matched the current search or filters.</td></tr>
                     ) : (
                       prizes.map((prize) => (
                         <tr key={prize.id || prize._id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-8 py-6 text-sm font-semibold text-slate-700">{prize.zone_name || 'India'}</td>
-                          <td className="px-8 py-6 text-sm text-slate-600 font-medium">
+                          <td className="px-4 py-2 text-xs font-semibold text-slate-700">{prize.zone_name || 'India'}</td>
+                          <td className="px-4 py-2 text-xs text-slate-600 font-medium">
                             {prize.transport_type === 'both' ? 'All' : (prize.transport_type === 'taxi' ? 'Ride Hailing' : (prize.transport_type || 'All'))}
                           </td>
-                          <td className="px-8 py-6 text-sm text-slate-800 font-bold">{prize.vehicle_type_name || 'Premium Car'}</td>
-                          <td className="px-8 py-6">
+                          <td className="px-4 py-2 text-xs text-slate-800 font-bold">{prize.vehicle_type_name || 'Premium Car'}</td>
+                          <td className="px-4 py-2">
                              <StatusToggle active={Number(prize.active) === 1} onToggle={async () => {
                                try {
                                  const idsToToggle = Array.isArray(prize.grouped_ids) && prize.grouped_ids.length > 0
@@ -684,36 +719,36 @@ const SetPrices = ({ mode }) => {
                                } catch(e) {}
                              }} />
                           </td>
-                          <td className="px-8 py-6 text-right pr-12">
-                             <div className="flex items-center justify-end gap-2">
-                                <button onClick={() => navigate(`/admin/pricing/set-price/edit/${prize.id || prize._id}`)} className="w-8 h-8 flex items-center justify-center bg-[#FFF7ED] text-[#F97316] rounded transition-colors hover:bg-orange-100"><Edit2 size={14} /></button>
+                          <td className="px-4 py-2 text-right pr-6">
+                              <div className="flex items-center justify-end gap-1.5">
+                                 <button title="Edit Price" onClick={() => navigate(`/admin/pricing/set-price/edit/${prize.id || prize._id}`)} className="w-7 h-7 flex items-center justify-center bg-[#FFF7ED] text-[#F97316] rounded transition-colors hover:bg-orange-100"><Edit2 size={12} /></button>
                                  <button 
-                                   title="set package prices"
+                                   title="Incentive"
                                    onClick={() => navigate('/admin/pricing/package-pricing')}
-                                   className="w-8 h-8 flex items-center justify-center bg-[#F0FDFA] text-[#14B8A6] rounded transition-colors hover:bg-emerald-100"
+                                   className="w-7 h-7 flex items-center justify-center bg-[#F0FDFA] text-[#14B8A6] rounded transition-colors hover:bg-emerald-100"
                                  >
-                                    <Gift size={14} />
+                                    <Gift size={12} />
                                  </button>
                                  <button 
-                                   title="Surge"
+                                   title="Surge Pricing"
                                    onClick={() => navigate(`/admin/pricing/set-price/surge/${prize.id || prize._id}`)}
-                                   className="w-8 h-8 flex items-center justify-center bg-[#FEF2F2] text-[#EF4444] rounded transition-colors hover:bg-red-100"
+                                   className="w-7 h-7 flex items-center justify-center bg-[#FEF2F2] text-[#EF4444] rounded transition-colors hover:bg-red-100"
                                  >
-                                    <Zap size={14} />
+                                    <Zap size={12} />
                                  </button>
                                  <button 
-                                   title="driver incentive"
+                                   title="Airport/Outstation Setting"
                                    onClick={() => navigate(`/admin/pricing/set-price/incentive/${prize.id || prize._id}`)}
-                                   className="w-8 h-8 flex items-center justify-center bg-[#EEF2FF] text-[#6366F1] rounded transition-colors hover:bg-indigo-100"
+                                   className="w-7 h-7 flex items-center justify-center bg-[#EEF2FF] text-[#6366F1] rounded transition-colors hover:bg-indigo-100"
                                  >
-                                    <Cone size={14} />
+                                    <Cone size={12} />
                                  </button>
                                  <button
-                                   title="Delete pricing rule"
+                                   title="Delete"
                                    onClick={() => handleDeleteSetPrice(prize)}
-                                   className="w-8 h-8 flex items-center justify-center bg-[#FEF2F2] text-[#DC2626] rounded transition-colors hover:bg-red-100"
+                                   className="w-7 h-7 flex items-center justify-center bg-[#FEF2F2] text-[#DC2626] rounded transition-colors hover:bg-red-100"
                                  >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={12} />
                                  </button>
                              </div>
                           </td>
@@ -724,7 +759,7 @@ const SetPrices = ({ mode }) => {
                  </table>
                </div>
 
-               <div className="flex flex-col gap-3 border-t border-gray-100 px-8 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+               <div className="flex flex-col gap-3 border-t border-gray-100 px-4 py-2.5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                  <span>
                    Showing {paginator.from || 0} to {paginator.to || 0} of {paginator.total || 0} entries
                  </span>
@@ -756,11 +791,11 @@ const SetPrices = ({ mode }) => {
         ) : (
           <motion.div 
             key="create" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="p-6 lg:p-8 space-y-6"
+            className="p-3 lg:p-4 space-y-3"
           >
             {/* Form Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3 mb-8">
-               <h1 className="text-sm font-bold text-[#1E293B] uppercase tracking-[0.15em]">{mode === 'edit' ? 'EDIT' : 'CREATE'}</h1>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-1 mb-2">
+               <h1 className="text-xl font-bold text-[#1E293B]" style={{ fontFamily: '"Times New Roman", Times, serif' }}>{mode === 'edit' ? 'Edit Set Price' : 'Create Set Price'}</h1>
                <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium">
                   <span className="hover:text-slate-600 transition-colors cursor-pointer" onClick={() => navigate('/admin/pricing/set-price')}>Set Prices</span>
                   <ChevronRight size={10} className="text-slate-300" />
@@ -768,7 +803,7 @@ const SetPrices = ({ mode }) => {
                </div>
             </div>
 
-            <div className="bg-white rounded-md border border-gray-100 shadow-sm p-4 lg:p-10 relative">
+            <div className="bg-white rounded-md border border-gray-100 shadow-sm p-2 relative">
                {loading && mode === 'edit' && (
                   <div className="absolute inset-0 bg-white/80 z-20 flex flex-col items-center justify-center gap-4">
                      <Loader2 className="animate-spin text-indigo-600" size={40} />
@@ -776,13 +811,13 @@ const SetPrices = ({ mode }) => {
                   </div>
                )}
                
-               <div className="flex justify-end mb-4">
-                  <button className="text-[11px] font-bold text-[#00BFA5] underline decoration-dotted underline-offset-4">How It Works</button>
+               <div className="flex justify-end mb-2">
+                  <button type="button" onClick={() => setShowHowItWorks(true)} className="text-[10px] font-bold text-[#00BFA5] underline decoration-dotted underline-offset-4">How It Works</button>
                </div>
 
-               <form onSubmit={handleSave} className="space-y-10">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                     {/* Column System */}
+               <form onSubmit={handleSave} className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-2 gap-y-1">
+                     {/* Top Section */}
                      <div>
                         <label className={labelClass}>Zone <span className="text-rose-500">*</span></label>
                         <div className="relative">
@@ -816,10 +851,12 @@ const SetPrices = ({ mode }) => {
                           </span>
                         </p>
                      </div>
-                     <div>
+                  </div>
+
+                  <div className="border-t border-gray-100 pt-1 mt-1">
                         <label className={labelClass}>Payment Type <span className="text-rose-500">*</span></label>
-                        <div className="space-y-3">
-                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1 mt-0.5">
+                           <div className="flex flex-wrap gap-2">
                               {paymentTypeOptions.map((option) => {
                                 const isSelected = normalizePaymentTypes(formData.payment_type).includes(option.value);
 
@@ -831,15 +868,15 @@ const SetPrices = ({ mode }) => {
                                       ...previous,
                                       payment_type: togglePaymentType(previous.payment_type, option.value),
                                     }))}
-                                    className={`rounded-xl border px-4 py-3 text-left transition-all ${
+                                    className={`rounded border px-2 py-1 text-left transition-all ${
                                       isSelected
                                         ? 'border-emerald-300 bg-emerald-50 shadow-sm'
                                         : 'border-gray-200 bg-white hover:border-indigo-300'
                                     }`}
                                   >
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
                                       <div
-                                        className={`flex h-5 w-5 items-center justify-center rounded border text-[11px] font-black ${
+                                        className={`flex h-4 w-4 items-center justify-center rounded border text-[10px] font-black ${
                                           isSelected
                                             ? 'border-emerald-500 bg-emerald-500 text-white'
                                             : 'border-slate-300 bg-white text-transparent'
@@ -848,10 +885,7 @@ const SetPrices = ({ mode }) => {
                                         ✓
                                       </div>
                                       <div>
-                                        <p className="text-[13px] font-bold text-slate-800">{option.label}</p>
-                                        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-400">
-                                          {option.value}
-                                        </p>
+                                        <p className="text-[10px] font-bold text-slate-800 leading-none">{option.label}</p>
                                       </div>
                                     </div>
                                   </button>
@@ -864,148 +898,92 @@ const SetPrices = ({ mode }) => {
                              value={normalizePaymentTypes(formData.payment_type).join(',')}
                              onChange={() => {}}
                            />
-                           <p className="text-[11px] font-medium text-slate-400">Tap as many payment types as you want to allow for this pricing rule.</p>
-                           <div className="flex flex-wrap gap-2">
-                              {normalizePaymentTypes(formData.payment_type).length ? (
-                                normalizePaymentTypes(formData.payment_type).map((type) => (
-                                  <span
-                                    key={type}
-                                    className="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-emerald-700"
-                                  >
-                                    {paymentTypeOptions.find((option) => option.value === type)?.label || type}
-                                  </span>
-                                ))
-                              ) : (
-                                <span className="text-[11px] font-medium text-rose-500">Select at least one payment type.</span>
-                              )}
-                           </div>
                         </div>
                      </div>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-2 gap-y-1 pt-1 mt-1 border-t border-gray-100">
                      <div>
-                        <label className={labelClass}>Admin Commission Type From Driver <span className="text-rose-500">*</span></label>
-                        <div className="relative">
-                           <select required className={inputClass + " appearance-none cursor-pointer"} value={formData.admin_commission_type_from_driver} onChange={e => setFormData(p=>({...p, admin_commission_type_from_driver: e.target.value}))}>
-                              <option value="">Select Type</option>
-                              <option value="1">Percentage</option>
+                        <label className={labelClass}>Admin Comm. (Driver) <span className="text-rose-500">*</span></label>
+                        <div className="flex gap-1">
+                           <select className={inputClass + " w-20 py-1"} value={formData.admin_commission_type_from_driver} onChange={e => setFormData(p=>({...p, admin_commission_type_from_driver: e.target.value}))}>
+                              <option value="1">%</option>
                               <option value="2">Fixed</option>
                            </select>
-                           <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                           <input type="number" min="0" required className={inputClass + " py-1"} value={formData.admin_commission_from_driver} onChange={e => setFormData(p=>({...p, admin_commission_from_driver: clampNonNegativeInput('admin_commission_from_driver', e.target.value)}))} />
                         </div>
                      </div>
                      <div>
-                        <label className={labelClass}>Admin Commission From Driver <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Enter Admin Commission From Driver" value={formData.admin_commission_from_driver} onChange={e => setFormData(p=>({...p, admin_commission_from_driver: clampNonNegativeInput('admin_commission_from_driver', e.target.value)}))} />
-                     </div>
-                     <div>
-                        <label className={labelClass}>Admin Commission Type From Owner <span className="text-rose-500">*</span></label>
-                        <div className="relative">
-                           <select required className={inputClass + " appearance-none cursor-pointer"} value={formData.admin_commission_type_for_owner} onChange={e => setFormData(p=>({...p, admin_commission_type_for_owner: e.target.value}))}>
-                              <option value="">Select Type</option>
-                              <option value="1">Percentage</option>
+                        <label className={labelClass}>Admin Comm. (Owner) <span className="text-rose-500">*</span></label>
+                        <div className="flex gap-1">
+                           <select className={inputClass + " w-20 py-1"} value={formData.admin_commission_type_for_owner} onChange={e => setFormData(p=>({...p, admin_commission_type_for_owner: e.target.value}))}>
+                              <option value="1">%</option>
                               <option value="2">Fixed</option>
                            </select>
-                           <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                           <input type="number" min="0" required className={inputClass + " py-1"} value={formData.admin_commission_for_owner} onChange={e => setFormData(p=>({...p, admin_commission_for_owner: clampNonNegativeInput('admin_commission_for_owner', e.target.value)}))} />
                         </div>
-                     </div>
-                     <div>
-                        <label className={labelClass}>Admin Commission From Owner <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Enter Admin Commission From Owner" value={formData.admin_commission_for_owner} onChange={e => setFormData(p=>({...p, admin_commission_for_owner: clampNonNegativeInput('admin_commission_for_owner', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Service Tax (%) <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Enter Service Tax (%)" value={formData.service_tax} onChange={e => setFormData(p=>({...p, service_tax: clampNonNegativeInput('service_tax', e.target.value)}))} />
+                        <input type="number" min="0" required className={inputClass + " py-1"} value={formData.service_tax} onChange={e => setFormData(p=>({...p, service_tax: clampNonNegativeInput('service_tax', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Base Price <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Enter Base Price" value={formData.base_price} onChange={e => setFormData(p=>({...p, base_price: clampNonNegativeInput('base_price', e.target.value)}))} />
+                        <input type="number" min="0" required className={inputClass + " py-1"} value={formData.base_price} onChange={e => setFormData(p=>({...p, base_price: clampNonNegativeInput('base_price', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Base Distance <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Enter Base Distance" value={formData.base_distance} onChange={e => setFormData(p=>({...p, base_distance: clampNonNegativeInput('base_distance', e.target.value)}))} />
+                        <input type="number" min="0" required className={inputClass + " py-1"} value={formData.base_distance} onChange={e => setFormData(p=>({...p, base_distance: clampNonNegativeInput('base_distance', e.target.value)}))} />
                      </div>
                      <div>
-                        <label className={labelClass}>Price Per Distance <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Enter Price Per Distance" value={formData.price_per_distance} onChange={e => setFormData(p=>({...p, price_per_distance: clampNonNegativeInput('price_per_distance', e.target.value)}))} />
+                        <label className={labelClass}>Price / Distance <span className="text-rose-500">*</span></label>
+                        <input type="number" min="0" required className={inputClass + " py-1"} value={formData.price_per_distance} onChange={e => setFormData(p=>({...p, price_per_distance: clampNonNegativeInput('price_per_distance', e.target.value)}))} />
                      </div>
                      <div>
-                        <label className={labelClass}>Time Price in Mintue <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Enter Time Price" value={formData.time_price} onChange={e => setFormData(p=>({...p, time_price: clampNonNegativeInput('time_price', e.target.value)}))} />
+                        <label className={labelClass}>Time Price / Min <span className="text-rose-500">*</span></label>
+                        <input type="number" min="0" required className={inputClass + " py-1"} value={formData.time_price} onChange={e => setFormData(p=>({...p, time_price: clampNonNegativeInput('time_price', e.target.value)}))} />
                      </div>
                      <div>
                         <label className={labelClass}>Waiting Charge <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Enter Waiting Charge" value={formData.waiting_charge} onChange={e => setFormData(p=>({...p, waiting_charge: clampNonNegativeInput('waiting_charge', e.target.value)}))} />
+                        <input type="number" min="0" required className={inputClass + " py-1"} value={formData.waiting_charge} onChange={e => setFormData(p=>({...p, waiting_charge: clampNonNegativeInput('waiting_charge', e.target.value)}))} />
                      </div>
                      <div>
-                        <label className={labelClass}>Free Waiting Time In Minutes Before Start A Ride <span className="text-rose-500">*</span></label>
-                        <input type="number" min="0" required className={inputClass} placeholder="Free Waiting Time In Minutes Before Start A Ride" value={formData.free_waiting_before} onChange={e => setFormData(p=>({...p, free_waiting_before: clampNonNegativeInput('free_waiting_before', e.target.value)}))} />
+                        <label className={labelClass}>Free Wait (Before) <span className="text-rose-500">*</span></label>
+                        <input type="number" min="0" required className={inputClass + " py-1"} value={formData.free_waiting_before} onChange={e => setFormData(p=>({...p, free_waiting_before: clampNonNegativeInput('free_waiting_before', e.target.value)}))} />
                      </div>
-
-                     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-12">
-                        <div>
-                           <label className={labelClass}>Free Waiting Time In Minutes After Start A Ride <span className="text-rose-500">*</span></label>
-                           <input type="number" min="0" required className={inputClass} placeholder="Free Waiting Time In Minutes After Start A Ride" value={formData.free_waiting_after} onChange={e => setFormData(p=>({...p, free_waiting_after: clampNonNegativeInput('free_waiting_after', e.target.value)}))} />
+                     <div>
+                        <label className={labelClass}>Free Wait (After) <span className="text-rose-500">*</span></label>
+                        <input type="number" min="0" required className={inputClass + " py-1"} value={formData.free_waiting_after} onChange={e => setFormData(p=>({...p, free_waiting_after: clampNonNegativeInput('free_waiting_after', e.target.value)}))} />
+                     </div>
+                     <div className="col-span-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-2 gap-y-1 pt-1 border-t border-gray-100 mt-1">
+                        <div className="flex items-center gap-1">
+                           <input type="checkbox" className="w-3 h-3 rounded border-gray-300" checked={formData.enable_airport_ride} onChange={e => setFormData(p=>({...p, enable_airport_ride: e.target.checked}))} />
+                           <span className="text-[10px] font-semibold text-gray-700">Airport Ride</span>
                         </div>
-                     </div>
-
-                     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-12 pt-4">
-                        <div className="flex items-center gap-2 pt-2 ml-1">
-                           <input type="checkbox" className="w-4 h-4 rounded border-gray-300 pointer-events-auto" checked={formData.enable_airport_ride} onChange={e => setFormData(p=>({...p, enable_airport_ride: e.target.checked}))} />
-                           <span className="text-[13px] font-semibold text-gray-700">Enable Airport Ride</span>
+                        <div className="flex items-center gap-1">
+                           <input type="checkbox" className="w-3 h-3 rounded border-gray-300" checked={formData.enable_outstation_ride} onChange={e => setFormData(p=>({...p, enable_outstation_ride: e.target.checked}))} />
+                           <span className="text-[10px] font-semibold text-gray-700">Outstation Ride</span>
                         </div>
                      </div>
 
                      {formData.enable_airport_ride && (
-                        <div className="md:col-span-2 space-y-6 pt-6 border-t border-gray-100 mt-4">
-                           <h2 className="text-base font-bold text-[#1E293B] uppercase tracking-wider">Airport Ride</h2>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                              <div>
-                                 <label className={labelClass}>Airport Surge Fee <span className="text-rose-500">*</span></label>
-                                 <input type="number" min="0" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Airport Surge Fee" value={formData.airport_surge} onChange={e => setFormData(p=>({...p, airport_surge: clampNonNegativeInput('airport_surge', e.target.value)}))} />
-                              </div>
-                              <div>
-                                 <label className={labelClass}>Support Airport Fee <span className="text-rose-500">*</span></label>
-                                 <input type="number" min="0" required={formData.enable_airport_ride} className={inputClass} placeholder="Enter Support Airport Fee" value={formData.support_airport_fee} onChange={e => setFormData(p=>({...p, support_airport_fee: clampNonNegativeInput('support_airport_fee', e.target.value)}))} />
-                              </div>
-                           </div>
+                        <div className="col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-6 flex gap-2">
+                           <div className="flex-1"><label className={labelClass}>Airport Surge</label><input type="number" className={inputClass + " py-1"} value={formData.airport_surge} onChange={e => setFormData(p=>({...p, airport_surge: e.target.value}))} /></div>
+                           <div className="flex-1"><label className={labelClass}>Support Fee</label><input type="number" className={inputClass + " py-1"} value={formData.support_airport_fee} onChange={e => setFormData(p=>({...p, support_airport_fee: e.target.value}))} /></div>
                         </div>
                      )}
 
-                     <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-12">
-                        <div className="flex items-center gap-2 pt-2 ml-1">
-                           <input type="checkbox" className="w-4 h-4 rounded border-gray-300 pointer-events-auto" checked={formData.enable_outstation_ride} onChange={e => setFormData(p=>({...p, enable_outstation_ride: e.target.checked}))} />
-                           <span className="text-[13px] font-semibold text-gray-700">Enable Outstation Ride</span>
-                        </div>
-                     </div>
-
                      {formData.enable_outstation_ride && (
-                        <div className="md:col-span-2 space-y-6 pt-6 border-t border-gray-100 mt-4">
-                           <h2 className="text-base font-bold text-[#1E293B] uppercase tracking-wider">Outstation</h2>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                              <div>
-                                 <label className={labelClass}>Base Price <span className="text-rose-500">*</span></label>
-                                 <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Price" value={formData.outstation_base_price} onChange={e => setFormData(p=>({...p, outstation_base_price: clampNonNegativeInput('outstation_base_price', e.target.value)}))} />
-                              </div>
-                              <div>
-                                 <label className={labelClass}>Base Distance <span className="text-rose-500">*(Kilometers)</span></label>
-                                 <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Base Distance" value={formData.outstation_base_distance} onChange={e => setFormData(p=>({...p, outstation_base_distance: clampNonNegativeInput('outstation_base_distance', e.target.value)}))} />
-                              </div>
-                              <div>
-                                 <label className={labelClass}>Price Per Distance <span className="text-rose-500">*(Kilometers)</span></label>
-                                 <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Price Per Distance" value={formData.outstation_price_per_distance} onChange={e => setFormData(p=>({...p, outstation_price_per_distance: clampNonNegativeInput('outstation_price_per_distance', e.target.value)}))} />
-                              </div>
-                              <div>
-                                 <label className={labelClass}>Time Price in Mintue <span className="text-rose-500">*</span></label>
-                                 <input type="number" min="0" required={formData.enable_outstation_ride} className={inputClass} placeholder="Enter Time Price" value={formData.outstation_time_price} onChange={e => setFormData(p=>({...p, outstation_time_price: clampNonNegativeInput('outstation_time_price', e.target.value)}))} />
-                              </div>
-                           </div>
+                        <div className="col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-6 flex gap-2">
+                           <div className="flex-1"><label className={labelClass}>Out. Base</label><input type="number" className={inputClass + " py-1"} value={formData.outstation_base_price} onChange={e => setFormData(p=>({...p, outstation_base_price: e.target.value}))} /></div>
+                           <div className="flex-1"><label className={labelClass}>Out. Dist</label><input type="number" className={inputClass + " py-1"} value={formData.outstation_base_distance} onChange={e => setFormData(p=>({...p, outstation_base_distance: e.target.value}))} /></div>
+                           <div className="flex-1"><label className={labelClass}>Out. Price/Dist</label><input type="number" className={inputClass + " py-1"} value={formData.outstation_price_per_distance} onChange={e => setFormData(p=>({...p, outstation_price_per_distance: e.target.value}))} /></div>
                         </div>
                      )}
                   </div>
 
                   {/* Section: Cancellation Fee */}
-                  <div className="space-y-6 pt-6 border-t border-gray-100">
-                     <h2 className="text-base font-bold text-[#1E293B] uppercase tracking-wider">Cancellation Fee</h2>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                  <div className="space-y-1 pt-1 mt-1 border-t border-gray-100">
+                     <h2 className="text-[10px] font-bold text-[#1E293B] uppercase tracking-wider">Cancellation Fee</h2>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-x-2 gap-y-1">
                         <div>
                            <label className={labelClass}>Cancellation Fee for User <span className="text-rose-500">*</span></label>
                            <div className="flex border border-gray-200 rounded-md overflow-hidden focus-within:border-indigo-500">
@@ -1013,7 +991,7 @@ const SetPrices = ({ mode }) => {
                                  <option value="percentage">%</option>
                                  <option value="fixed">FIXED</option>
                               </select>
-                              <input type="number" min="0" className="flex-1 px-4 py-3 text-sm outline-none" placeholder="Enter Cancellation Fee for User" value={formData.user_cancellation_fee} onChange={e => setFormData(p=>({...p, user_cancellation_fee: clampNonNegativeInput('user_cancellation_fee', e.target.value)}))} />
+                              <input type="number" min="0" className="flex-1 px-2.5 py-1.5 text-xs outline-none" placeholder="User Cancellation Fee" value={formData.user_cancellation_fee} onChange={e => setFormData(p=>({...p, user_cancellation_fee: clampNonNegativeInput('user_cancellation_fee', e.target.value)}))} />
                            </div>
                         </div>
                         <div>
@@ -1023,7 +1001,7 @@ const SetPrices = ({ mode }) => {
                                  <option value="percentage">%</option>
                                  <option value="fixed">FIXED</option>
                               </select>
-                              <input type="number" min="0" className="flex-1 px-4 py-3 text-sm outline-none" placeholder="Enter Cancellation Fee for Driver" value={formData.driver_cancellation_fee} onChange={e => setFormData(p=>({...p, driver_cancellation_fee: clampNonNegativeInput('driver_cancellation_fee', e.target.value)}))} />
+                              <input type="number" min="0" className="flex-1 px-2.5 py-1.5 text-xs outline-none" placeholder="Driver Cancellation Fee" value={formData.driver_cancellation_fee} onChange={e => setFormData(p=>({...p, driver_cancellation_fee: clampNonNegativeInput('driver_cancellation_fee', e.target.value)}))} />
                            </div>
                         </div>
                         <div>
@@ -1035,30 +1013,62 @@ const SetPrices = ({ mode }) => {
                                  <option value="driver">Driver</option>
                               </select>
                               <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                           </div>
-                        </div>
-                     </div>
-                  </div>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
 
                   {/* Footer Action */}
-                  <div className="pt-8 flex justify-end">
-                     <button type="submit" disabled={saving} className="px-12 py-3.5 bg-[#00BFA5] text-white rounded text-[13px] font-bold shadow-lg hover:opacity-90 transition-all active:scale-95 flex items-center gap-2">
+                  <div className="pt-2 flex justify-end border-t border-gray-50 mt-1">
+                     <button type="submit" disabled={saving} className="px-6 py-1.5 bg-[#00BFA5] text-white rounded text-xs font-bold shadow-lg hover:opacity-90 transition-all active:scale-95 flex items-center gap-2">
                         {saving && <Loader2 size={16} className="animate-spin" />}
                         {saving ? 'Saving Changes...' : 'Save'}
                      </button>
                   </div>
                </form>
 
-               {/* Design Floating Action Button */}
-               <div className="absolute right-8 top-[380px] z-50">
-                  <button type="button" className="w-14 h-14 bg-[#00BFA5] text-white rounded-full flex items-center justify-center shadow-2xl hover:rotate-[360deg] transition-all duration-700">
-                     <div className="flex flex-col gap-1.5 items-center">
-                        <div className="w-6 h-[2.5px] bg-white rounded-full"></div>
-                        <div className="w-6 h-[2px] bg-white/70 rounded-full"></div>
-                        <div className="w-6 h-[1.5px] bg-white/40 rounded-full"></div>
+               <AnimatePresence>
+                 {showHowItWorks && (
+                   <motion.div 
+                     initial={{ x: '100%', opacity: 0 }}
+                     animate={{ x: 0, opacity: 1 }}
+                     exit={{ x: '100%', opacity: 0 }}
+                     transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                     className="absolute top-10 right-4 h-auto max-h-[85%] w-72 bg-white border border-gray-100 shadow-2xl z-50 p-4 rounded-xl overflow-y-auto"
+                   >
+                     <div className="flex items-center justify-between mb-4">
+                       <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">How It Works</h3>
+                       <button onClick={() => setShowHowItWorks(false)} className="p-1.5 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"><X size={14} /></button>
                      </div>
-                  </button>
-               </div>
+                     <div className="space-y-3 text-xs text-gray-600">
+                       <div>
+                         <p className="font-bold text-gray-800 mb-0.5 flex items-center gap-1.5"><MapPin size={12} className="text-[#00BFA5]"/> Zone</p>
+                         <p className="leading-snug text-gray-500 pl-4.5">Select the geographical area where this pricing applies.</p>
+                       </div>
+                       <div>
+                         <p className="font-bold text-gray-800 mb-0.5 flex items-center gap-1.5"><Car size={12} className="text-[#00BFA5]"/> Vehicle Type</p>
+                         <p className="leading-snug text-gray-500 pl-4.5">The vehicle category (e.g. Mini, SUV). This automatically sets the transport type.</p>
+                       </div>
+                       <div>
+                         <p className="font-bold text-gray-800 mb-0.5 flex items-center gap-1.5"><CreditCard size={12} className="text-[#00BFA5]"/> Payment Type</p>
+                         <p className="leading-snug text-gray-500 pl-4.5">Allowed payment methods for this ride type.</p>
+                       </div>
+                       <div>
+                         <p className="font-bold text-gray-800 mb-0.5 flex items-center gap-1.5"><DollarSign size={12} className="text-[#00BFA5]"/> Commission</p>
+                         <p className="leading-snug text-gray-500 pl-4.5">Platform earnings rules for drivers and fleet owners.</p>
+                       </div>
+                       <div>
+                         <p className="font-bold text-gray-800 mb-0.5 flex items-center gap-1.5"><ShieldCheck size={12} className="text-[#00BFA5]"/> Cancellation Fee</p>
+                         <p className="leading-snug text-gray-500 pl-4.5">Charges applied if the user or driver cancels the ride.</p>
+                       </div>
+                       <div>
+                         <p className="font-bold text-gray-800 mb-0.5 flex items-center gap-1.5"><Globe size={12} className="text-[#00BFA5]"/> Airport / Outstation</p>
+                         <p className="leading-snug text-gray-500 pl-4.5">Enable toggles to add special pricing rules for airport trips or inter-city outstation rides.</p>
+                       </div>
+                     </div>
+                   </motion.div>
+                 )}
+               </AnimatePresence>
             </div>
           </motion.div>
         )}

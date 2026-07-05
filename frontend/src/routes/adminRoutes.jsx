@@ -330,6 +330,7 @@ const adminRoutes = (
         <Route path="zone" element={<AdminZoneManagement />} />
         <Route path="zone/create" element={<AdminZoneManagement mode="create" />} />
         <Route path="zone/edit/:id" element={<AdminZoneManagement mode="edit" />} />
+        <Route path="zone/view/:id" element={<AdminZoneManagement mode="view" />} />
         <Route path="airport" element={<AdminAirportManagement />} />
         <Route path="airport/create" element={<AdminAirportManagement mode="create" />} />
         <Route path="airport/edit/:id" element={<AdminAirportManagement mode="edit" />} />

@@ -6,10 +6,10 @@ import { ArrowLeft, Tag, CheckCircle2, X, ChevronRight, Ticket } from 'lucide-re
 import { useUserTheme } from '../../../shared/context/UserThemeContext';
 
 const MOCK_PROMOS = [
-  { id: '1', code: 'RYDON50',  discount: 50,  type: 'flat',    service: 'All Rides',    expiry: '30 Apr 2026', minFare: 100 },
-  { id: '2', code: 'GOFREE',   discount: 100, type: 'flat',    service: 'Cab Only',     expiry: '15 Apr 2026', minFare: 150 },
-  { id: '3', code: 'SAVE20',   discount: 20,  type: 'percent', service: 'Parcel',       expiry: '30 Apr 2026', minFare: 50  },
-  { id: '4', code: 'NEWUSER',  discount: 75,  type: 'flat',    service: 'First Ride',   expiry: '30 Apr 2026', minFare: 80  },
+  { id: '1', code: 'Appzeto 50', discount: 50, type: 'flat', service: 'All Rides', expiry: '30 Apr 2026', minFare: 100 },
+  { id: '2', code: 'GOFREE', discount: 100, type: 'flat', service: 'Cab Only', expiry: '15 Apr 2026', minFare: 150 },
+  { id: '3', code: 'SAVE20', discount: 20, type: 'percent', service: 'Parcel', expiry: '30 Apr 2026', minFare: 50 },
+  { id: '4', code: 'NEWUSER', discount: 75, type: 'flat', service: 'First Ride', expiry: '30 Apr 2026', minFare: 80 },
 ];
 
 const SkeletonCard = () => (
@@ -116,7 +116,7 @@ const PromoCodes = () => {
               value={manualCode}
               onChange={e => setManualCode(e.target.value.toUpperCase())}
               onKeyDown={e => e.key === 'Enter' && handleManualApply()}
-              placeholder="e.g. RYDON50"
+              placeholder="e.g. Appzeto 50"
               className={`flex-1 border rounded-[12px] px-4 py-2.5 text-[14px] font-black placeholder:text-slate-350 focus:outline-none focus:ring-2 ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:ring-yellow-400/20' : 'bg-slate-50 border-slate-100 text-slate-900 focus:ring-orange-200'}`}
             />
             <motion.button whileTap={{ scale: 0.96 }} onClick={handleManualApply}
@@ -151,11 +151,10 @@ const PromoCodes = () => {
             <motion.div key={promo.id}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
-              className={`rounded-[20px] border p-4 transition-all ${
-                isApplied 
-                  ? (isDark ? 'bg-emerald-950/20 border-emerald-900 shadow-sm' : 'bg-emerald-50/80 border-emerald-200 shadow-[0_4px_14px_rgba(16,185,129,0.10)]') 
+              className={`rounded-[20px] border p-4 transition-all ${isApplied
+                  ? (isDark ? 'bg-emerald-950/20 border-emerald-900 shadow-sm' : 'bg-emerald-50/80 border-emerald-200 shadow-[0_4px_14px_rgba(16,185,129,0.10)]')
                   : (isDark ? 'bg-slate-900 border-slate-800 shadow-sm' : 'bg-white/90 border-white/80 shadow-[0_4px_14px_rgba(15,23,42,0.06)]')
-              }`}>
+                }`}>
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div>
                   <div className="flex items-center gap-2">
@@ -175,11 +174,10 @@ const PromoCodes = () => {
               <motion.button whileTap={{ scale: 0.97 }}
                 onClick={() => applyCode(promo.code)}
                 disabled={isApplied || isApplying}
-                className={`w-full py-2.5 rounded-[12px] text-[12px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  isApplied
+                className={`w-full py-2.5 rounded-[12px] text-[12px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer ${isApplied
                     ? (isDark ? 'bg-emerald-950/20 text-emerald-400 border border-emerald-900/30' : 'bg-emerald-100 text-emerald-700 cursor-default')
                     : (isDark ? 'bg-yellow-400 text-slate-950' : 'bg-slate-900 text-white shadow-sm active:bg-black')
-                }`}>
+                  }`}>
                 {isApplying ? (
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : isApplied ? (
@@ -195,9 +193,8 @@ const PromoCodes = () => {
       <AnimatePresence>
         {toast && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl text-[12px] font-black shadow-2xl z-50 whitespace-nowrap ${
-              toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-            }`}>
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl text-[12px] font-black shadow-2xl z-50 whitespace-nowrap ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+              }`}>
             {toast.type === 'success' ? '✓ ' : '✗ '}{toast.msg}
           </motion.div>
         )}

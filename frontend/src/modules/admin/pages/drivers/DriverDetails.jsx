@@ -669,7 +669,7 @@ const DriverDetails = () => {
           <span className="text-gray-700">Driver Profile</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">Driver Profile</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Driver Profile</h1>
           <button
             onClick={() => navigate(backRoute)}
             className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -698,7 +698,7 @@ const DriverDetails = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-gray-900">{profile.name}</h2>
+                <h2 className="text-lg text-gray-900 font-bold">{profile.name}</h2>
                 <span className="font-mono font-semibold text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded shadow-sm border border-indigo-100">
                   {profile.driver_code || profile.referralCode || (profile.phone ? `DRV${String(profile.phone).slice(-4)}${String(profile._id || profile.id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : 'N/A')}
                 </span>
@@ -865,7 +865,7 @@ const DriverDetails = () => {
               </div>
 
               <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Credit or Debit wallet</h3>
+                <h3 className="text-sm text-gray-900 mb-4 font-bold">Credit or Debit wallet</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Amount *</label>
@@ -927,7 +927,7 @@ const DriverDetails = () => {
 
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100">
-                  <h3 className="text-sm font-semibold text-gray-900">Wallet Transactions</h3>
+                  <h3 className="text-sm text-gray-900 font-bold">Wallet Transactions</h3>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
@@ -1011,7 +1011,7 @@ const DriverDetails = () => {
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <h3 className="text-base font-semibold text-gray-900">Vehicle Onboarding Details</h3>
+                    <h3 className="text-base text-gray-900 font-bold">Vehicle Onboarding Details</h3>
                     <p className="mt-1 text-sm text-gray-500">
                       These values mirror the fields collected from the driver on the vehicle setup step.
                     </p>
@@ -1334,7 +1334,7 @@ const DriverDetails = () => {
       ) : (
         <>
           <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Wallet Overview</h3>
+            <h3 className="text-base text-gray-900 mb-4 font-bold">Wallet Overview</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="border border-gray-100 rounded-lg p-4">
                 <p className="text-sm text-gray-500">Wallet Balance</p>
@@ -1363,7 +1363,7 @@ const DriverDetails = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6"> 
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Driver Location</h3>
+              <h3 className="text-base text-gray-900 mb-4 font-bold">Driver Location</h3>
               <div className="h-80 rounded-xl overflow-hidden border border-gray-100">
                 {loadError ? (
                   <div className="h-full flex items-center justify-center text-sm text-gray-500 bg-gray-50">
@@ -1401,7 +1401,7 @@ const DriverDetails = () => {
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Earnings</h3>
+              <h3 className="text-base text-gray-900 mb-4 font-bold">Earnings</h3>
               <div className="h-52 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
                 <div className="relative h-full">
                   <ChartGrid height={170} />
@@ -1450,7 +1450,7 @@ const DriverDetails = () => {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">Trips</h3>
+            <h3 className="text-base text-gray-900 mb-4 font-bold">Trips</h3>
             <div className="h-52 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4">
               <div className="relative h-full">
                 <ChartGrid height={170} />

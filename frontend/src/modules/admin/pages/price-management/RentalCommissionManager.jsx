@@ -115,6 +115,21 @@ const RentalCommissionManager = () => {
   const handleSave = async (store) => {
     const storeId = String(store._id || store.id);
     const draft = drafts[storeId] || {};
+    
+    const serviceVal = Number(draft.serviceStoreValue || 0);
+    const ownerVal = Number(draft.ownerValue || 0);
+    const taxVal = Number(draft.serviceTaxPercentage || 0);
+    
+    if (serviceVal < 0 || ownerVal < 0 || taxVal < 0) {
+      return toast.error('Commission or tax cannot be negative');
+    }
+    if (draft.serviceStoreType === 'percentage' && serviceVal > 100) return toast.error('Store commission percentage cannot be above 100');
+    if (draft.ownerType === 'percentage' && ownerVal > 100) return toast.error('Owner commission percentage cannot be above 100');
+    if (taxVal > 100) return toast.error('Tax percentage cannot be above 100');
+    
+    if (draft.serviceStoreType === 'fixed' && String(draft.serviceStoreValue || '').trim() === '') return toast.error('Store fixed amount cannot be empty');
+    if (draft.ownerType === 'fixed' && String(draft.ownerValue || '').trim() === '') return toast.error('Owner fixed amount cannot be empty');
+
     setSavingId(storeId);
 
     try {
@@ -168,26 +183,28 @@ const RentalCommissionManager = () => {
               <Percent size={14} />
               Rental Commission
             </div>
-            <h1 className="mt-3 text-3xl font-black text-slate-900">Rental Store & Owner Commission</h1>
+            <h1 className="mt-3 text-3xl font-bold text-slate-900">Rental Commission Setup</h1>
             <p className="mt-1 text-sm font-medium text-slate-500">
               Each rental booking snapshots the selected store rules. Store share is applied first, owner share is applied on the remaining rental amount, admin keeps the rest, and service tax is calculated separately on the rental amount.
             </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative min-w-[280px]">
-              <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="relative w-full sm:w-[280px]">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <Search size={16} className="text-slate-400" />
+              </div>
               <input
-                className={`${inputClass} pl-11`}
+                className={`${inputClass} pl-10 text-left`}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search store, owner, zone, or location"
+                placeholder="Search store, owner, zone..."
               />
             </div>
             <button
               type="button"
               onClick={() => navigate('/admin/pricing/service-stores')}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-yellow-200 bg-yellow-50 px-6 py-3 text-sm font-bold text-yellow-700 shadow-sm transition hover:bg-yellow-100 whitespace-nowrap"
             >
               <Building2 size={16} />
               Open Service Stores
@@ -212,7 +229,17 @@ const RentalCommissionManager = () => {
           {loading ? (
             <div className="bg-white px-6 py-10 text-center text-sm font-bold text-slate-400">Loading rental commission settings...</div>
           ) : filteredStores.length === 0 ? (
-            <div className="bg-white px-6 py-10 text-center text-sm font-bold text-slate-400">No service stores found.</div>
+            <div className="flex flex-col items-center justify-center bg-white px-6 py-16 text-center text-sm font-bold text-slate-400">
+              <p className="mb-4 text-lg">No service stores found</p>
+              <button
+                type="button"
+                onClick={() => navigate('/admin/pricing/service-stores')}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-yellow-200 bg-yellow-50 px-6 py-3 text-sm font-bold text-yellow-700 shadow-sm transition hover:bg-yellow-100 whitespace-nowrap"
+              >
+                <Building2 size={16} />
+                Open Service Stores
+              </button>
+            </div>
           ) : (
             <div className="divide-y divide-slate-100 bg-white">
               {filteredStores.map((store) => {
@@ -279,7 +306,7 @@ const RentalCommissionManager = () => {
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-slate-500">
                         <Receipt size={15} />
-                        <span className="text-[11px] font-black uppercase tracking-[0.18em]">Tax %</span>
+                        <span className="text-sm font-semibold">Tax %</span>
                       </div>
                       <input
                         className={inputClass}

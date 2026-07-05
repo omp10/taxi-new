@@ -122,7 +122,7 @@ const TicketTitle = () => {
           <span className="text-gray-700">Ticket Title</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold text-gray-900">Ticket Title</h1>
+          <h1 className="text-xl text-gray-900 font-bold">Ticket Title</h1>
         </div>
       </div>
 
@@ -139,7 +139,7 @@ const TicketTitle = () => {
               <Plus size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-sm text-gray-900 font-bold">
                 {editingId ? 'Update Ticket Title' : 'Add Ticket Title'}
               </h3>
               <p className="text-xs text-gray-400">Create support title for user/driver/owner flows</p>
@@ -206,7 +206,7 @@ const TicketTitle = () => {
 
         <div className="rounded-xl border border-gray-200 bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4">
-            <h3 className="text-sm font-semibold text-gray-900">Ticket Title List</h3>
+            <h3 className="text-sm text-gray-900 font-bold">Ticket Title List</h3>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}

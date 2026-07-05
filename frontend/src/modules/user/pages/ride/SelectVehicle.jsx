@@ -1122,6 +1122,9 @@ const ScrollIndicator = ({ show }) => (
 
 const SelectVehicle = () => {
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const queryVehicleType = searchParams.get('vehicleType') || '';
+  const localVehicleType = typeof window !== 'undefined' ? (window.localStorage.getItem('selectedVehicleType') || '') : '';
   const routeState = location.state || {};
   const [vehicles, setVehicles] = useState([]);
   const [availabilityByVehicleId, setAvailabilityByVehicleId] = useState({});
@@ -1321,7 +1324,8 @@ const SelectVehicle = () => {
           return;
         }
 
-        const nextVehicles = getVehicleTypes(response)
+        const categoryFilter = String(queryVehicleType || routeState?.selectedCategory || localVehicleType || '').trim().toLowerCase();
+        let nextVehicles = getVehicleTypes(response)
           .filter((type) => {
             const isActive = type.active !== false && Number(type.status ?? 1) !== 0;
             const transportType = String(type.transport_type || 'taxi').toLowerCase();
@@ -1329,16 +1333,27 @@ const SelectVehicle = () => {
           })
           .map(normalizeVehicleType);
 
-        const categoryFilter = String(routeState?.selectedCategory || '').trim().toLowerCase();
-        const preselectedVehicle = categoryFilter
-          ? nextVehicles.find((v) => v.category === categoryFilter)
-          : null;
+        if (categoryFilter) {
+          nextVehicles = nextVehicles.filter((v) => {
+            const vCat = v.category;
+            if (categoryFilter === 'cab' && vCat === 'car') return true;
+            if (categoryFilter === 'car' && vCat === 'cab') return true;
+            return vCat === categoryFilter;
+          });
+        }
+
+        console.log('--- TEMPORARY DEBUG LOG ---');
+        console.log('selectedVehicleType in select vehicle page:', categoryFilter);
+        console.log('nextVehicles length:', nextVehicles.length);
+
+        const preselectedVehicle = nextVehicles[0] || null;
 
         setVehicles(nextVehicles);
         setSelected((current) => current || preselectedVehicle?.id || nextVehicles[0]?.id || '');
-      } catch (error) {
+      } catch (err) {
+        console.error('[SelectVehicle] Failed to load vehicles:', err);
         if (active) {
-          setVehicleLoadError(error.message || 'Could not load vehicle types.');
+          setVehicleLoadError('Failed to load available vehicles for this area.');
         }
       } finally {
         if (active) {
@@ -1352,7 +1367,7 @@ const SelectVehicle = () => {
     return () => {
       active = false;
     };
-  }, [routeState?.selectedCategory]);
+  }, [isResolvingServiceLocation, queryVehicleType, routeState?.selectedCategory, localVehicleType, resolvedZoneId, resolvedServiceLocationId, routeState.transportType, routeState.transport_type, routeState.serviceType, hasCompleteRouteZoneContext]);
 
   useEffect(() => {
     let active = true;
@@ -1551,13 +1566,13 @@ const SelectVehicle = () => {
 
     const rankedVehicles = pricedVehicles
       .map((vehicle, index) => ({
-        vehicle,
-        index,
+        ...vehicle,
+        originalIndex: index,
         availability: availabilityByVehicleId[vehicle.id] || DEFAULT_AVAILABILITY,
       }))
       .sort((a, b) => {
-        const aAvailable = a.availability.totalDrivers > 0;
-        const bAvailable = b.availability.totalDrivers > 0;
+        const aAvailable = (a.availability.totalDrivers || 0) > 0;
+        const bAvailable = (b.availability.totalDrivers || 0) > 0;
 
         if (aAvailable !== bAvailable) {
           return aAvailable ? -1 : 1;
@@ -1572,21 +1587,15 @@ const SelectVehicle = () => {
           if (etaDelta !== 0) return etaDelta;
         }
 
-        return a.index - b.index;
+        return a.originalIndex - b.originalIndex;
       })
-      .map(({ vehicle, availability }) => ({
-        vehicle,
-        availability,
-      }));
+      .map(({ originalIndex, availability, ...vehicle }) => vehicle);
 
-    if (rideMode !== 'schedule') {
-      return rankedVehicles
-        .filter(({ availability }) => (availability.totalDrivers || 0) > 0)
-        .map(({ vehicle }) => vehicle);
-    }
+    console.log('--- TEMPORARY DEBUG LOG ---');
+    console.log('Final displayed vehicles:', rankedVehicles.map(v => v.name));
 
-    return rankedVehicles.map(({ vehicle }) => vehicle);
-  }, [availabilityByVehicleId, hasAvailabilityResults, hasLoadedAvailability, pricedVehicles, rideMode]);
+    return rankedVehicles;
+  }, [availabilityByVehicleId, hasAvailabilityResults, hasLoadedAvailability, pricedVehicles]);
 
   const selectedVehicle = useMemo(() => pricedVehicles.find((v) => v.id === selected), [pricedVehicles, selected]);
   const previewVehicle = useMemo(
@@ -1608,10 +1617,10 @@ const SelectVehicle = () => {
   );
   const selectedAvailability = selectedVehicle ? (availabilityByVehicleId[selectedVehicle.id] || DEFAULT_AVAILABILITY) : DEFAULT_AVAILABILITY;
   const previewAvailability = previewVehicle ? (availabilityByVehicleId[previewVehicle.id] || DEFAULT_AVAILABILITY) : DEFAULT_AVAILABILITY;
-  const canProceed = Boolean(selectedVehicle) && !isFarePending && (rideMode === 'schedule' || Boolean(selectedAvailability.totalDrivers));
+  const canProceed = Boolean(selectedVehicle) && !isFarePending;
   const hasBookableVehicles = useMemo(
-    () => displayedVehicles.some((vehicle) => (availabilityByVehicleId[vehicle.id]?.totalDrivers || 0) > 0),
-    [availabilityByVehicleId, displayedVehicles],
+    () => displayedVehicles.length > 0,
+    [displayedVehicles],
   );
   const shouldUseDriverBidding = Boolean(
     routeState.intercity ||
@@ -1845,16 +1854,10 @@ const SelectVehicle = () => {
       return;
     }
 
-    const currentAvailability = selected ? (availabilityByVehicleId[selected] || DEFAULT_AVAILABILITY) : DEFAULT_AVAILABILITY;
-    const firstAvailable = displayedVehicles.find((vehicle) => (availabilityByVehicleId[vehicle.id]?.totalDrivers || 0) > 0);
+    const firstAvailable = displayedVehicles.find((vehicle) => (availabilityByVehicleId[vehicle.id]?.totalDrivers || 0) > 0) || displayedVehicles[0];
 
-    if (firstAvailable && (!selected || currentAvailability.totalDrivers <= 0)) {
+    if (!selected && firstAvailable) {
       setSelected(firstAvailable.id);
-      return;
-    }
-
-    if (!firstAvailable && rideMode !== 'schedule' && selected && currentAvailability.totalDrivers <= 0) {
-      setSelected('');
     }
   }, [availabilityByVehicleId, displayedVehicles, hasAvailabilityResults, rideMode, selected]);
 
@@ -2105,8 +2108,10 @@ const SelectVehicle = () => {
   };
 
   return (
-    <div className="h-[100dvh] bg-slate-50 max-w-lg mx-auto relative font-['Plus_Jakarta_Sans'] overflow-hidden">
-      <div className="absolute inset-0 w-full bg-gray-200">
+    <div className="h-[100dvh] bg-slate-50 w-full lg:max-w-7xl mx-auto relative font-['Plus_Jakarta_Sans'] overflow-hidden lg:grid lg:grid-cols-12 lg:bg-white lg:shadow-xl">
+      
+      {/* MAP BACKGROUND (Mobile) / RIGHT COLUMN (Desktop) */}
+      <div className="absolute inset-0 w-full bg-gray-200 lg:relative lg:col-span-7 lg:col-start-6 lg:h-full lg:rounded-r-3xl lg:overflow-hidden lg:z-0">
         <VehicleMapPreview
           center={pickupPosition}
           dropPosition={dropPosition}
@@ -2117,7 +2122,7 @@ const SelectVehicle = () => {
           loadError={mapLoadError}
         />
 
-        <div className="absolute top-6 left-4 right-4 z-20 flex items-center gap-2.5">
+        <div className="absolute top-6 left-4 right-4 z-20 flex items-center gap-2.5 lg:hidden">
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate(-1)}
@@ -2126,11 +2131,23 @@ const SelectVehicle = () => {
             <ArrowLeft size={18} className="text-slate-900" strokeWidth={2.5} />
           </motion.button>
         </div>
-
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-40 flex max-h-[69dvh] min-h-[360px] min-w-0 flex-col overflow-hidden rounded-t-[26px] bg-white shadow-[0_-12px_44px_rgba(15,23,42,0.16)]">
-        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-2.5 mb-2 shrink-0" />
+      {/* BOTTOM SHEET (Mobile) / LEFT COLUMN (Desktop) */}
+      <div className="absolute bottom-0 left-0 right-0 z-40 flex max-h-[69dvh] min-h-[360px] min-w-0 flex-col overflow-hidden rounded-t-[26px] bg-white shadow-[0_-12px_44px_rgba(15,23,42,0.16)] lg:relative lg:col-span-5 lg:col-start-1 lg:row-start-1 lg:h-full lg:max-h-none lg:rounded-none lg:shadow-none lg:border-r lg:border-slate-200 lg:z-10">
+        
+        {/* Desktop Header */}
+        <div className="hidden lg:flex items-center gap-3 px-4 pt-6 pb-2 border-b border-slate-100">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-slate-100 transition-colors">
+            <ArrowLeft size={22} className="text-slate-900" strokeWidth={3} />
+          </button>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-tight">Ride</p>
+            <h1 className="text-[20px] font-bold text-slate-900 tracking-tight leading-none">Select Vehicle</h1>
+          </div>
+        </div>
+
+        <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-2.5 mb-2 shrink-0 lg:hidden" />
 
         <div className="shrink-0 border-b border-slate-100 px-4 pb-3">
           {routeState.selectedCategory && (() => {
@@ -2229,16 +2246,17 @@ const SelectVehicle = () => {
               const isSelected = selected === v.id;
               const availability = availabilityByVehicleId[v.id] || DEFAULT_AVAILABILITY;
               const isUnavailable = !availability.totalDrivers;
-              const canSelectVehicle = rideMode === 'schedule' || !isUnavailable;
+              const canSelectVehicle = true;
               const compactEta = Math.max(
                 1,
                 availability.closestDriverEtaMinutes || tripMetrics.durationMinutes || 1,
               );
-              const fareLabel = isUnavailable && rideMode !== 'schedule'
-                ? 'N/A'
-                : isFarePending
-                  ? '...'
-                  : formatVehicleFare(v);
+              const fareLabel = isFarePending
+                ? '...'
+                : formatVehicleFare(v);
+              const sublabel = isUnavailable && rideMode !== 'schedule' 
+                ? `No nearby ${v.name.toLowerCase()} drivers` 
+                : v.sublabel;
 
               return (
                 <motion.div
@@ -2248,7 +2266,7 @@ const SelectVehicle = () => {
                   transition={{ duration: 0.4, delay: i * 0.04, ease: [0.23, 1, 0.32, 1] }}
                   className={`overflow-hidden rounded-[18px] border transition-all ${
                     isSelected
-                      ? 'border-slate-200 bg-[#fbfaf8] shadow-[0_6px_16px_rgba(15,23,42,0.08)]'
+                      ? 'border-slate-200 bg-slate-50 shadow-[0_6px_16px_rgba(15,23,42,0.08)]'
                       : 'border-transparent bg-white'
                   }`}
                 >
@@ -2287,12 +2305,12 @@ const SelectVehicle = () => {
                           <span className="block truncate text-[14px] font-semibold leading-tight text-slate-900">
                             {v.name}
                           </span>
-                          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-400">
-                            {v.sublabel}
+                          <p className={`mt-0.5 truncate text-[11px] font-medium ${isUnavailable && rideMode !== 'schedule' ? 'text-rose-500' : 'text-slate-400'}`}>
+                            {sublabel}
                           </p>
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className={`block text-[20px] font-semibold leading-none ${isUnavailable && rideMode !== 'schedule' ? 'text-slate-300' : 'text-slate-900'}`}>
+                          <span className="block text-[20px] font-semibold leading-none text-slate-900">
                             {fareLabel}
                           </span>
                           {isSelected && (
@@ -2423,7 +2441,7 @@ const SelectVehicle = () => {
             onClick={handleBook}
             className={`mt-3 flex w-full items-center justify-center rounded-[8px] px-4 py-3.5 text-[16px] font-medium transition ${
               canProceed
-                ? 'bg-[#1f1f1f] text-white'
+                ? 'bg-[#1f1f1f] !text-white'
                 : 'bg-slate-200 text-slate-400'
             }`}
           >
@@ -2434,12 +2452,8 @@ const SelectVehicle = () => {
                   ? `Request Bid for ${selectedVehicle.name}`
                   : rideMode === 'schedule'
                     ? `Schedule ${selectedVehicle.name}`
-                    : selectedAvailability.totalDrivers
-                      ? `Book ${selectedVehicle.name}`
-                      : `${selectedVehicle.name} Unavailable`
-              : rideMode !== 'schedule' && !hasBookableVehicles
-                ? 'No Vehicles Available'
-                : 'Select Vehicle'}
+                    : `Book ${selectedVehicle.name}`
+              : 'Select Vehicle'}
           </motion.button>
 
           {rideMode === 'schedule' ? (

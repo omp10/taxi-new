@@ -78,7 +78,7 @@ const SOSCard = ({ alert, isActive, onClick }) => (
       </div>
     </div>
 
-    <h4 className="text-sm font-semibold text-slate-900 mb-0.5">
+    <h4 className="text-sm text-slate-900 mb-0.5 font-bold">
       {getParticipantTitle(alert)}
     </h4>
     <p className="text-[10px] font-mono text-slate-400 mb-3">
@@ -420,7 +420,7 @@ const SafetyCenter = () => {
 
                 <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-6 flex-1 overflow-y-auto no-scrollbar">
                   <div>
-                    <h4 className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase mb-3">Distress Context</h4>
+                    <h4 className="text-[11px] text-slate-400 tracking-wider uppercase mb-3 font-bold">Distress Context</h4>
                     <div className="grid grid-cols-2 gap-4 text-xs">
                       <div className="bg-slate-50/60 p-3.5 rounded-xl border border-slate-100">
                         <p className="text-[10px] text-slate-400 font-medium mb-1">Subject</p>
@@ -457,7 +457,7 @@ const SafetyCenter = () => {
                   </div>
 
                   <div className="pt-4 border-t border-slate-100">
-                    <h4 className="text-[11px] font-semibold text-slate-900 tracking-wider uppercase mb-3 flex items-center gap-2">
+                    <h4 className="text-[11px] text-slate-900 tracking-wider uppercase mb-3 flex items-center gap-2 font-bold">
                       <AlertCircle size={13} className="text-indigo-600" /> Mandatory Response Checklist
                     </h4>
                     <div className="grid grid-cols-2 gap-2">
@@ -544,7 +544,7 @@ const SafetyCenter = () => {
                   ) : (
                     <div className="flex flex-col h-full bg-slate-900 text-white p-6 justify-between">
                       <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3 shrink-0">
-                        <h4 className="text-[10px] font-semibold text-slate-400 tracking-widest uppercase flex items-center gap-2">
+                        <h4 className="text-[10px] text-slate-400 tracking-widest uppercase flex items-center gap-2 font-bold">
                           <History size={14} /> Incident Logs
                         </h4>
                         <div className="h-2 w-2 bg-rose-500 rounded-full animate-ping" />

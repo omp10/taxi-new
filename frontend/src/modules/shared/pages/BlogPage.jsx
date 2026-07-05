@@ -28,7 +28,7 @@ const BlogPage = () => {
       content: [
         "In the fast-paced environment of modern cities, commuting efficiently is essential. While there are many modes of transport, our standard Hatchback and Sedan rides remain the most popular choices for daily travel. They offer a perfect balance of size, fuel economy, and comfort.",
         "Ideal for solo travellers, couples, or groups of up to four passengers, Hatchback and Sedan rides are compact enough to navigate through heavy traffic and narrow streets, ensuring you reach your destination faster than larger vehicles. They also have a lower carbon footprint and use less fuel, translating directly to lower fare rates for you.",
-        "With upfront pricing and transparent route options, booking a standard ride with Rydon24 takes the guesswork out of daily travel. Whether it is a quick trip to the local market or your daily office commute, these vehicles provide a cozy, air-conditioned space to relax or work while our professional driver partner handles the road."
+        "With upfront pricing and transparent route options, booking a standard ride with Appzeto 24 takes the guesswork out of daily travel. Whether it is a quick trip to the local market or your daily office commute, these vehicles provide a cozy, air-conditioned space to relax or work while our professional driver partner handles the road."
       ],
       author: "Admin",
       date: "April 28, 2026",
@@ -87,11 +87,11 @@ const BlogPage = () => {
     },
     {
       id: 5,
-      title: "Moving Goods with Confidence: How Rydon24 Has Transformed Logistics",
+      title: "Moving Goods with Confidence: How Appzeto 24 Has Transformed Logistics",
       excerpt: "From small packages to full house relocations, explore our versatile fleet of LCVs, Trucks, and delivery vehicles designed to move anything.",
       content: [
         "Logistics and shipping have historically been plagued by unreliable pricing, delays, and poor communication. Whether you are a small business owner trying to deliver orders to clients, or a homeowner relocating to a new apartment, transporting physical goods can be a major headache.",
-        "Rydon24 is transforming this landscape by integrating logistics directly into our booking platform. We offer a full range of commercial options, from lightweight parcel delivery bikes to Light Commercial Vehicles (LCVs), mini trucks, and heavy-duty cargo trucks (HCVs/EHCVs).",
+        "Appzeto 24 is transforming this landscape by integrating logistics directly into our booking platform. We offer a full range of commercial options, from lightweight parcel delivery bikes to Light Commercial Vehicles (LCVs), mini trucks, and heavy-duty cargo trucks (HCVs/EHCVs).",
         "Booking a logistics vehicle is as easy as requesting a standard passenger cab. You get transparent, upfront quotes based on cargo weight and distance, eliminating the need to bargain with independent transporters. With real-time GPS tracking and dedicated delivery support, you can monitor your goods every step of the way, ensuring safe and timely delivery."
       ],
       author: "Logistics Admin",
@@ -104,10 +104,10 @@ const BlogPage = () => {
     {
       id: 6,
       title: "Safety First: Behind Our Comprehensive Driver Screening Process",
-      excerpt: "Your peace of mind is our utmost priority. Learn about the background checks, vehicle inspections, and safety features in every Rydon24 ride.",
+      excerpt: "Your peace of mind is our utmost priority. Learn about the background checks, vehicle inspections, and safety features in every Appzeto 24 ride.",
       content: [
         "When you step into a ride-hailing vehicle, you are placing your trust in the hands of the driver and the platform. We take this responsibility extremely seriously. Safety is not a marketing tagline; it is the fundamental core of how our platform is designed and operated.",
-        "Every driver partner wishing to join the Rydon24 network must pass a multi-stage vetting process. This includes complete background checks, validation of commercial driving licenses, verification of identity documents, and checking historical driving records. Furthermore, we mandate a rigorous vehicle health inspection to check brakes, tires, lights, and seatbelts.",
+        "Every driver partner wishing to join the Appzeto 24 network must pass a multi-stage vetting process. This includes complete background checks, validation of commercial driving licenses, verification of identity documents, and checking historical driving records. Furthermore, we mandate a rigorous vehicle health inspection to check brakes, tires, lights, and seatbelts.",
         "During the ride, both the driver and the passenger are protected by active digital safeguards. Our app includes real-time GPS trip tracking, an in-app emergency SOS button linked directly to local authorities, and a trip-sharing feature that lets your loved ones see your exact path. We continuously review feedback to ensure that only the highest-performing, most professional drivers remain on our network."
       ],
       author: "Safety Board",
@@ -132,10 +132,10 @@ const BlogPage = () => {
             <button onClick={() => navigate(-1)} className="p-2 text-gray-400 hover:text-white hover:bg-zinc-800/60 rounded-full transition-all">
               <ArrowLeft size={20} />
             </button>
-            <span className="font-bold text-xs uppercase tracking-widest text-[#FFB300]">Rydon24 Insight</span>
+            <span className="font-bold text-xs uppercase tracking-widest text-[#FFB300]">Appzeto 24 Insight</span>
           </div>
-          <button 
-            onClick={() => navigate('/')} 
+          <button
+            onClick={() => navigate('/')}
             className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-white transition-colors"
           >
             Home
@@ -166,11 +166,10 @@ const BlogPage = () => {
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 border ${
-                selectedCategory === category
+              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 border ${selectedCategory === category
                   ? "bg-[#FFB300] text-black border-[#FFB300] shadow-lg shadow-[#FFB300]/10 scale-102"
                   : "bg-zinc-900/60 text-gray-400 border-zinc-800/80 hover:text-white hover:border-zinc-700"
-              }`}
+                }`}
             >
               {category}
             </button>
@@ -187,15 +186,15 @@ const BlogPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredPosts.map((post) => (
-              <div 
-                key={post.id} 
+              <div
+                key={post.id}
                 className="bg-zinc-900/40 rounded-3xl overflow-hidden shadow-md border border-zinc-800/40 group hover:border-zinc-700/80 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer"
                 onClick={() => setActivePost(post)}
               >
                 <div className="relative h-52 overflow-hidden">
-                  <img 
-                    src={post.image} 
-                    alt={post.title} 
+                  <img
+                    src={post.image}
+                    alt={post.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md border border-zinc-700/50 text-[#FFB300] text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wide">
@@ -248,7 +247,7 @@ const BlogPage = () => {
         {activePost && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
             {/* Backdrop */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -257,7 +256,7 @@ const BlogPage = () => {
             />
 
             {/* Modal Body */}
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
@@ -265,7 +264,7 @@ const BlogPage = () => {
               className="bg-zinc-950 border border-zinc-800 rounded-[32px] overflow-hidden max-w-4xl w-full max-h-[85vh] flex flex-col md:flex-row shadow-2xl relative z-10"
             >
               {/* Close Button */}
-              <button 
+              <button
                 onClick={() => setActivePost(null)}
                 className="absolute top-4 right-4 z-20 p-2 bg-black/60 hover:bg-black/80 text-gray-300 hover:text-white rounded-full transition-all border border-zinc-700/40 backdrop-blur-sm"
               >
@@ -274,13 +273,13 @@ const BlogPage = () => {
 
               {/* Left Column: Image & Overlay */}
               <div className="w-full md:w-1/2 h-48 md:h-auto min-h-[220px] md:min-h-0 relative bg-zinc-900 flex-shrink-0">
-                <img 
-                  src={activePost.image} 
-                  alt={activePost.title} 
+                <img
+                  src={activePost.image}
+                  alt={activePost.title}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-black/80 via-black/20 to-transparent pointer-events-none" />
-                
+
                 {/* Floating Vehicle Category badge on image */}
                 <div className="absolute bottom-6 left-6 right-6 text-left">
                   <span className="bg-[#FFB300] text-black text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
@@ -324,7 +323,7 @@ const BlogPage = () => {
                     <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">Ready to go?</p>
                     <p className="text-white font-bold text-xs">Book a {activePost.vehicleType} ride today</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => {
                       setActivePost(null);
                       navigate('/');

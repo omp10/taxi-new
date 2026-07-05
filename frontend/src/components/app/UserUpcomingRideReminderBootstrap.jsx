@@ -44,7 +44,7 @@ const UserUpcomingRideReminderBootstrap = () => {
       lastSyncAt = now;
 
       try {
-        const [busResult, poolingResult, scheduledRideResult] = await Promise.all([
+        const [busSettled, poolingSettled, scheduledRideSettled] = await Promise.allSettled([
           userBusService.getMyBookings({ page: 1, limit: 20, tripState: 'upcoming' }),
           userService.getMyPoolingBookings(),
           api.get('/rides', {
@@ -60,9 +60,9 @@ const UserUpcomingRideReminderBootstrap = () => {
           return;
         }
 
-        const busPayload = getResponsePayload(busResult);
-        const poolingPayload = getResponsePayload(poolingResult);
-        const scheduledRidePayload = getResponsePayload(scheduledRideResult);
+        const busPayload = busSettled.status === 'fulfilled' ? getResponsePayload(busSettled.value) : {};
+        const poolingPayload = poolingSettled.status === 'fulfilled' ? getResponsePayload(poolingSettled.value) : {};
+        const scheduledRidePayload = scheduledRideSettled.status === 'fulfilled' ? getResponsePayload(scheduledRideSettled.value) : {};
 
         const rawPoolingBookings = Array.isArray(poolingPayload)
           ? poolingPayload
