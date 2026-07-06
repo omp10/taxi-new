@@ -151,14 +151,18 @@ const UserList = () => {
   }, []);
 
   const handleToggleStatus = async (userId, currentStatus) => {
+    const newStatus = currentStatus === 'Active' ? false : true;
+    const confirmed = window.confirm(`Are you sure you want to ${newStatus ? 'activate' : 'block'} this user?`);
+    if (!confirmed) return;
     try {
-      const newStatus = currentStatus === 'Active' ? false : true;
       const resData = await adminService.updateUser(userId, { active: newStatus });
       if (resData.success) {
         setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus ? 'Active' : 'Suspended' } : u));
+        toast?.success?.(`User ${newStatus ? 'activated' : 'blocked'} successfully`) || console.log('Status updated');
       }
     } catch (err) {
       console.error('Failed to toggle status', err);
+      alert('Failed to update status');
     }
   };
 
@@ -251,32 +255,32 @@ const UserList = () => {
   }
 
   return (
-    <div className="p-6 lg:p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 lg:p-6 bg-gray-50 min-h-screen">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
+      <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
         <span>Users</span>
         <ChevronRight size={12} />
-        <span className="text-gray-700">All Users</span>
+        <span className="text-gray-700 font-medium">All Users</span>
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl text-gray-900 font-bold">Passengers</h1>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-            <Download size={15} /> Export
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg text-gray-900 font-bold">Passengers</h1>
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors">
+            <Download size={14} /> Export
           </button>
           <button 
             onClick={handleAddUser}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-400 text-black text-sm font-semibold rounded-lg shadow-sm hover:bg-yellow-500 transition-colors"
           >
-            <UserPlus size={15} /> New User
+            <UserPlus size={14} /> New User
           </button>
         </div>
       </div>
 
       {/* Search */}
-      <div className="mb-6 flex flex-col gap-3">
+      <div className="mb-4 flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full max-w-sm">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -299,18 +303,18 @@ const UserList = () => {
                 setItemsPerPage(Number(e.target.value) || 10);
                 setPage(1);
               }}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-800 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors"
             >
               {[10, 25, 50].map((value) => (
                 <option key={value} value={value}>{value}</option>
               ))}
             </select>
-            <span>entries</span>
+            <span>Entries</span>
           </div>
         </div>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Referral source</label>
+            <label className="text-xs font-bold text-gray-500">Referral Source</label>
             <select
               value={referralSource}
               onChange={(e) => {
@@ -321,15 +325,15 @@ const UserList = () => {
                 }
                 setPage(1);
               }}
-              className="min-w-[220px] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+              className="min-w-[220px] border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-800 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors"
             >
-              <option value="all">All users</option>
-              <option value="employee">Employee referred only</option>
-              <option value="organic">No employee referral</option>
+              <option value="all">All Users</option>
+              <option value="employee">Employee Referred Only</option>
+              <option value="organic">No Employee Referral</option>
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">Employee</label>
+            <label className="text-xs font-bold text-gray-500">Employee</label>
             <select
               value={selectedEmployeeId}
               onChange={(e) => {
@@ -337,9 +341,9 @@ const UserList = () => {
                 setReferralSource('employee');
                 setPage(1);
               }}
-              className="min-w-[260px] border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+              className="min-w-[260px] border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-800 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors"
             >
-              <option value="">All employees</option>
+              <option value="">All Employees</option>
               {employeeOptions.map((employee) => (
                 <option key={employee.id} value={employee.id}>
                   {employee.name}{employee.code ? ` (${employee.code})` : ''}
@@ -462,12 +466,12 @@ const UserList = () => {
               >
                 Prev
               </button>
-              <span className="px-3 py-1.5 rounded bg-indigo-600 text-white text-xs font-medium">{safePage}</span>
+              <span className="px-3 py-1.5 rounded bg-black text-white text-xs font-bold">{safePage}</span>
               <button
                 type="button"
                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                 disabled={safePage >= totalPages}
-                className="px-3 py-1.5 border border-gray-200 rounded text-xs text-gray-500 disabled:opacity-60"
+                className="px-3 py-1.5 border border-gray-200 rounded text-xs text-gray-700 font-bold disabled:opacity-60 hover:bg-gray-50"
               >
                 Next
               </button>
@@ -484,25 +488,25 @@ const UserList = () => {
               style={{ top: menuPosition.top, left: menuPosition.left }}
               onClick={(e) => e.stopPropagation()}
             >
-              <button onClick={() => navigate(`/admin/users/${activeMenu}`)} className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <UserCheck size={13} className="text-emerald-500" /> View Profile
+              <button onClick={() => { setActiveMenu(null); navigate(`/admin/users/${activeMenu}`); }} className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-yellow-50 flex items-center gap-2">
+                <UserCheck size={13} className="text-gray-500" /> View Profile
               </button>
-              <button onClick={() => handleEditUser(users.find((item) => item.id === activeMenu))} className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <Edit2 size={13} className="text-blue-500" /> Edit
+              <button onClick={() => { setActiveMenu(null); handleEditUser(users.find((item) => item.id === activeMenu)); }} className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-yellow-50 flex items-center gap-2">
+                <Edit2 size={13} className="text-gray-500" /> Edit
               </button>
-              <button onClick={() => handleEditUser(users.find((item) => item.id === activeMenu))} className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2">
-                <Lock size={13} className="text-amber-500" /> Update Password
+              <button onClick={() => { setActiveMenu(null); handleEditUser(users.find((item) => item.id === activeMenu)); }} className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-yellow-50 flex items-center gap-2">
+                <Lock size={13} className="text-gray-500" /> Update Password
               </button>
               <button
-                onClick={() => handleBlockUser(users.find((item) => item.id === activeMenu))}
-                className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                onClick={() => { setActiveMenu(null); handleBlockUser(users.find((item) => item.id === activeMenu)); }}
+                className="w-full text-left px-3 py-2 text-xs font-bold text-gray-700 hover:bg-yellow-50 flex items-center gap-2"
               >
-                <Ban size={13} className={users.find((item) => item.id === activeMenu)?.status === 'Active' ? 'text-red-500' : 'text-emerald-500'} />
+                <Ban size={13} className="text-gray-500" />
                 {users.find((item) => item.id === activeMenu)?.status === 'Active' ? 'Block User' : 'Unblock User'}
               </button>
               <div className="h-px bg-gray-100 my-1" />
-              <button onClick={() => handleDeleteUser(activeMenu)} className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2">
-                <Trash2 size={13} /> Delete
+              <button onClick={() => { setActiveMenu(null); handleDeleteUser(activeMenu); }} className="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2">
+                <Trash2 size={13} className="text-red-500" /> Delete
               </button>
             </div>
           </div>,

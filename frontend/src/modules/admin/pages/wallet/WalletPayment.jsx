@@ -115,16 +115,16 @@ const WalletPayment = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
-      <div className="mb-6">
+    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+      <div className="mb-4">
         <div className="mb-2 flex items-center gap-1.5 text-xs text-gray-400">
           <span>Wallet</span>
           <ChevronRight size={12} />
-          <span className="text-gray-700">Wallet Payment</span>
+          <span className="text-gray-700 font-medium">Wallet Payment</span>
         </div>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl text-gray-900 font-bold">Wallet Payment</h1>
+            <h1 className="text-lg text-gray-900 font-bold">Wallet Payment</h1>
             <p className="mt-1 text-sm text-gray-500">
               Manage and adjust balances for Users, Drivers, and Fleet Owners
             </p>

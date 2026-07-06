@@ -24,7 +24,7 @@ const VEHICLE_TYPES = [
   { id: 'luxury', label: 'Luxury', capacity: 4, grid: [3, 2] },
 ];
 
-const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50';
+const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 outline-none transition-all focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/10';
 const labelClass = 'mb-2 block text-[10px] font-black uppercase tracking-widest text-slate-400';
 
 const PoolingVehicleForm = ({
@@ -186,6 +186,12 @@ const PoolingVehicleForm = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isViewMode) return;
+
+    if (!formData.name?.trim() || !formData.vehicleModel?.trim() || !formData.vehicleNumber?.trim()) {
+      toast.error('Vehicle Name, Model, and Number Plate are required');
+      return;
+    }
+
     setSaving(true);
     try {
       const payload = {
@@ -221,16 +227,16 @@ const PoolingVehicleForm = ({
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-900 border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50/50 p-4 lg:p-6">
       <div className="mx-auto max-w-5xl">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4">
           <button
             onClick={() => navigate(backPath)}
             className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-400 transition hover:text-slate-900"
@@ -251,7 +257,7 @@ const PoolingVehicleForm = ({
               isViewMode ? (
                 <button
                   onClick={() => navigate(`${backPath}/edit/${id}`)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-black text-white shadow-xl shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-black px-6 py-3 text-sm font-black text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95"
                 >
                   <Save size={18} />
                   Edit Vehicle
@@ -260,7 +266,7 @@ const PoolingVehicleForm = ({
                 <button
                   onClick={handleSubmit}
                   disabled={saving}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-black text-white shadow-xl shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-black px-6 py-3 text-sm font-black text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-50"
                 >
                   {saving ? <RefreshCcw size={18} className="animate-spin" /> : <Save size={18} />}
                   {isEditMode ? editActionLabel : createActionLabel}
@@ -270,11 +276,11 @@ const PoolingVehicleForm = ({
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-5">
+        <div className="grid gap-4 lg:gap-6 lg:grid-cols-5">
           {/* Form Side */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
-              <h3 className="mb-6 text-lg font-black text-slate-900">Basic Information</h3>
+          <div className="lg:col-span-2 space-y-4">
+            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+              <h3 className="mb-4 text-lg font-black text-slate-900">Basic Information</h3>
               <div className="space-y-4">
                 <div>
                   <label className={labelClass}>Vehicle Type</label>
@@ -285,13 +291,13 @@ const PoolingVehicleForm = ({
                         type="button"
                         onClick={() => handleTypeChange(type.id)}
                         disabled={isViewMode}
-                        className={`rounded-xl border p-3 text-center transition-all ${
+                        className={`rounded-xl border py-2.5 px-2 text-center transition-all ${
                           formData.vehicleType === type.id
-                            ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
+                            ? 'border-slate-900 bg-slate-900 text-yellow-400'
                             : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200'
                         } ${isViewMode ? 'cursor-default opacity-80' : ''}`}
                       >
-                        <p className="text-[10px] font-black uppercase tracking-tight">{type.label}</p>
+                        <p className="text-xs font-bold truncate">{type.label}</p>
                       </button>
                     ))}
                   </div>
@@ -425,14 +431,14 @@ const PoolingVehicleForm = ({
             </div>
 
             {helperPanel ? (
-              <div className="rounded-[32px] border border-teal-100 bg-teal-50 p-6 shadow-sm">
+              <div className="rounded-3xl border border-teal-100 bg-teal-50 p-5 shadow-sm">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-teal-600">Quick Note</p>
                 <p className="mt-3 text-sm font-semibold leading-6 text-teal-900">{helperPanel}</p>
               </div>
             ) : null}
 
-            <div className="rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
-              <div className="mb-6 flex items-center justify-between">
+            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-black text-slate-900">Vehicle Images</h3>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
@@ -479,7 +485,7 @@ const PoolingVehicleForm = ({
                     />
                     <label 
                       htmlFor="vehicle-image-upload"
-                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-xs font-black uppercase tracking-wide text-indigo-600 transition hover:bg-indigo-100"
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-xs font-black uppercase tracking-wide text-slate-700 transition hover:bg-slate-200"
                     >
                       <Plus size={16} />
                       Upload Image
@@ -514,16 +520,16 @@ const PoolingVehicleForm = ({
           </div>
 
           {/* Blueprint Side */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className="rounded-[32px] border border-slate-100 bg-white p-8 shadow-sm">
-              <div className="mb-6 flex items-center justify-between">
+          <div className="lg:col-span-3 space-y-4">
+            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-black text-slate-900">Seat Layout Blueprint</h3>
                   <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Interactive Top View Design</p>
                 </div>
                 <div className="flex gap-2">
                   <div className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-2 py-1">
-                    <div className="h-2 w-2 rounded-full bg-indigo-500" />
+                    <div className="h-2 w-2 rounded-full bg-yellow-400" />
                     <span className="text-[10px] font-black uppercase text-slate-500">Seat</span>
                   </div>
                   <div className="flex items-center gap-1.5 rounded-lg bg-slate-50 px-2 py-1">
@@ -534,14 +540,14 @@ const PoolingVehicleForm = ({
               </div>
 
               {/* Top View Container */}
-              <div className="flex flex-col items-center justify-center py-12 bg-slate-50/50 rounded-[40px] border border-dashed border-slate-200">
+              <div className="flex flex-col items-center justify-center py-8 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
                 {/* Windshield */}
-                <div className="mb-8 h-12 w-48 rounded-t-[60px] border-x-8 border-t-8 border-slate-300 bg-slate-200/50" />
+                <div className="mb-6 h-10 w-40 rounded-t-[40px] border-x-8 border-t-8 border-slate-300 bg-slate-200/50" />
                 
                 {/* Grid */}
-                <div className="relative p-6 rounded-[48px] bg-white shadow-2xl border-x-12 border-slate-300">
+                <div className="relative p-5 rounded-[40px] bg-white shadow-2xl border-x-[10px] border-slate-300">
                   <div 
-                    className="grid gap-6"
+                    className="grid gap-4"
                     style={{ 
                       gridTemplateColumns: `repeat(${formData.blueprint.cols}, minmax(0, 1fr))`,
                       gridTemplateRows: `repeat(${formData.blueprint.rows}, minmax(0, 1fr))`
@@ -555,7 +561,7 @@ const PoolingVehicleForm = ({
                         disabled={isViewMode}
                         className={`group relative h-16 w-16 flex items-center justify-center rounded-2xl transition-all ${
                           item.type === 'seat' 
-                            ? 'bg-indigo-50 text-indigo-600 border-2 border-indigo-200 hover:bg-indigo-600 hover:text-white' 
+                            ? 'bg-black text-yellow-400 border-2 border-black hover:bg-slate-800' 
                             : item.type === 'driver'
                             ? 'bg-slate-900 text-white border-2 border-slate-900 cursor-default'
                             : 'bg-slate-100 text-slate-300 border-2 border-dashed border-slate-200 hover:bg-slate-200'
@@ -575,10 +581,10 @@ const PoolingVehicleForm = ({
                 </div>
 
                 {/* Trunk */}
-                <div className="mt-8 h-8 w-48 rounded-b-3xl border-x-8 border-b-8 border-slate-300 bg-slate-200/50" />
+                <div className="mt-6 h-6 w-40 rounded-b-2xl border-x-8 border-b-8 border-slate-300 bg-slate-200/50" />
               </div>
 
-              <div className="mt-8 rounded-2xl bg-amber-50 p-4 border border-amber-100">
+              <div className="mt-6 rounded-2xl bg-amber-50 p-4 border border-amber-100">
                 <div className="flex gap-3">
                   <Info className="text-amber-500 shrink-0" size={20} />
                   <p className="text-xs font-medium text-amber-700 leading-relaxed">
@@ -594,11 +600,11 @@ const PoolingVehicleForm = ({
         </div>
 
         {!isViewMode && !isEditMode && placeCreateActionAtEnd ? (
-          <div className="mt-8 flex justify-end">
+          <div className="mt-4 flex justify-end">
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-black text-white shadow-xl shadow-indigo-200 transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-2xl bg-black px-6 py-3 text-sm font-black text-white shadow-sm transition-all hover:bg-slate-800 active:scale-95 disabled:opacity-50"
             >
               {saving ? <RefreshCcw size={18} className="animate-spin" /> : <Save size={18} />}
               {createActionLabel}

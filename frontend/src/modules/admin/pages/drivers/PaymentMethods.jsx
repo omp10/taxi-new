@@ -13,7 +13,7 @@ import {
 const BASE = () => `${globalThis.__LEGACY_BACKEND_ORIGIN__}/api/v1/admin/payment-methods`;
 
 const inputClass =
-  'w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors';
+  'w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors';
 const labelClass = 'block text-xs font-semibold text-gray-500 mb-1.5';
 
 const buildField = () => ({
@@ -184,7 +184,7 @@ const PaymentMethods = () => {
 
   if (view === 'form') {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 lg:p-8 font-sans text-gray-900">
+      <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-6 font-sans text-gray-900">
         <div className="mb-6">
           <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
             <span>Driver Management</span>
@@ -204,7 +204,7 @@ const PaymentMethods = () => {
               </button>
               <button
                 onClick={handleAddField}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-black font-bold bg-yellow-400 border border-yellow-400 rounded-lg hover:bg-yellow-500 shadow-sm transition-colors"
               >
                 <Plus size={16} /> Add New Field
               </button>
@@ -285,7 +285,7 @@ const PaymentMethods = () => {
                       onChange={() =>
                         handleFieldChange(field.id, 'isRequired', !field.isRequired)
                       }
-                      className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                      className="h-4 w-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400"
                     />
                     Is Required?
                   </label>
@@ -309,7 +309,7 @@ const PaymentMethods = () => {
             </button>
             <button
               onClick={handleSubmit}
-              className="px-6 py-2.5 text-sm text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-70"
+              className="px-6 py-2.5 text-sm font-bold text-black bg-yellow-400 rounded-lg shadow-sm hover:bg-yellow-500 transition-colors disabled:opacity-70"
               disabled={saving}
             >
               {saving ? 'Saving...' : 'Submit'}
@@ -321,7 +321,7 @@ const PaymentMethods = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-8 font-sans text-gray-900">
+    <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-6 font-sans text-gray-900">
       <div className="mb-6">
         <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
           <span>Driver Management</span>
@@ -332,7 +332,7 @@ const PaymentMethods = () => {
           <h1 className="text-xl text-gray-900 font-bold">Payment Methods</h1>
           <button
             onClick={startAdd}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-black bg-yellow-400 shadow-sm rounded-lg hover:bg-yellow-500 transition-colors"
           >
             <Plus size={16} /> Add
           </button>
@@ -364,7 +364,7 @@ const PaymentMethods = () => {
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg w-56 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg w-56 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors"
               />
             </div>
           </div>
@@ -384,7 +384,7 @@ const PaymentMethods = () => {
               {loading ? (
                 <tr>
                   <td colSpan="4" className="py-10 text-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-indigo-600 mx-auto" />
+                    <Loader2 className="w-6 h-6 animate-spin text-yellow-500 mx-auto" />
                   </td>
                 </tr>
               ) : filteredMethods.length === 0 ? (

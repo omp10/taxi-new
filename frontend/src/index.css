@@ -286,8 +286,6 @@ body {
   color: #64748b !important; /* slate-500 */
   font-size: 0.75rem !important;
   font-weight: 700 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
 }
 
 .redigo-admin-root td {

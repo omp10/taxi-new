@@ -15,6 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { adminService } from '../../services/adminService';
 import { useTaxiTransportTypes } from '../../../../shared/hooks/useTaxiTransportTypes';
 
 const serviceCategoryOptions = [
@@ -220,20 +221,19 @@ const EditDriver = () => {
 
   useEffect(() => {
     const fetchVehiclesForArea = async () => {
-      if (!formData.area || !formData.transportType) return;
+      if (!formData.transportType) return;
       try {
         const typeFilter = formData.transportType.toLowerCase() === 'delivery' ? 'delivery' : 'taxi';
-        const res = await fetch(`${globalThis.__LEGACY_BACKEND_ORIGIN__}/api/v1/types/${formData.area}?transport_type=${typeFilter}`);
-        const data = await res.json();
-        if (data.success) {
-          setVehicleTypes(Array.isArray(data.data) ? data.data : (data.data?.results || []));
+        const res = await adminService.getVehicleTypes(typeFilter);
+        if (res?.data) {
+          setVehicleTypes(Array.isArray(res.data) ? res.data : (res.data?.results || []));
         }
       } catch (e) {
         console.error("Vehicle types error:", e);
       }
     };
     fetchVehiclesForArea();
-  }, [formData.area, formData.transportType]);
+  }, [formData.transportType]);
 
   useEffect(() => {
     if (!vehicleTypes.length || !formData.vehicleType) return;
@@ -392,7 +392,7 @@ const EditDriver = () => {
   };
 
   // --- Shared input class ---
-  const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors";
+  const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors";
   const labelClass = "block text-xs font-semibold text-gray-500 mb-1.5";
   const visibleZones = zones.filter((zone) => {
     if (!formData.area) return true;
@@ -412,7 +412,7 @@ const EditDriver = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
+    <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-6 font-sans">
       {/* Breadcrumb & Header */}
       <div className="mb-6">
         <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
@@ -441,7 +441,7 @@ const EditDriver = () => {
           {/* Identity Section */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-              <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+              <div className="w-9 h-9 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600">
                 <User size={18} />
               </div>
               <div>
@@ -471,24 +471,6 @@ const EditDriver = () => {
                 </select>
               </div>
 
-               <div className="space-y-3">
-                 <label className="text-gray-400 flex items-center gap-2">
-                   <Globe size={14} className="text-indigo-400" /> Country *
-                 </label>
-                 <select 
-                   name="country"
-                   required
-                   value={formData.country}
-                   onChange={handleChange}
-                   style={{ color: '#000000' }}
-                   className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-[14px] font-bold text-gray-950 focus:bg-white focus:border-indigo-200 focus:ring-4 focus:ring-indigo-50/50 outline-none transition-all shadow-inner"
-                 >
-                   <option value="" className="bg-white text-gray-950 font-bold">Select Country</option>
-                   {countries.map(c => (
-                     <option key={c._id} value={c._id} className="bg-white text-gray-950 font-bold">{c.name}</option>
-                   ))}
-                 </select>
-               </div>
               <div>
                 <label className={labelClass}>
                   <Globe size={12} className="inline mr-1 text-gray-400" />
@@ -579,7 +561,7 @@ const EditDriver = () => {
           {/* Vehicle Section */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-              <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <div className="w-9 h-9 rounded-lg bg-yellow-50 flex items-center justify-center text-yellow-600">
                 <Car size={18} />
               </div>
               <div>
@@ -617,7 +599,7 @@ const EditDriver = () => {
                         onClick={() => toggleServiceCategory(option.value)}
                         className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
                           selected
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-yellow-400 text-black'
                             : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
                         }`}
                       >
@@ -731,7 +713,7 @@ const EditDriver = () => {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="text-sm text-gray-900 mb-4 font-bold">Profile Photo</h3>
             <div className="relative group cursor-pointer">
-              <div className="w-full aspect-square rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden transition-colors group-hover:border-indigo-300 group-hover:bg-indigo-50/30">
+              <div className="w-full aspect-square rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden transition-colors group-hover:border-yellow-400 group-hover:bg-yellow-50/30">
                 {imagePreview ? (
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
@@ -758,7 +740,7 @@ const EditDriver = () => {
             <button 
               type="submit"
               disabled={isLoading || success}
-              className="w-full py-3 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full py-3 bg-yellow-400 text-black rounded-lg text-sm font-bold shadow-sm hover:bg-yellow-500 active:bg-yellow-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {isLoading ? (
                 <Loader2 size={16} className="animate-spin" />

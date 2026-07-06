@@ -78,12 +78,12 @@ const PendingPoolingDrivers = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-6 lg:p-8">
-      <div className="mb-8">
+    <div className="min-h-screen bg-slate-50/50 p-4 lg:p-6">
+      <div className="mb-4">
         <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
           <span>Car Pooling</span>
           <ChevronRight size={12} />
-          <span className="text-indigo-600">Pending Pooling Drivers</span>
+          <span className="text-yellow-600">Pending Pooling Drivers</span>
         </div>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -93,114 +93,126 @@ const PendingPoolingDrivers = () => {
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Pending Requests</p>
-          <p className="mt-3 text-3xl font-black text-slate-900">{stats.pending}</p>
+      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Pending Requests</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">{stats.pending}</p>
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">With Vehicle Images</p>
-          <p className="mt-3 text-3xl font-black text-indigo-600">{stats.withImages}</p>
+        <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">With Vehicle Images</p>
+          <p className="mt-1 text-2xl font-black text-slate-900">{stats.withImages}</p>
         </div>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="relative max-w-xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
           <input
             type="text"
             placeholder="Search by driver, phone, model, or plate number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm font-medium outline-none transition-all focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50"
+            className="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm font-medium outline-none transition-all focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/10"
           />
         </div>
       </div>
 
       <div className="overflow-hidden rounded-[28px] border border-slate-100 bg-white shadow-sm">
         {loading ? (
-          <div className="py-20 text-center text-sm font-bold text-slate-400">Loading pending pooling drivers...</div>
+          <div className="p-6 space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={`loading-${i}`} className="h-20 rounded-2xl bg-slate-50 animate-pulse border border-slate-100" />
+            ))}
+          </div>
         ) : items.length === 0 ? (
-          <div className="py-20 text-center text-sm font-bold text-slate-400">No pending pooling drivers found.</div>
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50">
+              <Car size={32} className="text-slate-300" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900">No pending drivers</h3>
+            <p className="mt-1 max-w-sm text-sm font-medium text-slate-500">
+              New driver signup requests will appear here for review.
+            </p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-100">
               <thead className="bg-white">
-                <tr className="text-left text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">
-                  <th className="px-5 py-4">Driver</th>
-                  <th className="px-5 py-4">Vehicle</th>
-                  <th className="px-5 py-4">Type</th>
-                  <th className="px-5 py-4">Status</th>
-                  <th className="px-5 py-4">Actions</th>
+                <tr className="text-left text-xs font-bold text-slate-500">
+                  <th className="px-4 py-3">Driver</th>
+                  <th className="px-4 py-3">Vehicle</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {items.map((vehicle) => (
                   <tr key={vehicle._id} className="transition hover:bg-slate-50/70">
-                    <td className="px-5 py-4">
-                      <div className="space-y-1">
+                    <td className="px-4 py-3">
+                      <div className="space-y-0.5">
                         <p className="text-sm font-black text-slate-900">{vehicle.driverName || 'Pooling Driver'}</p>
-                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                          <Phone size={12} />
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+                          <Phone size={10} />
                           {vehicle.driverPhone || 'No phone'}
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-slate-100">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
                           {vehicle.images?.[0] ? (
                             <img src={vehicle.images[0]} alt={vehicle.name} className="h-full w-full object-cover" />
                           ) : (
-                            <Car size={20} className="text-slate-300" />
+                            <Car size={16} className="text-slate-300" />
                           )}
                         </div>
                         <div>
                           <p className="text-sm font-black text-slate-900">{vehicle.name || 'Unnamed vehicle'}</p>
-                          <p className="text-xs font-semibold text-slate-500">{vehicle.vehicleModel || '-'}</p>
-                          <p className="text-xs font-bold text-slate-400">{vehicle.vehicleNumber || '-'}</p>
+                          <p className="text-[11px] font-semibold text-slate-500">{vehicle.vehicleModel || '-'}</p>
+                          <p className="text-[11px] font-bold text-slate-400">{vehicle.vehicleNumber || '-'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-indigo-600">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-700">
                         {vehicle.vehicleType || 'sedan'}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex rounded-full bg-amber-50 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-amber-700">
+                    <td className="px-4 py-3">
+                      <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-700">
                         {vehicle.status || 'pending'}
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex flex-wrap gap-2">
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-wrap items-center justify-end gap-1.5">
                         <button
                           onClick={() => navigate(`/admin/pooling/vehicles/view/${vehicle._id}`)}
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-100"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-600 transition hover:bg-slate-100"
                         >
-                          <Eye size={14} />
+                          <Eye size={12} />
                           View
                         </button>
                         <button
                           onClick={() => navigate(`/admin/pooling/vehicles/edit/${vehicle._id}`)}
-                          className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 px-3 py-2 text-xs font-bold text-indigo-600 transition hover:bg-indigo-50"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-bold text-slate-700 transition hover:bg-yellow-50 hover:text-yellow-700 hover:border-yellow-200"
                         >
-                          <PencilLine size={14} />
+                          <PencilLine size={12} />
                           Edit
                         </button>
                         <button
                           onClick={() => handleApprove(vehicle._id)}
-                          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-black px-2 py-1 text-[11px] font-bold text-white transition hover:bg-slate-800"
                         >
-                          <CheckCircle2 size={14} />
+                          <CheckCircle2 size={12} />
                           Approve
                         </button>
                         <button
                           onClick={() => handleDelete(vehicle._id)}
-                          className="rounded-xl border border-rose-100 p-2.5 text-rose-500 transition hover:bg-rose-50"
+                          className="rounded-lg border border-rose-100 p-1.5 text-rose-500 transition hover:bg-rose-50"
                           aria-label={`Delete ${vehicle.name}`}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>

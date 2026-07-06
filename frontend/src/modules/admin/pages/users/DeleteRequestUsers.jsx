@@ -119,20 +119,20 @@ const DeleteRequestUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
-      <div className="mb-6">
-        <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
+    <div className="min-h-screen bg-gray-50 p-4 lg:p-6">
+      <div className="mb-4">
+        <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
           <span>Users</span>
           <ChevronRight size={12} />
-          <span className="text-gray-700">Delete Requests</span>
+          <span className="text-gray-700 font-medium">Delete Requests</span>
         </div>
 
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl text-gray-900 font-bold">Delete Requests</h1>
+          <h1 className="text-lg text-gray-900 font-bold">Delete Requests</h1>
           <button
             type="button"
             onClick={() => navigate('/admin/users')}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
           >
             <ArrowLeft size={16} /> Back
           </button>

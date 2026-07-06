@@ -74,7 +74,7 @@ const WithdrawalRequestDrivers = () => {
   const showingTo = totalEntries === 0 ? 0 : Math.min(startIndex + rows.length, totalEntries);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-8 font-sans text-gray-900">
+    <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-6 font-sans text-gray-900">
       <div className="mb-6">
         <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-2">
           <span>Driver Wallet</span>
@@ -93,7 +93,7 @@ const WithdrawalRequestDrivers = () => {
             <select
               value={itemsPerPage}
               onChange={(event) => setItemsPerPage(Number(event.target.value) || 10)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors"
             >
               {[10, 25, 50, 100].map((count) => (
                 <option key={count} value={count}>
@@ -111,7 +111,7 @@ const WithdrawalRequestDrivers = () => {
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search..."
-              className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors"
+              className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors"
             />
           </div>
         </div>
@@ -156,7 +156,7 @@ const WithdrawalRequestDrivers = () => {
                       {item.driver?.name || 'Unknown'}
                     </td>
                     <td className="px-6 py-4 text-sm font-medium">
-                      <span className="font-mono font-semibold text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded shadow-sm border border-indigo-100">
+                      <span className="font-mono font-bold text-[10px] uppercase tracking-wider text-black bg-yellow-400 px-2 py-0.5 rounded shadow-sm">
                         {item.driver?.driver_code || item.driver?.referralCode || (item.driver?.mobile ? `DRV${String(item.driver.mobile).slice(-4)}${String(item.driver_id || '').slice(-6).toUpperCase()}`.replace(/\W/g, '') : 'N/A')}
                       </span>
                     </td>
@@ -173,7 +173,7 @@ const WithdrawalRequestDrivers = () => {
                           {item.driver?.bankDetails?.ifsc ? <span>{item.driver.bankDetails.ifsc}</span> : null}
                           {item.driver?.bankDetails?.branchName ? <span>{item.driver.bankDetails.branchName}</span> : null}
                           {item.driver?.bankDetails?.qrCodeImage ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 font-medium text-green-700">
                               <QrCode size={12} />
                               QR
                             </span>
@@ -185,7 +185,7 @@ const WithdrawalRequestDrivers = () => {
                       Rs {Number(item.pending_amount || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-amber-50 text-amber-700">
+                      <span className="inline-flex rounded-full px-3 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800">
                         Requested
                       </span>
                     </td>
@@ -199,7 +199,7 @@ const WithdrawalRequestDrivers = () => {
                             }`,
                           )
                         }
-                        className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
                       >
                         <Eye size={16} />
                         View details
@@ -225,7 +225,7 @@ const WithdrawalRequestDrivers = () => {
             >
               Prev
             </button>
-            <span className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">{safePage}</span>
+            <span className="px-3 py-2 bg-yellow-400 text-black shadow-sm font-bold rounded-lg text-sm">{safePage}</span>
             <button
               type="button"
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}

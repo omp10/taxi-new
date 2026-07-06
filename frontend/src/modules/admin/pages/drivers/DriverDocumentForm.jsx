@@ -4,7 +4,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 
 const inputClass =
-  'w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-colors';
+  'w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm text-gray-800 bg-white focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 outline-none transition-colors';
 const labelClass = 'block text-xs font-semibold text-gray-500 mb-1.5';
 const selectPlaceholderClass = 'text-gray-400';
 const customVehicleFieldSentinel = '__custom__';
@@ -359,7 +359,7 @@ const DriverDocumentForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
+    <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-6 font-sans">
       <div className="mb-6">
         <div className="mb-2 flex items-center gap-1.5 text-xs text-gray-400">
           <span>Driver Onboarding Config</span>
@@ -405,9 +405,9 @@ const DriverDocumentForm = () => {
                 <button
                   type="button"
                   onClick={() => handleVehicleFieldChange('field_key', customVehicleFieldSentinel)}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
                     isCustomVehicleField
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-yellow-400 text-black shadow-sm'
                       : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -416,9 +416,9 @@ const DriverDocumentForm = () => {
                 <button
                   type="button"
                   onClick={() => handleVehicleFieldChange('field_key', vehicleFieldOptions[0]?.value || '')}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
                     !isCustomVehicleField
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-yellow-400 text-black shadow-sm'
                       : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -765,7 +765,7 @@ const DriverDocumentForm = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-60"
+            className="px-6 py-2.5 bg-yellow-400 text-black rounded-lg text-sm font-bold shadow-sm hover:bg-yellow-500 transition-colors disabled:opacity-60"
           >
             {submitting ? 'Saving...' : 'Save'}
           </button>
