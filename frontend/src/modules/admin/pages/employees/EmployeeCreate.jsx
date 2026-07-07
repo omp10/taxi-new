@@ -5,8 +5,8 @@ import toast from 'react-hot-toast';
 import { adminService } from '../../services/adminService';
 
 const inputClass =
-  'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100';
-const labelClass = 'mb-2 block text-xs font-black uppercase tracking-[0.18em] text-slate-500';
+  'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/20';
+const labelClass = 'mb-2 block text-sm font-bold text-slate-700';
 
 const EmployeeCreate = () => {
   const navigate = useNavigate();
@@ -109,7 +109,7 @@ const EmployeeCreate = () => {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-7 w-7 animate-spin text-indigo-600" />
+          <Loader2 className="h-7 w-7 animate-spin text-yellow-500" />
           <p className="text-sm font-medium text-slate-500">Loading employee...</p>
         </div>
       </div>
@@ -117,11 +117,11 @@ const EmployeeCreate = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,_#EEF2FF_0%,_#F8FAFC_30%)] p-6 lg:p-8">
+    <div className="min-h-screen bg-[#FFFDF5] p-4 lg:p-6">
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+            <div className="mb-2 flex items-center gap-1.5 text-xs font-bold text-slate-500">
               <span>Users</span>
               <ChevronRight size={12} />
               <span>Employee Management</span>
@@ -148,11 +148,11 @@ const EmployeeCreate = () => {
 
         <form onSubmit={handleSubmit} className="rounded-[30px] border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/50">
           <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-2xl bg-indigo-50 p-3 text-indigo-700">
+            <div className="rounded-2xl bg-yellow-50 p-3 text-yellow-700">
               <UserRound size={18} />
             </div>
             <div>
-              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-slate-900">Employee Master</h2>
+              <h2 className="text-sm font-bold text-slate-900">Employee Master</h2>
               <p className="text-xs font-semibold text-slate-500">Identity and attribution configuration</p>
             </div>
           </div>
@@ -200,7 +200,7 @@ const EmployeeCreate = () => {
                 }`}
               >
                 <span>{form.active ? 'Active' : 'Inactive'}</span>
-                <span className="text-xs font-black uppercase tracking-[0.16em]">
+                <span className="text-xs font-bold">
                   {form.active ? 'Accepting codes' : 'Blocked'}
                 </span>
               </button>
@@ -222,14 +222,14 @@ const EmployeeCreate = () => {
             <button
               type="button"
               onClick={() => navigate('/admin/employees')}
-              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 transition-all hover:bg-slate-50"
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition-all hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-indigo-200 transition-all hover:bg-indigo-700 disabled:opacity-70"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-6 py-3 text-sm font-bold text-black shadow-lg shadow-yellow-200 transition-all hover:bg-yellow-500 disabled:opacity-70"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : null}
               {isEdit ? 'Update Employee' : 'Create Employee'}

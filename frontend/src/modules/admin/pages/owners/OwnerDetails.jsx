@@ -14,7 +14,7 @@ import {
   Menu,
   Phone,
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 
 import { adminService } from '../../services/adminService';
 import AdminPageHeader from '../../components/ui/AdminPageHeader';
@@ -73,7 +73,8 @@ const StatCard = ({ label, value, tone = 'teal' }) => {
 const OwnerDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Owner Profile');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'Owner Profile');
   const [owner, setOwner] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -236,13 +237,6 @@ const OwnerDetails = () => {
             <p className="text-sm font-semibold text-slate-400">{emptyStateByTab[activeTab]}</p>
           </div>
         )}
-
-        <button
-          type="button"
-          className="absolute -right-1 top-28 flex h-14 w-14 items-center justify-center rounded-full bg-teal-500 text-white shadow-xl transition-colors hover:bg-teal-600"
-        >
-          <Menu size={24} />
-        </button>
       </div>
         </div>
       </div>

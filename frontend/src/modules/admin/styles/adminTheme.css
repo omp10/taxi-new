@@ -497,15 +497,15 @@
 }
 
 /* Fallback generic text replacements to strictly enforce sizes */
-.redigo-admin-root p,
+.redigo-admin-root p:not(.notification-dropdown p),
 .redigo-admin-root .admin-desc {
   font-weight: 400 !important;
   font-size: 15px !important;
 }
 
-.redigo-admin-root header a,
-.redigo-admin-root header button,
-.redigo-admin-root header span {
+.redigo-admin-root header a:not(.notification-dropdown a),
+.redigo-admin-root header button:not(.notification-dropdown button),
+.redigo-admin-root header span:not(.notification-dropdown span) {
   font-weight: 600 !important;
   font-size: 18px !important;
 }

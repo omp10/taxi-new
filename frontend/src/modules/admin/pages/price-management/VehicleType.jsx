@@ -40,7 +40,7 @@ import trucksImg from '@/assets/images/delivery/trucks.png';
 import bikeImg from '@/assets/images/delivery/bike.png';
 import moversImg from '@/assets/images/delivery/movers.png';
 
-const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-orange-300 focus:ring-2 focus:ring-orange-100';
+const inputClass = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition-all focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100';
 const labelClass = 'mb-2 block text-[12px] font-bold text-slate-700';
 
 const iconMap = {
@@ -320,7 +320,7 @@ const StatusToggle = ({ active, onToggle }) => (
       e.stopPropagation();
       onToggle();
     }}
-    className={`relative h-6 w-12 rounded-full transition-all ${active ? 'bg-emerald-500' : 'bg-slate-300'}`}
+    className={`relative h-6 w-12 rounded-full transition-all ${active ? 'bg-yellow-400' : 'bg-slate-300'}`}
   >
     <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-all ${active ? 'left-7' : 'left-1'}`} />
   </button>
@@ -353,7 +353,7 @@ const VehicleMultiSelect = ({
           {selectedItems.length ? selectedItems.map((item) => (
             <span
               key={String(item.id || item._id)}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-700 px-3 py-1.5 text-[12px] font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-full bg-slate-700 px-3 py-1.5 text-[12px] font-semibold text-black"
             >
               {item.name}
               <button
@@ -652,7 +652,7 @@ const VehicleType = ({ mode: propMode }) => {
 
   if (!isEditor) {
     return (
-      <div className="min-h-screen bg-[#f6f7fb] p-6 lg:p-8">
+      <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
         <div className="mb-6">
           <div className="mb-2 flex items-center gap-1.5 text-xs text-slate-400">
             <span>Pricing</span>
@@ -666,7 +666,7 @@ const VehicleType = ({ mode: propMode }) => {
             </div>
             <button
               onClick={() => navigate('/admin/pricing/vehicle-type/create')}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#ff6b4a] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-200 transition hover:bg-[#f55a37]"
+              className="inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-orange-200 transition hover:bg-yellow-500"
             >
               <Plus size={18} />
               Add Vehicle
@@ -681,7 +681,7 @@ const VehicleType = ({ mode: propMode }) => {
                 <Car size={20} />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Total Types</p>
+                <p className="text-sm font-medium text-slate-500">Total Types</p>
                 <p className="text-2xl font-bold text-slate-900">{vehicles.length}</p>
               </div>
             </div>
@@ -692,7 +692,7 @@ const VehicleType = ({ mode: propMode }) => {
                 <Activity size={20} />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Active</p>
+                <p className="text-sm font-medium text-slate-500">Active</p>
                 <p className="text-2xl font-bold text-slate-900">{vehicles.filter((item) => item.active !== false).length}</p>
               </div>
             </div>
@@ -703,7 +703,7 @@ const VehicleType = ({ mode: propMode }) => {
                 <Package size={20} />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Delivery Types</p>
+                <p className="text-sm font-medium text-slate-500">Delivery Types</p>
                 <p className="text-2xl font-bold text-slate-900">{vehicles.filter((item) => ['delivery', 'both'].includes(String(item.transport_type || '').toLowerCase())).length}</p>
               </div>
             </div>
@@ -721,11 +721,11 @@ const VehicleType = ({ mode: propMode }) => {
             <table className="w-full text-left">
               <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Vehicle</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Transport</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Dispatch</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Active</th>
-                  <th className="px-6 py-4 text-right text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500">Action</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-slate-600">Vehicle</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-slate-600">Transport</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-slate-600">Dispatch</th>
+                  <th className="px-6 py-4 text-sm font-semibold text-slate-600">Active</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-slate-600">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -792,7 +792,7 @@ const VehicleType = ({ mode: propMode }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] p-6 lg:p-8">
+    <div className="min-h-screen bg-gray-50 p-6 lg:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <div className="mb-2 flex items-center gap-1.5 text-xs text-slate-400">
@@ -1146,7 +1146,7 @@ const VehicleType = ({ mode: propMode }) => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-black text-slate-900">{formData.name || 'Taxi'}</p>
-                    <span className="rounded bg-orange-500 px-1.5 py-0.5 text-[7px] font-black text-white">FASTEST</span>
+                    <span className="rounded bg-orange-500 px-1.5 py-0.5 text-[7px] font-black text-black">FASTEST</span>
                   </div>
                   <p className="truncate text-[11px] font-bold text-slate-500">{formData.short_description || formData.description || 'Closest driver 940 m away'}</p>
                   {showsDeliveryCategorySelector ? (
@@ -1321,7 +1321,7 @@ const VehicleType = ({ mode: propMode }) => {
             <button
               onClick={handleSave}
               disabled={isSaving || loading}
-              className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-[#2e3c78] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#24305f] disabled:opacity-60"
+              className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-semibold text-black transition hover:bg-yellow-500 disabled:opacity-60"
             >
               <Save size={16} />
               {isSaving ? 'Saving...' : id ? 'Update' : 'Create'}

@@ -366,14 +366,14 @@ const DriverDocumentForm = () => {
           <ChevronRight size={12} />
           <span className="text-gray-700">{isEditMode ? 'Edit' : 'Create'}</span>
         </div>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-xl text-gray-900 font-bold">
             {isEditMode ? 'Edit' : 'Create'} {templateType === 'vehicle_field' ? 'Vehicle Field' : 'Document'}
           </h1>
           <button
             type="button"
             onClick={() => navigate('/admin/drivers/documents')}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <ArrowLeft size={16} />
             Back
@@ -572,25 +572,28 @@ const DriverDocumentForm = () => {
 
             <div className="md:col-span-2 rounded-xl border border-gray-200 bg-gray-50/70 p-4">
               <div className="flex flex-wrap gap-6">
-                <label className="flex items-center gap-3 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input
                     type="checkbox"
+                    className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400 cursor-pointer"
                     checked={vehicleFieldForm.is_editable}
                     onChange={(event) => handleVehicleFieldChange('is_editable', event.target.checked)}
                   />
                   Is Editable?
                 </label>
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-800">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
                   <input
                     type="checkbox"
+                    className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400 cursor-pointer"
                     checked={vehicleFieldForm.is_required}
                     onChange={(event) => handleVehicleFieldChange('is_required', event.target.checked)}
                   />
                   Is Required?
                 </label>
-                <label className="flex items-center gap-3 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input
                     type="checkbox"
+                    className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400 cursor-pointer"
                     checked={vehicleFieldForm.active}
                     onChange={(event) => handleVehicleFieldChange('active', event.target.checked)}
                   />
@@ -722,25 +725,28 @@ const DriverDocumentForm = () => {
 
             <div className="md:col-span-2 rounded-xl border border-gray-200 bg-gray-50/70 p-4">
               <div className="flex flex-wrap gap-6">
-                <label className="flex items-center gap-3 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input
                     type="checkbox"
+                    className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400 cursor-pointer"
                     checked={documentForm.is_editable}
                     onChange={(event) => handleDocumentChange('is_editable', event.target.checked)}
                   />
                   Is Editable?
                 </label>
-                <label className="flex items-center gap-3 text-sm font-semibold text-gray-800">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 cursor-pointer">
                   <input
                     type="checkbox"
+                    className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400 cursor-pointer"
                     checked={documentForm.is_required}
                     onChange={(event) => handleDocumentChange('is_required', event.target.checked)}
                   />
                   Is Required?
                 </label>
-                <label className="flex items-center gap-3 text-sm text-gray-700">
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input
                     type="checkbox"
+                    className="w-4 h-4 text-yellow-500 border-gray-300 rounded focus:ring-yellow-400 cursor-pointer"
                     checked={documentForm.active}
                     onChange={(event) => handleDocumentChange('active', event.target.checked)}
                   />

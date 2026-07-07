@@ -239,12 +239,6 @@ const DeletedOwners = () => {
                   </table>
                 </div>
               </div>
-
-              <button
-                type="button"
-                className="absolute -right-1 top-[66%] flex h-14 w-14 -translate-y-1/2 items-center justify-center rounded-full bg-teal-500 text-white shadow-xl transition-colors hover:bg-teal-600">
-                <Menu size={24} />
-              </button>
             </div>
 
             <div className="mt-8 flex items-center justify-between">

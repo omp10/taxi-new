@@ -368,7 +368,7 @@ const DriverList = ({ mode = 'approved' }) => {
                       </button>
                     </td>
                     <td className="px-3 py-1.5 text-center">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-800 uppercase border border-green-200">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800 border border-green-200 capitalize">
                         {driver.status}
                       </span>
                     </td>

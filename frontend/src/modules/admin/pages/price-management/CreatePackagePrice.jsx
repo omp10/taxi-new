@@ -394,7 +394,7 @@ const CreatePackagePrice = ({ mode = 'create' }) => {
                 <div key={row.id} className="rounded-xl border border-gray-200 bg-[#FCFCFD] p-3 lg:p-4">
                   <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-500">Vehicle Pricing {index + 1}</p>
+                      <p className="text-sm font-semibold text-amber-500">Vehicle Pricing {index + 1}</p>
                       <p className="mt-0.5 text-xs text-slate-500">{vehicleLabelMap[row.vehicle_type] || 'Choose vehicle and fill its package pricing'}</p>
                     </div>
                     <button
@@ -519,7 +519,7 @@ const CreatePackagePrice = ({ mode = 'create' }) => {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0F766E] px-8 py-3 text-sm font-bold text-white transition hover:bg-[#115E59] disabled:cursor-not-allowed disabled:opacity-70"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-8 py-3 text-sm font-bold text-black transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : null}
               {isEdit ? 'Update Package Pricing' : 'Save Package Pricing'}
@@ -537,7 +537,7 @@ const CreatePackagePrice = ({ mode = 'create' }) => {
               className="absolute top-10 right-4 h-auto max-h-[85%] w-72 bg-white border border-gray-100 shadow-2xl z-50 p-4 rounded-xl overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">How It Works</h3>
+                <h3 className="text-sm font-semibold text-[#1E293B]">How It Works</h3>
                 <button onClick={() => setShowHowItWorks(false)} className="p-1.5 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"><X size={14} /></button>
               </div>
               <div className="space-y-3 text-xs text-gray-600">
@@ -550,7 +550,7 @@ const CreatePackagePrice = ({ mode = 'create' }) => {
                   <p className="leading-snug text-gray-500 pl-4.5">Each vehicle added to this package gets its own base price, distance limits, and commission rules.</p>
                 </div>
                 <div className="bg-emerald-50 rounded p-2 border border-emerald-100">
-                  <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-1">PRO TIP</p>
+                  <p className="text-xs font-bold text-emerald-800 mb-1">PRO TIP</p>
                   <p className="text-[11px] leading-tight text-emerald-600">You can add multiple vehicle pricing blocks within a single package form to save time.</p>
                 </div>
               </div>

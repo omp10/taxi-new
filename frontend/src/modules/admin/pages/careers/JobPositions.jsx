@@ -256,7 +256,7 @@ const JobPositions = () => {
         {/* List Column */}
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-4">
-            <h3 className="text-sm font-bold text-gray-900 uppercase">Positions List</h3>
+            <h3 className="text-base font-bold text-gray-900">Positions List</h3>
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -269,12 +269,12 @@ const JobPositions = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Title</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Department</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Location</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Type</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Status</th>
-                  <th className="px-6 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-gray-500">Action</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500">Title</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500">Department</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500">Location</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500">Type</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-bold text-gray-500">Status</th>
+                  <th className="px-6 py-3.5 text-right text-xs font-bold text-gray-500">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -305,7 +305,7 @@ const JobPositions = () => {
                         <button
                           type="button"
                           onClick={() => toggleActive(row)}
-                          className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
                             row.active
                               ? 'bg-emerald-50 text-emerald-600'
                               : 'bg-gray-100 text-gray-500'

@@ -209,12 +209,12 @@ const HeatMap = () => {
       {/* 1. Header Block */}
       <div className="mb-2 flex flex-col md:flex-row md:items-center justify-between gap-2">
         <div>
-          <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-0.5">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 mb-1">
             <span>Geofencing</span>
-            <ChevronRight size={10} />
+            <ChevronRight size={14} className="text-slate-300" />
             <span className="text-slate-600">Heat Map</span>
           </div>
-          <h1 className="text-lg text-slate-900 font-black tracking-tight">Heat Map Overlay</h1>
+          <h1 className="text-base text-slate-900 font-bold">Heat Map Overlay</h1>
         </div>
         <button 
            onClick={() => navigate('/admin/dashboard')}

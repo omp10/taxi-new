@@ -135,7 +135,7 @@ const TicketTitle = () => {
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
         <form onSubmit={submitForm} className="rounded-xl border border-gray-200 bg-white p-6">
           <div className="mb-6 flex items-center gap-3 border-b border-gray-100 pb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600">
               <Plus size={18} />
             </div>
             <div>
@@ -154,7 +154,7 @@ const TicketTitle = () => {
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                 placeholder="e.g. Ride related issue"
-                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none transition-colors focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
               />
             </div>
 
@@ -163,7 +163,7 @@ const TicketTitle = () => {
               <select
                 value={form.userType}
                 onChange={(event) => setForm((prev) => ({ ...prev, userType: event.target.value }))}
-                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-gray-800 outline-none transition-colors focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
               >
                 {USER_TYPES.map((type) => (
                   <option key={type} value={type}>
@@ -178,7 +178,7 @@ const TicketTitle = () => {
                 type="checkbox"
                 checked={form.active}
                 onChange={(event) => setForm((prev) => ({ ...prev, active: event.target.checked }))}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400"
               />
               Active
             </label>
@@ -187,7 +187,7 @@ const TicketTitle = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 rounded-lg bg-yellow-400 px-4 py-2.5 text-sm font-bold text-black transition-colors hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm"
               >
                 {saving ? 'Saving...' : editingId ? 'Update' : 'Create'}
               </button>

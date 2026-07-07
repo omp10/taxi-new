@@ -731,7 +731,7 @@ const ServiceLocation = ({ mode }) => {
               <div className="pt-10 flex justify-end">
                  <button 
                     type="submit" disabled={saving}
-                    className="px-10 py-3 bg-[#38467F] text-white rounded-lg text-sm font-bold hover:bg-[#2D3866] transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                    className="px-10 py-3 bg-yellow-400 text-black rounded-lg text-sm font-bold hover:bg-yellow-500 transition-all shadow-sm active:scale-95 flex items-center gap-2"
                  >
                     {saving ? <Loader2 size={16} className="animate-spin" /> : null}
                     {isEdit ? 'Update' : 'Save'}

@@ -260,8 +260,8 @@ const GodsEye = () => {
              </button>
            )}
            <div>
-             <h1 className="text-base font-black text-black">God's Eye Dashboard</h1>
-             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+             <h1 className="text-base font-bold text-gray-900">God's Eye Dashboard</h1>
+             <p className="text-xs font-semibold text-gray-500">
                 Live Fleet Monitoring {lastSync && ` • Synced ${lastSync.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`}
              </p>
            </div>
@@ -314,7 +314,7 @@ const GodsEye = () => {
             {/* Filter Group */}
             <div className="space-y-3">
                <div>
-                  <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Driver Status</label>
+                  <label className="block text-xs font-semibold capitalize text-gray-500 mb-1">Driver Status</label>
                   <select 
                     value={filters.status} 
                     onChange={e => setFilters(prev => ({...prev, status: e.target.value}))}
@@ -329,7 +329,7 @@ const GodsEye = () => {
                </div>
                
                <div>
-                  <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Vehicle Type</label>
+                  <label className="block text-xs font-semibold capitalize text-gray-500 mb-1">Vehicle Type</label>
                   <select 
                     value={filters.vehicleType} 
                     onChange={e => setFilters(prev => ({...prev, vehicleType: e.target.value}))}
@@ -343,7 +343,7 @@ const GodsEye = () => {
                </div>
 
                <div>
-                  <label className="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-1">Refresh Mode</label>
+                  <label className="block text-xs font-semibold capitalize text-gray-500 mb-1">Refresh Mode</label>
                   <select 
                     value={filters.refreshMode} 
                     onChange={e => setFilters(prev => ({...prev, refreshMode: e.target.value}))}

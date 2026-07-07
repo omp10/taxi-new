@@ -89,8 +89,8 @@ const DriverIncentive = () => {
       
       {/* Header Block */}
       <div className="flex items-center justify-between border-b border-gray-100 pb-2 mb-4">
-        <h1 className="text-xl font-bold text-[#1E293B]" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Incentive</h1>
-        <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+        <h1 className="text-lg font-black text-gray-900 tracking-tight">Incentive</h1>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 mt-1">
            <span className="cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => navigate('/admin/pricing/set-price')}>Incentive</span>
            <ChevronRight size={10} strokeWidth={3} />
            <span className="text-gray-600">Control</span>
@@ -100,12 +100,12 @@ const DriverIncentive = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
          <div className="bg-white border-2 border-dashed border-indigo-100 rounded-md p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <span className="text-[10px] font-black text-gray-900 bg-indigo-50/50 px-3 py-1 rounded-full uppercase mb-1.5">Zone</span>
-            <span className="text-xs font-bold text-gray-700">{details.zone_name}</span>
+            <span className="text-xs font-semibold text-gray-900 bg-gray-100 px-3 py-1 rounded-full mb-1.5">Zone</span>
+            <span className="text-sm font-bold text-gray-700 capitalize">{(details.zone_name || '').toLowerCase()}</span>
          </div>
          <div className="bg-white border-2 border-dashed border-indigo-100 rounded-md p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <span className="text-[10px] font-black text-gray-900 bg-indigo-50/50 px-3 py-1 rounded-full uppercase mb-1.5">Vehicle Type</span>
-            <span className="text-xs font-bold text-gray-700">{details.vehicle_type}</span>
+            <span className="text-xs font-semibold text-gray-900 bg-gray-100 px-3 py-1 rounded-full mb-1.5">Vehicle Type</span>
+            <span className="text-sm font-bold text-gray-700 capitalize">{(details.vehicle_type || '').toLowerCase()}</span>
          </div>
       </div>
 
@@ -114,23 +114,23 @@ const DriverIncentive = () => {
          <div className="flex border-b border-gray-100 h-10">
             <button 
               onClick={() => setActiveTab('daily')}
-              className={`flex-1 flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'daily' ? 'text-[#00BFA5]' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`flex-1 flex items-center justify-center text-sm font-semibold transition-all relative ${activeTab === 'daily' ? 'text-yellow-500' : 'text-gray-400 hover:text-gray-600'}`}
             >
                Daily
-               {activeTab === 'daily' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00BFA5]" />}
+               {activeTab === 'daily' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-yellow-400" />}
             </button>
             <button 
               onClick={() => setActiveTab('weekly')}
-              className={`flex-1 flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'weekly' ? 'text-[#00BFA5]' : 'text-gray-400 hover:text-gray-600'}`}
+              className={`flex-1 flex items-center justify-center text-sm font-semibold transition-all relative ${activeTab === 'weekly' ? 'text-yellow-500' : 'text-gray-400 hover:text-gray-600'}`}
             >
                Weekly
-               {activeTab === 'weekly' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#00BFA5]" />}
+               {activeTab === 'weekly' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-yellow-400" />}
             </button>
          </div>
 
          <div className="p-4 space-y-4 flex-grow">
             <div className="flex justify-end">
-               <button onClick={addRow} className="bg-[#405189] text-white px-3 py-1.5 rounded-md text-[10px] font-bold shadow-sm hover:bg-[#344475] transition-all flex items-center gap-1.5">
+               <button onClick={addRow} className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1.5 rounded-md text-xs font-bold shadow-sm  transition-all flex items-center gap-1.5">
                   <Plus size={12} /> Add
                </button>
             </div>
@@ -139,7 +139,7 @@ const DriverIncentive = () => {
                {incentives.map((row, idx) => (
                   <div key={idx} className="flex flex-col md:flex-row items-end gap-3 animate-in slide-in-from-left-4 duration-300 bg-gray-50/50 p-2 border border-gray-100 rounded-md">
                      <div className="flex-1 space-y-1 w-full">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Minimum Ride Should Complete</label>
+                        <label className="text-xs font-semibold text-gray-600">Minimum Ride Should Complete</label>
                         <input 
                           type="number"
                           min="0"
@@ -149,7 +149,7 @@ const DriverIncentive = () => {
                         />
                      </div>
                      <div className="flex-1 space-y-1 w-full">
-                        <label className="text-[10px] font-bold text-gray-400 uppercase">Incentive Amount</label>
+                        <label className="text-xs font-semibold text-gray-600">Incentive Amount</label>
                         <input 
                           type="number"
                           min="0"
@@ -170,7 +170,7 @@ const DriverIncentive = () => {
          </div>
 
          <div className="p-3 border-t border-gray-50 flex justify-end bg-gray-50/20">
-            <button onClick={handleSubmit} className="bg-[#405189] text-white px-6 py-1.5 rounded-md text-xs font-bold shadow hover:bg-[#344475] transition-all active:scale-95">
+            <button onClick={handleSubmit} className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-1.5 rounded-md text-xs font-bold shadow  transition-all active:scale-95">
                Submit
             </button>
          </div>
@@ -178,7 +178,7 @@ const DriverIncentive = () => {
 
       {/* Floating Design element */}
       <div className="fixed bottom-10 right-10">
-         <button className="w-14 h-14 bg-[#00BFA5] text-white rounded-full flex items-center justify-center shadow-2xl hover:rotate-[360deg] transition-all duration-700">
+         <button className="w-14 h-14 bg-yellow-400 text-white rounded-full flex items-center justify-center shadow-2xl hover:rotate-[360deg] transition-all duration-700">
             <div className="flex flex-col gap-1 items-center">
                <div className="w-6 h-[2.5px] bg-white rounded-full"></div>
                <div className="w-6 h-[2px] bg-white/70 rounded-full"></div>

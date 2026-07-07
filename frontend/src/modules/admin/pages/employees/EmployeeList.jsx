@@ -65,7 +65,7 @@ const EmployeeList = () => {
     return (
       <div className="flex min-h-[420px] items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-7 w-7 animate-spin text-indigo-600" />
+          <Loader2 className="h-7 w-7 animate-spin text-yellow-500" />
           <p className="text-sm font-medium text-slate-500">Loading employees...</p>
         </div>
       </div>
@@ -73,9 +73,9 @@ const EmployeeList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 lg:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
           <span>Users</span>
           <ChevronRight size={12} />
           <span className="text-slate-700">Employee Management</span>
@@ -92,7 +92,7 @@ const EmployeeList = () => {
           <button
             type="button"
             onClick={() => navigate('/admin/employees/create')}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-black text-white shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5 hover:bg-indigo-700"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-bold text-black shadow-lg shadow-yellow-200 transition-all hover:-translate-y-0.5 hover:bg-yellow-500"
           >
             <Plus size={16} />
             Add Employee
@@ -111,7 +111,7 @@ const EmployeeList = () => {
                   setPage(1);
                 }}
                 placeholder="Search by name, code, or phone..."
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-900 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-semibold text-slate-900 outline-none transition-all focus:border-yellow-400 focus:bg-white focus:ring-4 focus:ring-yellow-100"
               />
             </div>
 
@@ -134,7 +134,7 @@ const EmployeeList = () => {
           </div>
 
           {refreshing ? (
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-indigo-700">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-yellow-50 px-3 py-1 text-xs font-bold text-yellow-700">
               <Loader2 size={12} className="animate-spin" />
               Updating employees
             </div>
@@ -144,14 +144,14 @@ const EmployeeList = () => {
             <table className="w-full min-w-[860px]">
               <thead>
                 <tr className="border-b border-slate-100 text-left">
-                  <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Employee</th>
-                  <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Phone</th>
-                  <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Code</th>
-                  <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Users</th>
-                  <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Drivers</th>
-                  <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Total</th>
-                  <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-slate-400">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-black uppercase tracking-[0.16em] text-slate-400">Action</th>
+                  <th className="px-4 py-3 text-sm font-bold text-slate-500">Employee</th>
+                  <th className="px-4 py-3 text-sm font-bold text-slate-500">Phone</th>
+                  <th className="px-4 py-3 text-sm font-bold text-slate-500">Code</th>
+                  <th className="px-4 py-3 text-sm font-bold text-slate-500">Users</th>
+                  <th className="px-4 py-3 text-sm font-bold text-slate-500">Drivers</th>
+                  <th className="px-4 py-3 text-sm font-bold text-slate-500">Total</th>
+                  <th className="px-4 py-3 text-sm font-bold text-slate-500">Status</th>
+                  <th className="px-4 py-3 text-right text-sm font-bold text-slate-500">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -179,7 +179,7 @@ const EmployeeList = () => {
                         onClick={() => navigate(`/admin/employees/${employee._id}`)}
                         className="text-left"
                       >
-                        <p className="text-sm font-bold text-slate-900 hover:text-indigo-600">{employee.name}</p>
+                        <p className="text-sm font-bold text-slate-900 hover:text-yellow-600 capitalize">{employee.name.toLowerCase()}</p>
                         <p className="mt-1 text-xs font-semibold text-slate-400">
                           Joined {employee.createdAt ? new Date(employee.createdAt).toLocaleDateString() : 'recently'}
                         </p>
@@ -187,16 +187,16 @@ const EmployeeList = () => {
                     </td>
                     <td className="px-4 py-4 text-sm font-semibold text-slate-700">{employee.phone}</td>
                     <td className="px-4 py-4">
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-slate-700">
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
                         {employee.employeeCode}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-sm font-bold text-slate-900">{employee.totalUsersAcquired}</td>
                     <td className="px-4 py-4 text-sm font-bold text-slate-900">{employee.totalDriversAcquired}</td>
-                    <td className="px-4 py-4 text-sm font-black text-indigo-700">{employee.totalAcquired}</td>
+                    <td className="px-4 py-4 text-sm font-black text-yellow-600">{employee.totalAcquired}</td>
                     <td className="px-4 py-4">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${
                           employee.active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
                         }`}
                       >
@@ -239,7 +239,7 @@ const EmployeeList = () => {
               >
                 Prev
               </button>
-              <span className="rounded-lg bg-indigo-600 px-3 py-1.5 font-bold text-white">{safePage}</span>
+              <span className="rounded-lg bg-yellow-400 px-3 py-1.5 font-bold text-black">{safePage}</span>
               <button
                 type="button"
                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}

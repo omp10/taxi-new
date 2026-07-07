@@ -8,6 +8,7 @@ import { getSupportConversations, markSupportMessagesRead } from '../../shared/c
 import { adminService } from '../services/adminService';
 import { hasAdminPermission } from '../constants/adminAccess';
 import toast from 'react-hot-toast';
+import AdminSplashScreen from './AdminSplashScreen';
 import {
   BarChart3,
   Bell,
@@ -638,6 +639,7 @@ const AdminLayout = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const [notificationTab, setNotificationTab] = useState('ride_requests');
   const [searchTerm, setSearchTerm] = useState('');
   const [rideRequestFeed, setRideRequestFeed] = useState({
@@ -681,6 +683,14 @@ const AdminLayout = () => {
   const mode = isOwnerRoute ? OWNER_MODE : ADMIN_MODE;
 
   const appName = settings.general?.app_name || 'App';
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const syncAdminProfile = () => setAdminProfile(readAdminProfile());
     window.addEventListener('storage', syncAdminProfile);
@@ -1490,7 +1500,12 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F9FA] font-sans text-gray-900">
+    <>
+      <AnimatePresence>
+        {showSplash && <AdminSplashScreen />}
+      </AnimatePresence>
+
+      <div className="flex h-screen overflow-hidden bg-[#F8F9FA] font-sans text-gray-900">
       <aside
         className={`relative z-50 flex h-screen flex-col overflow-hidden transition-all bg-[#fffbeb] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${isCollapsed ? 'w-20' : 'w-72'
           } ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
@@ -1612,7 +1627,7 @@ const AdminLayout = () => {
               </button>
 
               <div
-                className={`absolute right-0 top-full z-40 mt-2 w-[280px] max-h-[320px] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl transition-all duration-300 ${isNotificationsOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
+                className={`notification-dropdown absolute right-0 top-full z-40 mt-2 w-[280px] max-h-[320px] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl transition-all duration-300 ${isNotificationsOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
                   }`}
               >
                 <div className="border-b border-slate-50 px-3 py-2 bg-slate-50/50 shrink-0">
@@ -2023,6 +2038,7 @@ const AdminLayout = () => {
         </main>
       </div>
     </div>
+    </>
   );
 };
 

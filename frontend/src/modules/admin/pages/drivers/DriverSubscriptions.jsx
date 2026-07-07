@@ -13,17 +13,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
-import ToggleSwitch from '../../../core/components/ToggleSwitch';
 import toast from 'react-hot-toast';
-
-    <button 
-      onClick={onToggle}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${enabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
-    >
-      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-    </button>
-  </div>
-);
 
 const DriverSubscriptions = () => {
   const navigate = useNavigate();

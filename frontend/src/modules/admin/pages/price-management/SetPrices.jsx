@@ -197,7 +197,7 @@ const togglePaymentType = (currentValue, targetValue) => {
 const StatusToggle = ({ active, onToggle }) => (
   <button
     onClick={(e) => { e.stopPropagation(); onToggle(); }}
-    className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${active ? 'bg-[#00BFA5]' : 'bg-gray-200'}`}
+    className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${active ? 'bg-yellow-400' : 'bg-gray-200'}`}
   >
     <div className={`absolute w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${active ? 'translate-x-[22px]' : 'translate-x-1'}`} />
   </button>
@@ -577,11 +577,11 @@ const SetPrices = ({ mode }) => {
                       <button
                         type="button"
                         onClick={() => setShowFilters((current) => !current)}
-                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded text-xs font-bold shadow-sm transition-colors ${showFilters ? 'bg-slate-900 text-white' : 'bg-[#F37048] text-white'}`}
+                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded text-xs font-bold shadow-sm transition-colors ${showFilters ? 'bg-yellow-400 text-black' : 'bg-gray-100 hover:bg-gray-200 text-slate-700'}`}
                       >
                         <Filter size={14} /> Filters
                       </button>
-                      <button onClick={() => navigate('/admin/pricing/set-price/create')} className="flex items-center gap-1.5 px-4 py-1.5 bg-[#44516F] text-white rounded text-xs font-bold shadow-sm">
+                      <button onClick={() => navigate('/admin/pricing/set-price/create')} className="flex items-center gap-1.5 px-4 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-black rounded text-xs font-bold shadow-sm">
                         <Plus size={14} /> Add Set Price
                       </button>
                     </div>
@@ -681,7 +681,7 @@ const SetPrices = ({ mode }) => {
                 <div className="overflow-x-auto">
                  <table className="w-full text-left">
                    <thead className="bg-[#FBFCFF]">
-                     <tr className="border-b border-gray-100 text-[10px] text-slate-800 uppercase font-black tracking-[0.05em]">
+                     <tr className="border-b border-gray-100 text-sm font-semibold text-slate-700">
                         <th className="px-4 py-2">Zone</th>
                         <th className="px-4 py-2">Transport Type</th>
                         <th className="px-4 py-2">Vehicle Type</th>
@@ -697,11 +697,11 @@ const SetPrices = ({ mode }) => {
                     ) : (
                       prizes.map((prize) => (
                         <tr key={prize.id || prize._id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-4 py-2 text-xs font-semibold text-slate-700">{prize.zone_name || 'India'}</td>
+                          <td className="px-4 py-2 text-xs font-semibold text-slate-700 capitalize">{(prize.zone_name || 'India').toLowerCase()}</td>
                           <td className="px-4 py-2 text-xs text-slate-600 font-medium">
                             {prize.transport_type === 'both' ? 'All' : (prize.transport_type === 'taxi' ? 'Ride Hailing' : (prize.transport_type || 'All'))}
                           </td>
-                          <td className="px-4 py-2 text-xs text-slate-800 font-bold">{prize.vehicle_type_name || 'Premium Car'}</td>
+                          <td className="px-4 py-2 text-xs text-slate-800 font-bold capitalize">{(prize.vehicle_type_name || 'Premium Car').toLowerCase()}</td>
                           <td className="px-4 py-2">
                              <StatusToggle active={Number(prize.active) === 1} onToggle={async () => {
                                try {
@@ -1020,7 +1020,7 @@ const SetPrices = ({ mode }) => {
 
                   {/* Footer Action */}
                   <div className="pt-2 flex justify-end border-t border-gray-50 mt-1">
-                     <button type="submit" disabled={saving} className="px-6 py-1.5 bg-[#00BFA5] text-white rounded text-xs font-bold shadow-lg hover:opacity-90 transition-all active:scale-95 flex items-center gap-2">
+                     <button type="submit" disabled={saving} className="px-6 py-1.5 bg-yellow-400 text-black rounded text-xs font-bold shadow-lg hover:opacity-90 transition-all active:scale-95 flex items-center gap-2">
                         {saving && <Loader2 size={16} className="animate-spin" />}
                         {saving ? 'Saving Changes...' : 'Save'}
                      </button>

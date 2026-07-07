@@ -61,8 +61,8 @@ const defaultSettings = {
 const SectionCard = ({ title, children }) => (
   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-8 flex flex-col">
     {title && (
-      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-        <h3 className="text-xs font-black text-gray-700 uppercase tracking-wider">{title}</h3>
+      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <h3 className="text-xs font-black text-gray-700 font-bold">{title}</h3>
       </div>
     )}
     <div className="p-6 flex-grow">
@@ -422,7 +422,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-[#405189] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Loading Settings...</span>
+          <span className="text-xs font-bold text-gray-500 font-bold">Loading Settings...</span>
         </div>
       </div>
     );
@@ -432,8 +432,8 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
     <div className="min-h-screen bg-gray-50 p-6 lg:p-10 font-sans">
       {/* Header Block */}
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-[15px] font-black text-gray-800 uppercase tracking-widest">User App Management</h1>
-        <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+        <h1 className="text-[15px] font-black text-gray-800 font-bold">User App Management</h1>
+        <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 font-bold">
           <span>Settings</span>
           <ChevronRight size={12} strokeWidth={3} />
           <span className="text-gray-600">User App UI</span>
@@ -453,7 +453,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                   setIsAdding(false);
                 }}
                 className={`w-full text-left px-4 py-3 rounded-xl text-[13px] font-bold transition-all flex items-center justify-between ${activeTab === tab.id
-                    ? 'bg-[#405189] text-white shadow-md'
+                    ? 'bg-yellow-50 border-l-4 border-yellow-400 text-yellow-900 shadow-md'
                     : 'text-gray-600 hover:bg-gray-50'
                   }`}
               >
@@ -465,7 +465,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
 
           <button
             onClick={handleSave}
-            className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-2xl bg-[#0AB39C] hover:bg-[#099A86] text-white text-xs font-black uppercase tracking-wider shadow-lg transition-all"
+            className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-2xl bg-yellow-400 hover:bg-yellow-500 text-black text-sm font-bold shadow-sm transition-all"
           >
             <Save size={16} /> Save Changes
           </button>
@@ -478,12 +478,12 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div>
-                    <h4 className="text-sm font-bold text-gray-800">Everything In Minutes Grid</h4>
+                    <div className="text-[15px] font-semibold text-gray-800">Everything In Minutes Grid</div>
                     <p className="text-[11px] font-medium text-gray-400 mt-1">Masonry grid displaying main travel & parcel categories.</p>
                   </div>
                   <button
                     onClick={() => updateHomeSectionToggle('enableEverything')}
-                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enableEverything ? 'bg-[#405189]' : 'bg-gray-300'}`}
+                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enableEverything ? 'bg-yellow-400' : 'bg-gray-300'}`}
                   >
                     <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${settings.homeSections.enableEverything ? 'right-1' : 'left-1'}`} />
                   </button>
@@ -491,12 +491,12 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div>
-                    <h4 className="text-sm font-bold text-gray-800">Explore Horizontal Scroll</h4>
+                    <div className="text-[15px] font-semibold text-gray-800">Explore Horizontal Scroll</div>
                     <p className="text-[11px] font-medium text-gray-400 mt-1">Explore all categories and active modules horizontally.</p>
                   </div>
                   <button
                     onClick={() => updateHomeSectionToggle('enableExplore')}
-                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enableExplore ? 'bg-[#405189]' : 'bg-gray-350'}`}
+                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enableExplore ? 'bg-yellow-400' : 'bg-gray-300'}`}
                   >
                     <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${settings.homeSections.enableExplore ? 'right-1' : 'left-1'}`} />
                   </button>
@@ -504,12 +504,12 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div>
-                    <h4 className="text-sm font-bold text-gray-800">Promo Banner</h4>
+                    <div className="text-[15px] font-semibold text-gray-800">Promo Banner</div>
                     <p className="text-[11px] font-medium text-gray-400 mt-1">Super Saver promotional card with action handler.</p>
                   </div>
                   <button
                     onClick={() => updateHomeSectionToggle('enablePromo')}
-                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enablePromo ? 'bg-[#405189]' : 'bg-gray-350'}`}
+                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enablePromo ? 'bg-yellow-400' : 'bg-gray-300'}`}
                   >
                     <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${settings.homeSections.enablePromo ? 'right-1' : 'left-1'}`} />
                   </button>
@@ -517,12 +517,12 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div>
-                    <h4 className="text-sm font-bold text-gray-800">Go Places Section</h4>
+                    <div className="text-[15px] font-semibold text-gray-800">Go Places Section</div>
                     <p className="text-[11px] font-medium text-gray-400 mt-1">Airport, railway station, and outstation fast booking cards.</p>
                   </div>
                   <button
                     onClick={() => updateHomeSectionToggle('enableGoPlaces')}
-                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enableGoPlaces ? 'bg-[#405189]' : 'bg-gray-350'}`}
+                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enableGoPlaces ? 'bg-yellow-400' : 'bg-gray-300'}`}
                   >
                     <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${settings.homeSections.enableGoPlaces ? 'right-1' : 'left-1'}`} />
                   </button>
@@ -530,12 +530,12 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                   <div>
-                    <h4 className="text-sm font-bold text-gray-800">Footer Brand Illustration</h4>
+                    <div className="text-[15px] font-semibold text-gray-800">Footer Brand Illustration</div>
                     <p className="text-[11px] font-medium text-gray-400 mt-1">Branded city silhouette footer with custom hashtag text.</p>
                   </div>
                   <button
                     onClick={() => updateHomeSectionToggle('enableFooter')}
-                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enableFooter ? 'bg-[#405189]' : 'bg-gray-350'}`}
+                    className={`w-12 h-6 rounded-full transition-all duration-300 relative ${settings.homeSections.enableFooter ? 'bg-yellow-400' : 'bg-gray-300'}`}
                   >
                     <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${settings.homeSections.enableFooter ? 'right-1' : 'left-1'}`} />
                   </button>
@@ -607,7 +607,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                       <button
                         type="button"
                         onClick={() => handleFooterChange('uploadedImage', '')}
-                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-650 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shrink-0"
+                        className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-650 rounded-lg text-xs font-bold font-bold transition-all shrink-0"
                       >
                         Remove
                       </button>
@@ -626,7 +626,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                         }
                       }}
                       className={`relative rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-200 ${dragActive
-                          ? 'border-[#405189] bg-indigo-50/20'
+                          ? 'border-[#405189] bg-yellow-50/20'
                           : 'border-gray-300 hover:border-gray-400 bg-white'
                         }`}
                     >
@@ -645,13 +645,13 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                       <label htmlFor="footer-file-upload" className="cursor-pointer block w-full h-full">
                         {uploading ? (
                           <div className="flex flex-col items-center justify-center gap-2">
-                            <div className="w-6 h-6 border-2 border-indigo-650 border-t-transparent rounded-full animate-spin" />
-                            <span className="text-xs font-bold text-indigo-650 uppercase tracking-wider">Uploading to Cloudinary...</span>
+                            <div className="w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs font-bold text-yellow-600 font-bold">Uploading to Cloudinary...</span>
                           </div>
                         ) : (
                           <div className="flex flex-col items-center justify-center gap-1.5">
                             <Sparkles className="w-7 h-7 text-gray-400 mb-1" />
-                            <span className="text-xs font-bold text-gray-700">Drag & drop your footer image here, or <span className="text-indigo-600 hover:underline">browse</span></span>
+                            <span className="text-xs font-bold text-gray-700">Drag & drop your footer image here, or <span className="text-yellow-600 hover:underline">browse</span></span>
                             <span className="text-[10px] text-gray-400 font-medium">Supports PNG, JPG, JPEG, GIF</span>
                           </div>
                         )}
@@ -685,7 +685,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                   <div className="mb-4 flex justify-end">
                     <button
                       onClick={() => setIsAdding(true)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#405189] hover:bg-[#354373] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black rounded-xl text-xs font-bold font-bold transition-all"
                     >
                       <Plus size={14} /> Add New Card
                     </button>
@@ -694,8 +694,8 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                   <div className="overflow-x-auto">
                     <table className="w-full text-[13px] text-left">
                       <thead>
-                        <tr className="border-b border-gray-200 text-gray-400 font-bold uppercase tracking-wider">
-                          <th className="pb-3 pl-2">Order</th>
+                        <tr className="border-b border-gray-200 text-gray-400 font-bold font-bold">
+                          <th className="pb-3 pl-2 w-24">Order</th>
                           <th className="pb-3">Title</th>
                           <th className="pb-3">Subtitle</th>
                           <th className="pb-3">Route / Action</th>
@@ -719,11 +719,11 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                             </td>
                             <td className="py-3.5 text-gray-900 font-bold">{item.title}</td>
                             <td className="py-3.5 text-gray-500">{item.subtitle || '-'}</td>
-                            <td className="py-3.5 font-mono text-xs text-indigo-600">{item.route || '-'}</td>
+                            <td className="py-3.5 font-mono text-xs text-yellow-600">{item.route || '-'}</td>
                             <td className="py-3.5">
                               <button
                                 onClick={() => toggleItemStatus(item.id)}
-                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${item.status === 'active'
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold font-bold ${item.status === 'active'
                                     ? 'bg-emerald-50 text-emerald-700'
                                     : 'bg-red-50 text-red-700'
                                   }`}
@@ -735,7 +735,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                               <div className="inline-flex items-center gap-2">
                                 <button
                                   onClick={() => setEditItem(item)}
-                                  className="p-1 text-gray-400 hover:text-indigo-600 rounded"
+                                  className="p-1 text-gray-400 hover:text-yellow-600 rounded"
                                 >
                                   <Edit2 size={14} />
                                 </button>
@@ -818,7 +818,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                           <button
                             type="button"
                             onClick={handleRemoveImage}
-                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-650 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shrink-0"
+                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-650 rounded-lg text-xs font-bold font-bold transition-all shrink-0"
                           >
                             Remove
                           </button>
@@ -830,7 +830,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                           onDragLeave={handleDrag}
                           onDrop={handleDrop}
                           className={`relative rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-200 ${dragActive
-                              ? 'border-[#405189] bg-indigo-50/20'
+                              ? 'border-[#405189] bg-yellow-50/20'
                               : 'border-gray-300 hover:border-gray-400 bg-white'
                             }`}
                         >
@@ -845,13 +845,13 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                           <label htmlFor="file-upload" className="cursor-pointer block w-full h-full">
                             {uploading ? (
                               <div className="flex flex-col items-center justify-center gap-2">
-                                <div className="w-6 h-6 border-2 border-indigo-650 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-xs font-bold text-indigo-650 uppercase tracking-wider">Uploading to Cloudinary...</span>
+                                <div className="w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin" />
+                                <span className="text-xs font-bold text-yellow-600 font-bold">Uploading to Cloudinary...</span>
                               </div>
                             ) : (
                               <div className="flex flex-col items-center justify-center gap-1.5">
                                 <Sparkles className="w-7 h-7 text-gray-400 mb-1" />
-                                <span className="text-xs font-bold text-gray-700">Drag & drop your image here, or <span className="text-indigo-600 hover:underline">browse</span></span>
+                                <span className="text-xs font-bold text-gray-700">Drag & drop your image here, or <span className="text-yellow-600 hover:underline">browse</span></span>
                                 <span className="text-[10px] text-gray-400 font-medium">Supports PNG, JPG, JPEG, GIF</span>
                               </div>
                             )}
@@ -920,7 +920,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                     <div className="flex items-center gap-3 pt-2">
                       <button
                         type="submit"
-                        className="px-5 py-2.5 bg-[#405189] hover:bg-[#354373] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                        className="px-5 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-black rounded-xl text-xs font-bold font-bold transition-all"
                       >
                         {isAdding ? 'Add Item' : 'Update Item'}
                       </button>
@@ -930,7 +930,7 @@ const AdminUserAppManagement = ({ tab: initialTab }) => {
                           setIsAdding(false);
                           setEditItem(null);
                         }}
-                        className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                        className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-bold font-bold transition-all"
                       >
                         Cancel
                       </button>

@@ -851,7 +851,7 @@ const RentalVehicleTypes = ({ mode: propMode }) => {
               <button
                 type="button"
                 onClick={() => navigate(`/admin/pricing/rental-vehicles/edit/${id}`)}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#2e3c78] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#24305f]"
+                className="inline-flex items-center gap-2 rounded-xl bg-yellow-400 px-4 py-3 text-sm font-semibold text-black transition hover:bg-yellow-500"
               >
                 <Edit2 size={16} />
                 Edit

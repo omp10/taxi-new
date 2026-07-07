@@ -164,41 +164,44 @@ const RechargeApiSettings = () => {
     ? `${settings.api_token.slice(0, 12)}...${settings.api_token.slice(-8)}`
     : 'No API token generated yet';
 
-  const cardClass = 'bg-white rounded-3xl border border-slate-200 shadow-sm';
+  const cardClass = 'bg-white rounded-[20px] border border-gray-200 shadow-sm';
   const inputClass =
-    'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100';
-  const labelClass = 'mb-2 block text-[11px] font-black uppercase tracking-[0.18em] text-slate-500';
+    'w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400';
+  const labelClass = 'mb-1.5 block text-[12px] font-bold text-gray-700';
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <Loader2 size={32} className="animate-spin text-cyan-600" />
+      <div className="flex min-h-screen items-center justify-center bg-[#FFFDF4]">
+        <Loader2 size={32} className="animate-spin text-yellow-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#edf9ff_0%,#f8fbff_55%,#ffffff_100%)] p-6 lg:p-8">
-      <div className="mb-8 flex items-center gap-1.5 text-xs text-slate-400">
+    <div className="min-h-screen bg-[#FFFDF4] p-6 lg:p-8">
+      <div className="mb-6 flex items-center gap-1.5 text-xs text-gray-500 font-medium">
         <span>Settings</span>
         <ChevronRight size={12} />
         <span>Third-party</span>
         <ChevronRight size={12} />
-        <span className="text-slate-700">Recharge API Setup</span>
+        <span className="text-gray-900">Recharge API Setup</span>
       </div>
 
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950">Recharge API Setup</h1>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            Configure token access, callback delivery, IP allowlisting, and test payloads from one place.
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-yellow-400 rounded-full"></div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Recharge API Setup</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Configure token access, callback delivery, IP allowlisting, and test payloads.
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => window.history.back()}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
           >
             <ArrowLeft size={16} />
             Back
@@ -207,7 +210,7 @@ const RechargeApiSettings = () => {
             type="button"
             onClick={handleRunTest}
             disabled={testing}
-            className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60"
           >
             {testing ? <Loader2 size={16} className="animate-spin" /> : <PlayCircle size={16} />}
             Run Test
@@ -216,7 +219,7 @@ const RechargeApiSettings = () => {
             type="button"
             onClick={handleSave}
             disabled={submitting}
-            className="inline-flex items-center gap-2 rounded-2xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg bg-yellow-400 px-5 py-2 text-sm font-semibold text-black transition hover:bg-yellow-500 disabled:opacity-60 shadow-sm"
           >
             {submitting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             Save Settings
@@ -225,41 +228,40 @@ const RechargeApiSettings = () => {
       </div>
 
       <div className="mb-8 grid gap-4 lg:grid-cols-3">
-        <div className={`${cardClass} p-5`}>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Token status</p>
-          <p className="mt-2 text-lg font-black text-slate-950">
+        <div className={`${cardClass} p-5 border-l-4 border-l-yellow-400`}>
+          <p className="text-xs font-bold text-gray-500">Token status</p>
+          <p className="mt-1 text-lg font-bold text-gray-900">
             {settings.api_token ? 'Active token available' : 'Token missing'}
           </p>
-          <p className="mt-2 text-sm font-medium text-slate-500">{maskedToken}</p>
+          <p className="mt-1 text-sm font-medium text-gray-500 truncate">{maskedToken}</p>
         </div>
-        <div className={`${cardClass} p-5`}>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Resolved callback</p>
-          <p className="mt-2 break-all text-sm font-semibold text-slate-900">
+        <div className={`${cardClass} p-5 border-l-4 border-l-gray-300`}>
+          <p className="text-xs font-bold text-gray-500">Resolved callback</p>
+          <p className="mt-1 break-all text-sm font-semibold text-gray-900">
             {settings.resolved_callback_url || metadata.callback_url || 'Not available'}
           </p>
         </div>
-        <div className={`${cardClass} p-5`}>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Allowlisted IPs</p>
-          <p className="mt-2 text-lg font-black text-slate-950">
+        <div className={`${cardClass} p-5 border-l-4 border-l-gray-300`}>
+          <p className="text-xs font-bold text-gray-500">Allowlisted IPs</p>
+          <p className="mt-1 text-lg font-bold text-gray-900">
             {Array.isArray(settings.allowed_ip_addresses) ? settings.allowed_ip_addresses.length : 0}
           </p>
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            Restrict callbacks to trusted sources when the provider supports IP allowlisting.
+          <p className="mt-1 text-xs font-medium text-gray-500">
+            Restrict callbacks to trusted sources.
           </p>
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="rounded-[2rem] bg-cyan-500 p-4 text-slate-950 shadow-[0_24px_80px_rgba(6,182,212,0.22)]">
-          <div className="rounded-[1.5rem] bg-white/15 p-4 text-white">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-cyan-50">Integration console</p>
-            <p className="mt-2 text-xl font-black">Recharge Provider</p>
-            <p className="mt-2 text-sm font-medium text-cyan-50/90">
-              Match the provider’s setup steps and keep your app callback ready for live traffic.
+        <div className="bg-white rounded-[20px] border border-gray-200 shadow-sm overflow-hidden flex flex-col h-fit">
+          <div className="p-6 bg-gray-50/50 border-b border-gray-100">
+            <h3 className="text-sm font-bold text-gray-900">Integration Console</h3>
+            <p className="mt-1 text-xs text-gray-500">
+              Match the provider’s setup steps and keep your callback ready.
             </p>
           </div>
 
-          <div className="mt-4 space-y-2">
+          <div className="p-4 space-y-1">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -269,24 +271,25 @@ const RechargeApiSettings = () => {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex w-full items-center justify-between rounded-[1.4rem] px-4 py-3 text-left transition ${
-                    isActive ? 'bg-white text-slate-950 shadow-lg' : 'bg-transparent text-cyan-50 hover:bg-white/10'
+                  className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition-colors ${
+                    isActive ? 'bg-yellow-50 text-yellow-800 font-bold border border-yellow-200/50' : 'bg-transparent text-gray-600 hover:bg-gray-50 font-medium'
                   }`}
                 >
                   <span className="flex items-center gap-3">
-                    <Icon size={18} />
-                    <span className="text-sm font-bold">{tab.label}</span>
+                    <Icon size={18} className={isActive ? "text-yellow-600" : "text-gray-400"} />
+                    <span className="text-sm">{tab.label}</span>
                   </span>
-                  <ChevronRight size={16} className={isActive ? 'text-slate-400' : 'text-cyan-100'} />
+                  <ChevronRight size={16} className={isActive ? 'text-yellow-600' : 'text-gray-300'} />
                 </button>
               );
             })}
           </div>
-        </aside>
+        </div>
 
-        <section className={`${cardClass} overflow-hidden`}>
-          <div className="border-b border-slate-200 px-6 py-5">
-            <h2 className="text-lg font-black text-slate-950">
+        <section className={`${cardClass} overflow-hidden h-fit`}>
+          <div className="border-b border-gray-100 bg-gray-50/30 px-6 py-5 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+            <h2 className="text-sm font-bold text-gray-900">
               {TABS.find((tab) => tab.id === activeTab)?.label || 'Recharge API Setup'}
             </h2>
           </div>
@@ -294,7 +297,7 @@ const RechargeApiSettings = () => {
           <div className="p-6">
             {activeTab === 'token' && (
               <div className="space-y-6">
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px]">
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
                   <div>
                     <div className="mb-6 grid gap-4 lg:grid-cols-2">
                       <div>
@@ -339,30 +342,30 @@ const RechargeApiSettings = () => {
                     </div>
 
                     <label className={labelClass}>API Token</label>
-                    <div className="flex overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="flex overflow-hidden rounded-lg border border-gray-200">
                       <input
                         type="text"
                         readOnly
                         value={settings.api_token || ''}
                         placeholder="Generate token to begin"
-                        className="min-w-0 flex-1 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 outline-none"
+                        className="min-w-0 flex-1 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900 outline-none"
                       />
                       <button
                         type="button"
                         onClick={() => handleCopy(settings.api_token || '', 'API token')}
-                        className="inline-flex items-center justify-center bg-slate-900 px-4 text-white transition hover:bg-slate-800"
+                        className="inline-flex items-center justify-center bg-gray-100 border-l border-gray-200 px-4 text-gray-700 transition hover:bg-gray-200"
                       >
                         <Copy size={16} />
                       </button>
                     </div>
-                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                    <p className="mt-2 text-xs font-semibold text-gray-500">
                       Use this token in the provider dashboard or in outgoing authenticated requests.
                     </p>
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50 p-4">
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">Generated at</p>
-                    <p className="mt-2 text-sm font-bold text-emerald-950">
+                  <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-5 h-fit">
+                    <p className="text-xs font-bold text-gray-600">Generated at</p>
+                    <p className="mt-2 text-sm font-bold text-gray-900">
                       {settings.token_generated_at
                         ? new Date(settings.token_generated_at).toLocaleString()
                         : 'Not generated yet'}
@@ -370,25 +373,25 @@ const RechargeApiSettings = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={handleGenerateToken}
                     disabled={generating}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-60"
+                    className="inline-flex items-center gap-2 rounded-lg bg-yellow-400 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-yellow-500 disabled:opacity-60 shadow-sm"
                   >
                     {generating ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     Generate Token
                   </button>
 
-                  <label className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
+                  <label className="inline-flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-2.5 bg-gray-50 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={String(settings.enabled) === '1'}
                       onChange={(event) => updateField('enabled', event.target.checked ? '1' : '0')}
-                      className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                      className="h-4 w-4 rounded border-gray-300 text-yellow-500 focus:ring-yellow-500"
                     />
-                    <span className="text-sm font-semibold text-slate-700">Enable recharge API configuration</span>
+                    <span className="text-sm font-semibold text-gray-700">Enable recharge API configuration</span>
                   </label>
                 </div>
               </div>
@@ -428,20 +431,20 @@ const RechargeApiSettings = () => {
                     onChange={(event) => updateField('callback_url', event.target.value)}
                     placeholder="https://your-domain.com/api/recharge/callback"
                     disabled={settings.callback_mode !== 'manual'}
-                    className={`${inputClass} disabled:bg-slate-50 disabled:text-slate-400`}
+                    className={`${inputClass} disabled:bg-gray-50 disabled:text-gray-400`}
                   />
                 </div>
 
-                <div className="rounded-[1.5rem] border border-cyan-100 bg-cyan-50 p-5">
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-cyan-700">Resolved callback URL</p>
+                <div className="rounded-xl border border-yellow-200 bg-yellow-50/50 p-5">
+                  <p className="text-xs font-bold text-yellow-800">Resolved callback URL</p>
                   <div className="mt-3 flex flex-wrap items-center gap-3">
-                    <p className="min-w-0 flex-1 break-all text-sm font-bold text-slate-900">
+                    <p className="min-w-0 flex-1 break-all text-sm font-bold text-gray-900">
                       {settings.resolved_callback_url || metadata.callback_url}
                     </p>
                     <button
                       type="button"
                       onClick={() => handleCopy(settings.resolved_callback_url || metadata.callback_url || '', 'Callback URL')}
-                      className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                      className="inline-flex items-center gap-2 rounded-lg bg-white border border-yellow-200 px-3 py-1.5 text-xs font-bold text-yellow-800 shadow-sm transition hover:bg-yellow-100"
                     >
                       <Copy size={14} />
                       Copy
@@ -470,7 +473,7 @@ const RechargeApiSettings = () => {
                     placeholder={'103.10.10.5\n103.10.10.6'}
                     className={`${inputClass} resize-y`}
                   />
-                  <p className="mt-2 text-xs font-semibold text-slate-500">
+                  <p className="mt-2 text-xs font-semibold text-gray-500">
                     Enter one IP per line. These values are stored for provider-side allowlisting and audit readiness.
                   </p>
                 </div>
@@ -490,14 +493,14 @@ const RechargeApiSettings = () => {
 
             {activeTab === 'testing' && (
               <div className="space-y-6">
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
+                <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">Test status</p>
-                      <p className="mt-2 text-lg font-black text-slate-950">
+                      <p className="text-xs font-bold text-gray-500">Test status</p>
+                      <p className="mt-1 text-lg font-bold text-gray-900">
                         {testResult?.success ? 'Ready for callback test' : 'Setup still incomplete'}
                       </p>
-                      <p className="mt-2 text-sm font-medium text-slate-500">
+                      <p className="mt-1 text-sm font-medium text-gray-500">
                         {testResult?.message || 'Run a test to generate a callback preview.'}
                       </p>
                     </div>
@@ -505,7 +508,7 @@ const RechargeApiSettings = () => {
                       type="button"
                       onClick={handleRunTest}
                       disabled={testing}
-                      className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:opacity-60"
                     >
                       {testing ? <Loader2 size={16} className="animate-spin" /> : <PlayCircle size={16} />}
                       Refresh Test
@@ -515,7 +518,7 @@ const RechargeApiSettings = () => {
 
                 <div>
                   <label className={labelClass}>cURL Preview</label>
-                  <div className="overflow-auto rounded-[1.5rem] bg-slate-950 p-5 text-sm text-slate-100">
+                  <div className="overflow-auto rounded-xl border border-yellow-200 bg-yellow-50 p-5 text-sm text-gray-900 font-medium">
                     <pre className="whitespace-pre-wrap break-all">{testResult?.curl || 'Run a test to generate cURL.'}</pre>
                   </div>
                 </div>
@@ -585,24 +588,24 @@ const RechargeApiSettings = () => {
             {activeTab === 'docs' && (
               <div className="space-y-6">
                 <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
                     <div className="flex items-center gap-3">
-                      <FileCode2 size={18} className="text-cyan-600" />
-                      <p className="text-sm font-black text-slate-950">Request Rules</p>
+                      <FileCode2 size={18} className="text-yellow-500" />
+                      <p className="text-sm font-bold text-gray-900">Request Rules</p>
                     </div>
-                    <ul className="mt-4 space-y-2 text-sm font-medium text-slate-600">
-                      <li>Send the API token in the <code>x-api-token</code> header.</li>
-                      <li>Deliver callbacks as <code>POST</code> JSON requests.</li>
+                    <ul className="mt-4 space-y-2 text-sm font-medium text-gray-600">
+                      <li>Send the API token in the <code className="bg-white px-1 py-0.5 border border-gray-200 rounded">x-api-token</code> header.</li>
+                      <li>Deliver callbacks as <code className="bg-white px-1 py-0.5 border border-gray-200 rounded">POST</code> JSON requests.</li>
                       <li>Use the resolved callback URL shown in the callback tab.</li>
                     </ul>
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5">
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
                     <div className="flex items-center gap-3">
-                      <ShieldCheck size={18} className="text-emerald-600" />
-                      <p className="text-sm font-black text-slate-950">Recommended Checks</p>
+                      <ShieldCheck size={18} className="text-green-600" />
+                      <p className="text-sm font-bold text-gray-900">Recommended Checks</p>
                     </div>
-                    <ul className="mt-4 space-y-2 text-sm font-medium text-slate-600">
+                    <ul className="mt-4 space-y-2 text-sm font-medium text-gray-600">
                       <li>Rotate the API token before production cutover.</li>
                       <li>Allowlist provider IPs where supported.</li>
                       <li>Store a callback secret if the provider supports request signing.</li>
@@ -610,21 +613,21 @@ const RechargeApiSettings = () => {
                   </div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-slate-200">
-                  <div className="border-b border-slate-200 px-5 py-4">
-                    <p className="text-sm font-black text-slate-950">Sample Endpoints</p>
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="border-b border-gray-200 bg-gray-50/50 px-5 py-4">
+                    <p className="text-sm font-bold text-gray-900">Sample Endpoints</p>
                   </div>
-                  <div className="divide-y divide-slate-200">
+                  <div className="divide-y divide-gray-200">
                     {Object.entries(metadata.sample_endpoints || {}).map(([key, value]) => (
-                      <div key={key} className="flex flex-col gap-2 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div key={key} className="flex flex-col gap-2 px-5 py-4 lg:flex-row lg:items-center lg:justify-between bg-white">
                         <div>
-                          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{key}</p>
-                          <p className="mt-1 break-all text-sm font-semibold text-slate-900">{value}</p>
+                          <p className="text-xs font-bold text-gray-500 uppercase">{key}</p>
+                          <p className="mt-1 break-all text-sm font-semibold text-gray-900">{value}</p>
                         </div>
                         <button
                           type="button"
                           onClick={() => handleCopy(value, `${key} endpoint`)}
-                          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+                          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:bg-gray-50 shrink-0"
                         >
                           <Copy size={14} />
                           Copy
@@ -634,15 +637,15 @@ const RechargeApiSettings = () => {
                   </div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-slate-200">
-                  <div className="border-b border-slate-200 px-5 py-4">
-                    <p className="text-sm font-black text-slate-950">Provider Verification Endpoints</p>
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  <div className="border-b border-gray-200 bg-gray-50/50 px-5 py-4">
+                    <p className="text-sm font-bold text-gray-900">Provider Verification Endpoints</p>
                   </div>
-                  <div className="divide-y divide-slate-200">
+                  <div className="divide-y divide-gray-200">
                     {Object.entries(metadata.provider_endpoints || {}).map(([key, value]) => (
-                      <div key={key} className="px-5 py-4">
-                        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">{key}</p>
-                        <p className="mt-1 break-all text-sm font-semibold text-slate-900">{value}</p>
+                      <div key={key} className="px-5 py-4 bg-white">
+                        <p className="text-xs font-bold text-gray-500 uppercase">{key}</p>
+                        <p className="mt-1 break-all text-sm font-semibold text-gray-900">{value}</p>
                       </div>
                     ))}
                   </div>

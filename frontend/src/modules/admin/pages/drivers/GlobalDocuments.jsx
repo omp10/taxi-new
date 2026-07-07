@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 
 const inputClass =
-  'w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-800 outline-none transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500';
+  'w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-800 outline-none transition-colors focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400';
 
 const typeLabel = (value) =>
   String(value || '')
@@ -168,22 +168,22 @@ const GlobalDocuments = () => {
         aria-label={`Set ${item.name || item.field_key || 'item'} ${item.active ? 'inactive' : 'active'}`}
         disabled={isToggling}
         onClick={() => handleToggleStatus(item)}
-        className={`inline-flex items-center gap-3 rounded-full px-2 py-1 text-xs font-semibold transition whitespace-nowrap ${
+        className={`inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs font-semibold transition whitespace-nowrap ${
           isToggling ? 'cursor-wait opacity-60' : 'cursor-pointer'
         }`}
       >
         <span
-          className={`relative shrink-0 h-6 w-11 rounded-full transition-colors ${
-            item.active ? 'bg-green-500' : 'bg-gray-300'
+          className={`relative shrink-0 flex items-center h-6 w-11 rounded-full p-0.5 transition-colors ${
+            item.active ? 'bg-yellow-400' : 'bg-gray-300'
           }`}
         >
           <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-              item.active ? 'translate-x-5' : 'translate-x-0.5'
+            className={`h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+              item.active ? 'translate-x-5' : 'translate-x-0'
             }`}
           />
         </span>
-        <span className={item.active ? 'text-green-700' : 'text-gray-600'}>
+        <span className={item.active ? 'text-gray-900' : 'text-gray-500'}>
           {isToggling ? 'Saving...' : item.active ? 'Active' : 'Inactive'}
         </span>
       </button>
@@ -217,7 +217,7 @@ const GlobalDocuments = () => {
           <ChevronRight size={10} />
           <span className="text-gray-700">Driver Onboarding Config</span>
         </div>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-base text-gray-900 font-bold">Driver Onboarding Config</h1>
             <p className="mt-0.5 text-xs text-gray-500">
@@ -246,13 +246,13 @@ const GlobalDocuments = () => {
       </div>
 
       <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>Show</span>
             <select
               value={pageSize}
               onChange={(event) => setPageSize(Number(event.target.value))}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -292,14 +292,14 @@ const GlobalDocuments = () => {
             <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Name</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Account Type</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Image Type</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Status</th>
-                  <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Action</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Name</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Account Type</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Image Type</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Status</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-bold text-gray-600">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 whitespace-nowrap">
                 {isLoading ? (
                   <tr>
                     <td colSpan="5" className="px-6 py-16 text-center text-sm text-gray-500">Loading document templates...</td>
@@ -335,17 +335,17 @@ const GlobalDocuments = () => {
             <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Label</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Field Key</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Field Type</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Account Type</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Order</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Required</th>
-                  <th className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Status</th>
-                  <th className="px-4 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Action</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Label</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Field Key</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Field Type</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Account Type</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Order</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Required</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-bold text-gray-600">Status</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-bold text-gray-600">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 whitespace-nowrap">
                 {isLoading ? (
                   <tr>
                     <td colSpan="8" className="px-6 py-16 text-center text-sm text-gray-500">Loading vehicle fields...</td>

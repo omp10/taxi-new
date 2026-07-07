@@ -103,7 +103,7 @@ const SetPackagePrices = () => {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px] text-left">
             <thead className="bg-[#FBFCFF]">
-              <tr className="border-b border-gray-100 text-[11px] text-slate-800 uppercase font-black tracking-[0.1em]">
+              <tr className="border-b border-gray-100 text-sm font-semibold text-slate-700">
                 <th className="px-6 py-4">Package</th>
                 <th className="px-6 py-4">Destination</th>
                 <th className="px-6 py-4">Location</th>
@@ -146,12 +146,12 @@ const SetPackagePrices = () => {
                       {(item.package_vehicle_prices || []).length > 2 ? ` +${item.package_vehicle_prices.length - 2} more` : ''}
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${badgeClass(item.package_availability)}`}>
+                      <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize ${badgeClass(item.package_availability)}`}>
                         {item.package_availability || 'available'}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${statusClass(item.active)}`}>
+                      <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize ${statusClass(item.active)}`}>
                         {Number(item.active) === 1 ? 'active' : 'inactive'}
                       </span>
                     </td>

@@ -246,7 +246,7 @@ const PoolingVehicleForm = ({
           </button>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-black text-slate-900">
+              <h1 className="text-xl font-bold text-slate-900">
                 {pageLabel || (isViewMode ? 'View Vehicle' : isEditMode ? 'Edit Vehicle' : 'Add New Vehicle')}
               </h1>
               <p className="text-sm font-medium text-slate-500">

@@ -276,7 +276,7 @@ const RentalPackageTypes = ({ mode: propMode }) => {
                               </div>
                             </td>
                             <td className="px-4 py-3.5">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${p.transport_type === 'taxi' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${p.transport_type === 'taxi' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>
                                 {p.transport_type || 'Taxi'}
                               </span>
                             </td>

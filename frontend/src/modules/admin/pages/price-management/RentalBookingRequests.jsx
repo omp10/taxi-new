@@ -588,9 +588,9 @@ const RentalBookingRequests = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-5">
         
         {/* Total Requests */}
-        <div className="rounded-xl border border-slate-200/90 bg-white p-3 shadow-sm hover:shadow-md transition">
+        <div className="rounded-xl border border-slate-200/90 bg-white p-2 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Total Requests</span>
+            <span className="text-xs font-semibold capitalize text-slate-400">Total Requests</span>
             <div className="text-slate-400"><ClipboardList size={14} /></div>
           </div>
           <p className="mt-1.5 text-lg font-black text-slate-800 leading-none">{totalCount}</p>
@@ -598,9 +598,9 @@ const RentalBookingRequests = () => {
         </div>
 
         {/* Pending */}
-        <div className="rounded-xl border border-amber-200 bg-amber-50/20 p-3 shadow-sm hover:shadow-md transition">
+        <div className="rounded-xl border border-amber-200 bg-amber-50/20 p-2 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600">Pending</span>
+            <span className="text-xs font-semibold capitalize text-amber-600">Pending</span>
             <div className="text-amber-500"><Clock3 size={14} /></div>
           </div>
           <p className="mt-1.5 text-lg font-black text-amber-700 leading-none">{pendingCount}</p>
@@ -608,9 +608,9 @@ const RentalBookingRequests = () => {
         </div>
 
         {/* Approved */}
-        <div className="rounded-xl border border-blue-200 bg-blue-50/20 p-3 shadow-sm hover:shadow-md transition">
+        <div className="rounded-xl border border-blue-200 bg-blue-50/20 p-2 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600">Approved</span>
+            <span className="text-xs font-semibold capitalize text-blue-600">Approved</span>
             <div className="text-blue-500"><CheckCircle2 size={14} /></div>
           </div>
           <p className="mt-1.5 text-lg font-black text-blue-700 leading-none">{approvedCount}</p>
@@ -618,9 +618,9 @@ const RentalBookingRequests = () => {
         </div>
 
         {/* Active Rentals */}
-        <div className="rounded-xl border border-violet-200 bg-violet-50/20 p-3 shadow-sm hover:shadow-md transition">
+        <div className="rounded-xl border border-violet-200 bg-violet-50/20 p-2 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-violet-600">Active</span>
+            <span className="text-xs font-semibold capitalize text-violet-600">Active</span>
             <div className="text-violet-500"><PlayCircle size={14} /></div>
           </div>
           <p className="mt-1.5 text-lg font-black text-violet-700 leading-none">{activeRentalsCount}</p>
@@ -628,9 +628,9 @@ const RentalBookingRequests = () => {
         </div>
 
         {/* Completed */}
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/20 p-3 shadow-sm hover:shadow-md transition">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/20 p-2 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600">Completed</span>
+            <span className="text-xs font-semibold capitalize text-emerald-600">Completed</span>
             <div className="text-emerald-500"><CheckSquare size={14} /></div>
           </div>
           <p className="mt-1.5 text-lg font-black text-emerald-700 leading-none">{completedCount}</p>
@@ -638,9 +638,9 @@ const RentalBookingRequests = () => {
         </div>
 
         {/* Cancelled */}
-        <div className="rounded-xl border border-rose-200 bg-rose-50/20 p-3 shadow-sm hover:shadow-md transition">
+        <div className="rounded-xl border border-rose-200 bg-rose-50/20 p-2 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-rose-600">Cancelled</span>
+            <span className="text-xs font-semibold capitalize text-rose-600">Cancelled</span>
             <div className="text-rose-500"><XCircle size={14} /></div>
           </div>
           <p className="mt-1.5 text-lg font-black text-rose-700 leading-none">{cancelledCount}</p>
@@ -648,9 +648,9 @@ const RentalBookingRequests = () => {
         </div>
 
         {/* Paid */}
-        <div className="rounded-xl border border-teal-200 bg-teal-50/20 p-3 shadow-sm hover:shadow-md transition">
+        <div className="rounded-xl border border-teal-200 bg-teal-50/20 p-2 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-teal-600">Paid Bookings</span>
+            <span className="text-xs font-semibold capitalize text-teal-600">Paid Bookings</span>
             <div className="text-teal-500"><CreditCard size={14} /></div>
           </div>
           <p className="mt-1.5 text-lg font-black text-teal-700 leading-none">{paidCount}</p>
@@ -658,9 +658,9 @@ const RentalBookingRequests = () => {
         </div>
 
         {/* Revenue Today */}
-        <div className="rounded-xl border border-purple-200 bg-purple-50/20 p-3 shadow-sm hover:shadow-md transition">
+        <div className="rounded-xl border border-purple-200 bg-purple-50/20 p-2 shadow-sm hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-purple-600">Revenue Today</span>
+            <span className="text-xs font-semibold capitalize text-purple-600">Revenue Today</span>
             <div className="text-purple-500"><TrendingUp size={14} /></div>
           </div>
           <p className="mt-1.5 text-sm font-black text-purple-800 leading-none">{formatAmount(revenueToday)}</p>
@@ -993,14 +993,14 @@ const RentalBookingRequests = () => {
 
                         {/* Payment Status */}
                         <td className="px-3.5 py-2.5">
-                          <span className={`inline-flex rounded-lg border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${paymentStatusClasses[item.paymentStatus] || paymentStatusClasses.pending}`}>
+                          <span className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-semibold capitalize ${paymentStatusClasses[item.paymentStatus] || paymentStatusClasses.pending}`}>
                             {item.paymentStatus}
                           </span>
                         </td>
 
                         {/* Booking Status */}
                         <td className="px-3.5 py-2.5">
-                          <span className={`inline-flex rounded-lg border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${statusClasses[item.status] || statusClasses.pending}`}>
+                          <span className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-semibold capitalize ${statusClasses[item.status] || statusClasses.pending}`}>
                             {item.status}
                           </span>
                         </td>
@@ -1139,10 +1139,10 @@ const RentalBookingRequests = () => {
                 <h2 className="text-[20px] lg:text-[22px] font-bold text-gray-900">
                   Rental Request #{selectedRequest.bookingReference || 'PENDING'}
                 </h2>
-                <span className={`px-2.5 py-1 rounded-md text-[13px] font-semibold ${statusClasses[selectedRequest.status] || statusClasses.pending}`}>
+                <span className={`px-2.5 py-1 rounded-md text-[13px] font-semibold capitalize ${statusClasses[selectedRequest.status] || statusClasses.pending}`}>
                   {selectedRequest.status}
                 </span>
-                <span className={`px-2.5 py-1 rounded-md text-[13px] font-semibold ${paymentStatusClasses[selectedRequest.paymentStatus] || paymentStatusClasses.pending}`}>
+                <span className={`px-2.5 py-1 rounded-md text-[13px] font-semibold capitalize ${paymentStatusClasses[selectedRequest.paymentStatus] || paymentStatusClasses.pending}`}>
                   {selectedRequest.paymentStatus}
                 </span>
               </div>
