@@ -7504,8 +7504,8 @@ export const getDriverApprovalStatus = async (req, res) => {
 
   const normalizedRole = String(payload.role || "").toLowerCase();
 
-  if (!["driver", "owner", "bus_driver", "service_center", "service_center_staff"].includes(normalizedRole)) {
-    throw new ApiError(403, "Insufficient permissions for this resource");
+  if (!["driver", "owner", "bus_driver", "pooling_driver", "service_center", "service_center_staff"].includes(normalizedRole)) {
+    throw new ApiError(403, "Insufficient permissions for this resource. Role: " + normalizedRole);
   }
 
   if (normalizedRole === "owner") {
@@ -7621,6 +7621,35 @@ export const getDriverApprovalStatus = async (req, res) => {
         rejectionReason: staff.rejectionReason || "",
         isOnline: false,
         isOnRide: false,
+      },
+    });
+    return;
+  }
+
+  if (normalizedRole === "pooling_driver") {
+    const poolingVehicle = await PoolingVehicle.findById(payload.sub).lean();
+
+    if (!poolingVehicle) {
+      throw new ApiError(404, "Pooling driver not found");
+    }
+
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    res.json({
+      success: true,
+      data: {
+        id: poolingVehicle._id,
+        name: poolingVehicle.driverName || "",
+        phone: poolingVehicle.phone || "",
+        approve: poolingVehicle.approve,
+        status: poolingVehicle.status,
+        documents: poolingVehicle.documents || {},
+        onboarding: poolingVehicle.onboarding || {},
+        rejectionReason: poolingVehicle.rejectionReason || "",
+        isOnline: poolingVehicle.isOnline || false,
+        isOnRide: poolingVehicle.isOnRide || false,
       },
     });
     return;
